@@ -1,3 +1,4 @@
+import time
 from fastapi import FastAPI, Request
 
 app = FastAPI()
@@ -15,9 +16,8 @@ async def add_request_id(request: Request, call_next):
 # 路由
 @app.get("/")
 async def hello_world(request: Request):
+    time.sleep(30)
     return {"message": f"Hello {request.state.request_id}"}
-
-
 
 
 if __name__ == "__main__":
