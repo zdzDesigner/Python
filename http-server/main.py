@@ -1,7 +1,11 @@
-import time
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, UploadFile, File
+import shutil
+import os
 
 app = FastAPI()
+
+# 确保 assets 目录存在
+os.makedirs("assets", exist_ok=True)
 
 
 # 中间件（类似 Koa）
@@ -16,8 +20,15 @@ async def add_request_id(request: Request, call_next):
 # 路由
 @app.get("/")
 async def hello_world(request: Request):
-    time.sleep(30)
     return {"message": f"Hello {request.state.request_id}"}
+
+
+@app.post("/uploadfile/")
+async def create_upload_file(file: UploadFile = File(...)):
+    file_path = f"assets/{file.filename}"
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    return {"filename": file.filename}
 
 
 if __name__ == "__main__":
