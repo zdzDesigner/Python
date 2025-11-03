@@ -25,9 +25,13 @@ async def hello_world(request: Request):
 
 @app.post("/uploadfile/")
 async def create_upload_file(file: UploadFile = File(...)):
+    print("========== uploadfile ============")
     file_path = f"assets/{file.filename}"
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    with open(file_path, "wb") as dfile:
+        print(dfile.readable())
+        shutil.copyfileobj(file.file, dfile)
+    # 文件会自动关闭，即使发生异常
+
     return {"filename": file.filename}
 
 
