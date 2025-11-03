@@ -1,8 +1,23 @@
 from fastapi import FastAPI, Request, UploadFile, File
 import shutil
 import os
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    启动执行
+    Manages the model's lifecycle. The model is loaded on startup and cleared on shutdown.
+    """
+    print("INFO: startup init.....")
+    yield
+    print("INFO: shutdown destroy.....")
+
+
+
+
+app = FastAPI(lifespan=lifespan)
 
 # 确保 assets 目录存在
 os.makedirs("assets", exist_ok=True)

@@ -1,0 +1,5 @@
+f = open('../base/if.py', 'r')
+# lines = f.readlines()
+# print(lines)
+data = f.read()
+print(data)
