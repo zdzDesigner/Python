@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -19,8 +18,8 @@ func main() {
 	// 要合成的文本
 	textToSynthesize := "你好，这是一个通过 Golang 客户端生成的语音。"
 	// 参考音色的音频文件路径 (spk_audio_prompt)
-	speakerAudioPath := "../run.sh" // 使用项目中的示例文件
-	// speakerAudioPath := "/home/zdz/temp/TTS/assets/self_voice.wav" // 使用项目中的示例文件
+	// speakerAudioPath := "../run.sh" // 使用项目中的示例文件
+	speakerAudioPath := "/home/zdz/temp/TTS/assets/self_voice.wav" // 使用项目中的示例文件
 	// 生成的音频要保存的路径
 	outputWavPath := "output.wav"
 
@@ -40,6 +39,7 @@ func main() {
     // 你可以在这里添加更多表单字段，例如：
     // writer.WriteField("emo_alpha", "0.8")
     // writer.WriteField("use_random", "true")
+    writer.WriteField("use_emo_text", "true")
 
 	// 2. 添加文件字段 (spk_audio_prompt)
 	file, err := os.Open(speakerAudioPath)
