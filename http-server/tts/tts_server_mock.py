@@ -15,6 +15,7 @@ from starlette.background import BackgroundTask
 # Use a dictionary to hold the model, making it accessible within the lifespan context.
 models = {}
 
+
 def read_file(filepath_src):
     try:
         with open(filepath_src, "r") as f:
@@ -26,8 +27,10 @@ def read_file(filepath_src):
     except Exception as err:
         return None
 
+
 # --- FastAPI App Initialization ---
 app = FastAPI()
+
 
 # --- API Endpoint Definition ---
 @app.post(
@@ -38,25 +41,22 @@ app = FastAPI()
     All parameters from the original `infer_v2.py` are exposed here.
     The generated audio is returned directly as a WAV file.
     """,
-    response_class=FileResponse
+    response_class=FileResponse,
 )
 async def run_inference(
     # --- Core Parameters ---
     text: str = Form(..., description="The text to be synthesized."),
     spk_audio_prompt: UploadFile = File(..., description="Reference audio file for the speaker's voice (timbre)."),
-
     # --- Emotion Control Parameters ---
     emo_audio_prompt: Optional[UploadFile] = File(None, description="Reference audio file for the desired emotion."),
     emo_alpha: float = Form(1.0, description="Blending ratio for the emotion reference audio. Range: 0.0 to 1.0."),
     emo_vector_str: Optional[str] = Form(None, description='A JSON string representing a list of 8 floats for emotion control. E.g., `"[0, 0, 0, 0, 0, 0, 0.45, 0]"`.'),
     use_emo_text: bool = Form(False, description="If True, derive emotions from the `emo_text` or the main `text`."),
     emo_text: Optional[str] = Form(None, description="Text to derive emotions from. If `use_emo_text` is True and this is empty, the main `text` is used."),
-
     # --- Generation Control Parameters ---
     use_random: bool = Form(False, description="If True, introduces randomness in emotion vector selection, potentially reducing voice cloning fidelity."),
     interval_silence: int = Form(200, description="Milliseconds of silence to insert between text segments."),
     max_text_tokens_per_segment: int = Form(120, description="Maximum number of text tokens for each synthesis segment."),
-    
     # --- Additional Generation Kwargs from the original script ---
     top_p: float = Form(0.8, description="Top-p sampling probability."),
     top_k: int = Form(30, description="Top-k sampling."),
@@ -64,10 +64,9 @@ async def run_inference(
     length_penalty: float = Form(0.0, description="Length penalty for generation."),
     repetition_penalty: float = Form(10.0, description="Repetition penalty."),
     max_mel_tokens: int = Form(1500, description="Maximum number of mel tokens to generate."),
-
-    verbose: bool = Form(False, description="Enable verbose logging.")
+    verbose: bool = Form(False, description="Enable verbose logging."),
 ):
-
+    print(f"use_emo_text:{use_emo_text}")
     temp_files = []
     output_path = None  # Track output path separately
     try:
@@ -79,7 +78,7 @@ async def run_inference(
                 spk_file.write(content)
                 spk_audio_path = spk_file.name
                 temp_files.append(spk_audio_path)  # This will be cleaned in finally
-        
+
         if emo_audio_prompt:
             with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as emo_file:
                 content = await emo_audio_prompt.read()
@@ -97,15 +96,10 @@ async def run_inference(
             output_path = temp_file.name
 
         print(f"output_path: {output_path}")
-        
+
         # --- Return Audio File ---
         # Use a BackgroundTask to delete the output file *after* the response is sent.
-        return FileResponse(
-            path=output_path,
-            media_type='audio/wav',
-            filename='generated_speech.wav',
-            background=BackgroundTask(os.remove, output_path)
-        )
+        return FileResponse(path=output_path, media_type="audio/wav", filename="generated_speech.wav", background=BackgroundTask(os.remove, output_path))
 
     except Exception as e:
         # In case of any error, raise an HTTP exception
@@ -117,7 +111,7 @@ async def run_inference(
                 pass  # Ignore cleanup errors in error handling
         print(f"ERROR:    An error occurred during inference: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-    
+
     finally:
         # --- Cleanup ---
         # Clean up ONLY the INPUT temporary files (audio prompts), not the output file.
@@ -128,7 +122,7 @@ async def run_inference(
                     os.remove(path)
             except Exception as e:
                 print(f"WARNING: Could not remove temporary file {path}: {e}")
-                
+
         print("INFO:     Cleaned up temporary input files.")
 
 
@@ -137,8 +131,7 @@ if __name__ == "__main__":
     print("--- IndexTTS2 FastAPI Server ---")
     print("Starting server. The model will be loaded shortly.")
     print("Access the interactive API documentation at http://127.0.0.1:8000/docs")
-    
+
     # Use uvicorn to run the app.
     # Set host to '0.0.0.0' to make it accessible from other devices on the network.
-    uvicorn.run(app, host="0.0.0.0", port=8800)
-
+    uvicorn.run(app, host="0.0.0.0", port=8900)

@@ -15,6 +15,7 @@ func main() {
 	// --- 配置 ---
 	// API服务器的URL
 	apiURL := "http://127.0.0.1:8800/inference"
+	// apiURL := "http://127.0.0.1:8900/inference"
 	// 要合成的文本
 	textToSynthesize := "你好，这是一个通过 Golang 客户端生成的语音。"
 	// 参考音色的音频文件路径 (spk_audio_prompt)
@@ -40,6 +41,13 @@ func main() {
     // writer.WriteField("emo_alpha", "0.8")
     // writer.WriteField("use_random", "true")
     writer.WriteField("use_emo_text", "true")
+    // writer.WriteField("emo_text", "高兴")
+    writer.WriteField("emo_text", "悲伤") // 情绪描述
+    writer.WriteField("emo_alpha", "0.8") // 情绪缩放
+    writer.WriteField("interval_silence", "800") // 停顿
+		
+		
+		
 
 	// 2. 添加文件字段 (spk_audio_prompt)
 	file, err := os.Open(speakerAudioPath)
