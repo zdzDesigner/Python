@@ -11,6 +11,14 @@ import (
 	"time"
 )
 
+type Narration struct {
+	Speaker   string `json:"speaker"`   // 发言人
+	Content   string `json:"content"`   // 内容
+	Tone      string `json:"tone"`      // 情感
+	Intensity int    `json:"intensity"` // 情感缩放
+	Delay     int    `json:"delay"`     // 延迟
+}
+
 func main() {
 	// --- 配置 ---
 	// API服务器的URL
@@ -37,17 +45,14 @@ func main() {
 		fmt.Printf("错误：无法添加 'text' 字段: %v\n", err)
 		return
 	}
-    // 你可以在这里添加更多表单字段，例如：
-    // writer.WriteField("emo_alpha", "0.8")
-    // writer.WriteField("use_random", "true")
-    writer.WriteField("use_emo_text", "true")
-    // writer.WriteField("emo_text", "高兴")
-    writer.WriteField("emo_text", "悲伤") // 情绪描述
-    writer.WriteField("emo_alpha", "0.8") // 情绪缩放
-    writer.WriteField("interval_silence", "800") // 停顿
-		
-		
-		
+	// 你可以在这里添加更多表单字段，例如：
+	// writer.WriteField("emo_alpha", "0.8")
+	// writer.WriteField("use_random", "true")
+	writer.WriteField("use_emo_text", "true")
+	// writer.WriteField("emo_text", "高兴")
+	writer.WriteField("emo_text", "悲伤")          // 情绪描述
+	writer.WriteField("emo_alpha", "0.8")        // 情绪缩放
+	writer.WriteField("interval_silence", "800") // 停顿
 
 	// 2. 添加文件字段 (spk_audio_prompt)
 	file, err := os.Open(speakerAudioPath)
@@ -127,4 +132,3 @@ func main() {
 
 	fmt.Printf("\n✨ 成功！音频文件已保存到: %s\n", outputWavPath)
 }
-
