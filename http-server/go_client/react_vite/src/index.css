@@ -1,3 +1,31 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --background-start-rgb: 243, 244, 246;
+  --background-end-rgb: 229, 231, 235;
+  --foreground-rgb: 17, 24, 39;
+  --primary-rgb: 79, 70, 229;
+  --primary-hover-rgb: 67, 56, 202;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-start-rgb: 31, 41, 55;
+    --background-end-rgb: 17, 24, 39;
+    --foreground-rgb: 255, 255, 255;
+    --primary-rgb: 99, 102, 241;
+    --primary-hover-rgb: 129, 140, 248;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}

@@ -8,127 +8,275 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
-type Narration struct {
-	Speaker   string `json:"speaker"`   // 发言人
-	Content   string `json:"content"`   // 内容
-	Tone      string `json:"tone"`      // 情感
-	Intensity int    `json:"intensity"` // 情感缩放
-	Delay     int    `json:"delay"`     // 延迟
+// --- Struct Definitions ---
+
+// FileItem represents a file or folder for the audio library API.
+type FileItem struct {
+	Name string `json:"Name"` // Name in "folder/file" format
+	Path string `json:"Path"` // Full path of the audio file
+	URL  string `json:"URL"`  // URL for accessing the audio file via the API
 }
 
-func main() {
-	// --- 配置 ---
-	// API服务器的URL
-	apiURL := "http://127.0.0.1:8800/inference"
-	// apiURL := "http://127.0.0.1:8900/inference"
-	// 要合成的文本
-	textToSynthesize := "你好，这是一个通过 Golang 客户端生成的语音。"
-	// 参考音色的音频文件路径 (spk_audio_prompt)
-	// speakerAudioPath := "../run.sh" // 使用项目中的示例文件
-	speakerAudioPath := "/home/zdz/temp/TTS/assets/self_voice.wav" // 使用项目中的示例文件
-	// 生成的音频要保存的路径
-	outputWavPath := "output.wav"
+// TTSRequest holds parameters for a text-to-speech synthesis request.
+type TTSRequest struct {
+	Text             string  `json:"text" binding:"required"`
+	SpeakerAudioPath string  `json:"speaker_audio_path" binding:"required"`
+	OutputWavPath    string  `json:"output_wav_path" binding:"required"`
+	EmotionText      string  `json:"emotion_text,omitempty"`
+	EmotionAlpha     float64 `json:"emotion_alpha,omitempty"`
+	IntervalSilence  int     `json:"interval_silence,omitempty"`
+}
 
-	fmt.Println("正在准备发送请求到 TTS API...")
+// --- TTS Synthesis Logic (unchanged) ---
 
-	// --- 创建 multipart/form-data 请求体 ---
+func synthesizeSpeech(apiURL string, request TTSRequest) error {
 	var requestBody bytes.Buffer
-	// 创建一个multipart writer，它会将数据写入requestBody
 	writer := multipart.NewWriter(&requestBody)
 
-	// 1. 添加文本字段
-	err := writer.WriteField("text", textToSynthesize)
-	if err != nil {
-		fmt.Printf("错误：无法添加 'text' 字段: %v\n", err)
-		return
+	if err := writer.WriteField("text", request.Text); err != nil {
+		return fmt.Errorf("failed to add 'text' field: %w", err)
 	}
-	// 你可以在这里添加更多表单字段，例如：
-	// writer.WriteField("emo_alpha", "0.8")
-	// writer.WriteField("use_random", "true")
-	writer.WriteField("use_emo_text", "true")
-	// writer.WriteField("emo_text", "高兴")
-	writer.WriteField("emo_text", "悲伤")          // 情绪描述
-	writer.WriteField("emo_alpha", "0.8")        // 情绪缩放
-	writer.WriteField("interval_silence", "800") // 停顿
+	if err := writer.WriteField("use_emo_text", "true"); err != nil {
+		return fmt.Errorf("failed to add 'use_emo_text' field: %w", err)
+	}
+	if request.EmotionText != "" {
+		if err := writer.WriteField("emo_text", request.EmotionText); err != nil {
+			return fmt.Errorf("failed to add 'emo_text' field: %w", err)
+		}
+	}
+	if request.EmotionAlpha > 0 {
+		if err := writer.WriteField("emo_alpha", fmt.Sprintf("%.2f", request.EmotionAlpha)); err != nil {
+			return fmt.Errorf("failed to add 'emo_alpha' field: %w", err)
+		}
+	}
+	if request.IntervalSilence > 0 {
+		if err := writer.WriteField("interval_silence", fmt.Sprintf("%d", request.IntervalSilence)); err != nil {
+			return fmt.Errorf("failed to add 'interval_silence' field: %w", err)
+		}
+	}
 
-	// 2. 添加文件字段 (spk_audio_prompt)
-	file, err := os.Open(speakerAudioPath)
+	file, err := os.Open(request.SpeakerAudioPath)
 	if err != nil {
-		fmt.Printf("错误：无法打开参考音频文件 '%s': %v\n", speakerAudioPath, err)
-		return
+		return fmt.Errorf("could not open reference audio file '%s': %w", request.SpeakerAudioPath, err)
 	}
 	defer file.Close()
 
-	// 创建一个用于文件的form-data部分
-	part, err := writer.CreateFormFile("spk_audio_prompt", filepath.Base(speakerAudioPath))
+	part, err := writer.CreateFormFile("spk_audio_prompt", filepath.Base(request.SpeakerAudioPath))
 	if err != nil {
-		fmt.Printf("错误：无法创建文件的form-data部分: %v\n", err)
-		return
+		return fmt.Errorf("failed to create form file: %w", err)
+	}
+	if _, err = io.Copy(part, file); err != nil {
+		return fmt.Errorf("failed to copy file content to request: %w", err)
 	}
 
-	// 将文件内容拷贝到form-data部分
-	_, err = io.Copy(part, file)
-	if err != nil {
-		fmt.Printf("错误：无法将文件内容拷贝到请求体: %v\n", err)
-		return
+	if err = writer.Close(); err != nil {
+		return fmt.Errorf("failed to close multipart writer: %w", err)
 	}
 
-	// --- 完成请求体并发送请求 ---
-	// 关闭multipart writer来写入结尾的boundary
-	err = writer.Close()
-	if err != nil {
-		fmt.Printf("错误：无法关闭 multipart writer: %v\n", err)
-		return
-	}
-
-	// 创建HTTP POST请求
 	req, err := http.NewRequest("POST", apiURL, &requestBody)
 	if err != nil {
-		fmt.Printf("错误：无法创建HTTP请求: %v\n", err)
-		return
+		return fmt.Errorf("failed to create HTTP request: %w", err)
 	}
-
-	// 设置正确的Content-Type，包含boundary
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	fmt.Println("请求已发送，等待服务器响应...")
-
-	// 发送请求
-	client := &http.Client{Timeout: time.Second * 120} // 设置一个较长的超时时间
+	client := &http.Client{Timeout: time.Second * 120}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("错误：发送HTTP请求失败: %v\n", err)
-		return
+		return fmt.Errorf("failed to send HTTP request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// --- 处理响应 ---
-	// 检查HTTP状态码
 	if resp.StatusCode != http.StatusOK {
-		// 如果不是200 OK，读取并打印错误信息
 		errorBody, _ := io.ReadAll(resp.Body)
-		fmt.Printf("错误：API返回了非200状态码: %d\n", resp.StatusCode)
-		fmt.Printf("错误详情: %s\n", string(errorBody))
-		return
+		return fmt.Errorf("external TTS API returned non-200 status code %d: %s", resp.StatusCode, string(errorBody))
 	}
 
-	// 创建输出文件
-	outputFile, err := os.Create(outputWavPath)
+	outputFile, err := os.Create(request.OutputWavPath)
 	if err != nil {
-		fmt.Printf("错误：无法创建输出文件 '%s': %v\n", outputWavPath, err)
-		return
+		return fmt.Errorf("failed to create output file '%s': %w", request.OutputWavPath, err)
 	}
 	defer outputFile.Close()
 
-	// 将响应体（音频数据）拷贝到输出文件
-	_, err = io.Copy(outputFile, resp.Body)
-	if err != nil {
-		fmt.Printf("错误：无法将音频数据写入文件: %v\n", err)
+	if _, err = io.Copy(outputFile, resp.Body); err != nil {
+		return fmt.Errorf("failed to write audio data to file: %w", err)
+	}
+
+	return nil
+}
+
+// --- Gin Handlers ---
+
+func ttsHandler(c *gin.Context) {
+	var ttsReq TTSRequest
+	if err := c.ShouldBindJSON(&ttsReq); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
 		return
 	}
 
-	fmt.Printf("\n✨ 成功！音频文件已保存到: %s\n", outputWavPath)
+	fmt.Printf("Received TTS request: %+v\n", ttsReq)
+
+	externalApiURL := "http://127.0.0.1:8800/inference"
+
+	if err := synthesizeSpeech(externalApiURL, ttsReq); err != nil {
+		fmt.Fprintf(os.Stderr, "TTS Synthesis Error: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to synthesize speech: " + err.Error()})
+		return
+	}
+
+	// After success, create a FileItem for the new file to return to the client.
+	audioRootPath := "/home/zdz/Documents/Try/TTS/audio/audiobook_manager/wav"
+	relPath, err := filepath.Rel(audioRootPath, ttsReq.OutputWavPath)
+	if err != nil {
+		// This should ideally not happen if paths are correct, but handle it.
+		fmt.Fprintf(os.Stderr, "Error creating relative path: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not construct file path for response"})
+		return
+	}
+
+	newFile := FileItem{
+		Name: filepath.ToSlash(relPath),
+		Path: ttsReq.OutputWavPath,
+		URL:  "/api/audio-file/" + filepath.ToSlash(relPath),
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"newFile": newFile,
+	})
+}
+
+func audioFilesHandler(c *gin.Context) {
+	rootPath := "/home/zdz/Documents/Try/TTS/audio/audiobook_manager/wav"
+	fileList, err := ReadDirectoryRecursive(rootPath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"files": fileList,
+		"count": len(fileList),
+	})
+}
+
+func audioFileHandler(c *gin.Context) {
+	filePath := c.Param("path")
+	// The path parameter from Gin includes the leading '/', so we trim it.
+	filePath = strings.TrimPrefix(filePath, "/")
+
+	if strings.Contains(filePath, "../") {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file path"})
+		return
+	}
+
+	fullPath := filepath.Join("/home/zdz/Documents/Try/TTS/audio/audiobook_manager/wav", filePath)
+	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+		return
+	}
+
+	c.File(fullPath)
+}
+
+// --- Directory Reading Logic (unchanged) ---
+
+func ReadDirectoryRecursive(rootPath string) ([]FileItem, error) {
+	var fileList []FileItem
+	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+
+		ext := strings.ToLower(filepath.Ext(path))
+		isAudioFile := false
+		switch ext {
+		case ".mp3", ".wav", ".ogg", ".flac", ".aac", ".m4a", ".wma", ".opus":
+			isAudioFile = true
+		}
+		if !isAudioFile {
+			return nil
+		}
+
+		relPath, err := filepath.Rel(rootPath, path)
+		if err != nil {
+			return err
+		}
+		if relPath == "." {
+			return nil
+		}
+
+		relPath = filepath.ToSlash(relPath)
+		fileItem := FileItem{
+			Name: relPath,
+			Path: path,
+			URL:  "/api/audio-file/" + relPath,
+		}
+		fileList = append(fileList, fileItem)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return fileList, nil
+}
+
+// --- Middleware ---
+
+func corsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+
+		c.Next()
+	}
+}
+
+// --- Main Application Entry Point ---
+
+func main() {
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.New() // Create a new router without default middleware
+
+	// Add custom logger and recovery middleware
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
+
+	// Add CORS middleware
+	router.Use(corsMiddleware())
+
+	// Group API routes
+	api := router.Group("/api")
+	{
+		api.GET("/audio-files", audioFilesHandler)
+		api.GET("/audio-file/*path", audioFileHandler)
+		api.POST("/tts", ttsHandler)
+	}
+
+	// Health check route
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
+
+	port := "8081"
+	fmt.Printf("Gin server starting on http://localhost:%s\n", port)
+	err := router.Run(":" + port)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Server error: %v\n", err)
+		os.Exit(1)
+	}
 }

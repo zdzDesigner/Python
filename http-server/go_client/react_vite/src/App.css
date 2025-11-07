@@ -1,42 +1,68 @@
+/*
+ * App.css
+ * This file contains custom styles that complement the Tailwind CSS utility classes.
+ */
+
+/* Import a modern, clean font for better readability */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Apply a base font and background color to the body */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f9fafb; /* Light gray background */
+}
+
+/* Ensure the root element takes up the full height */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  height: 100vh;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Custom scrollbar for a modern look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+::-webkit-scrollbar-track {
+  background: #f1f5f9; /* Lighter track */
+  border-radius: 4px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+::-webkit-scrollbar-thumb {
+  background: #a5b4fc; /* Softer thumb color */
+  border-radius: 4px;
 }
 
-.card {
-  padding: 2em;
+::-webkit-scrollbar-thumb:hover {
+  background: #818cf8; /* Darker on hover */
 }
 
-.read-the-docs {
-  color: #888;
+/* Smooth scrolling for a better user experience */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom focus styles for better accessibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgb(var(--primary-rgb));
+  outline-offset: 2px;
+  border-radius: 4px;
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
+}
+
+/* Style for the audio player */
+audio {
+  filter: invert(0.8) sepia(0.5) saturate(5) hue-rotate(190deg);
+  border-radius: 9999px; /* Rounded player */
+  transition: all 0.3s ease;
+}
+
+audio:hover {
+  filter: invert(0.9) sepia(0.8) saturate(8) hue-rotate(190deg);
 }
