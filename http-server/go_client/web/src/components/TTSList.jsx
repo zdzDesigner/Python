@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { Card, Table, Tag, Typography } from 'antd'
+import { audio_text } from '../assets/audio_text'
 
 const { Text } = Typography
 
 const TTSList = ({ jsonData }) => {
   const [ttsData, setTtsData] = useState([])
+  jsonData = JSON.stringify(audio_text)
 
   useEffect(() => {
     if (jsonData) {
