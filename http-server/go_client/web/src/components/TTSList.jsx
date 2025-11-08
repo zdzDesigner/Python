@@ -84,26 +84,29 @@ const TTSList = ({ jsonData }) => {
     }
   ]
 
+  {
+    // <Card className="w-full mt-4">
+    // </Card>
+  }
   return (
-    <Card className="w-full mt-4">
-      <Table
-        dataSource={ttsData}
-        columns={columns}
-        size="small"
-        rowKey={(record, index) => `${record.speaker}-${record.content}-${index}`}
-        pagination={false}
-        // pagination={{
-        //   pageSize: 10,
-        //   showSizeChanger: true,
-        //   showQuickJumper: true,
-        //   showTotal: (total) => `共 ${total} 条`
-        // }}
-        scroll={{ y: 400 }}
-        locale={{
-          emptyText: jsonData ? 'JSON数据有效但不包含TTS条目' : '尚未提供JSON数据'
-        }}
-      />
-    </Card>
+    <Table
+      style={{ padding: 10, backgroundColor:'#fff'}}
+      dataSource={ttsData}
+      columns={columns}
+      size="small"
+      rowKey={(record, index) => `${record.speaker}-${record.content}-${index}`}
+      pagination={false}
+      // pagination={{
+      //   pageSize: 10,
+      //   showSizeChanger: true,
+      //   showQuickJumper: true,
+      //   showTotal: (total) => `共 ${total} 条`
+      // }}
+      scroll={{ y: 'calc(100vh - 200px)' }}
+      locale={{
+        emptyText: jsonData ? 'JSON数据有效但不包含TTS条目' : '尚未提供JSON数据'
+      }}
+    />
   )
 }
 

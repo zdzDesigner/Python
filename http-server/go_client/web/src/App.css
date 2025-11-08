@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import 'antd/dist/reset.css';
+/* @import 'antd/dist/reset.css'; */
+@import 'tailwindcss';
 
 /*
  * App.css
@@ -14,7 +14,8 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f9fafb; /* Light gray background */
+  /* background-color: #f9fafb;  */
+  background-color: #fff;
 }
 
 /* Ensure the root element takes up the full height */
@@ -24,7 +25,7 @@ body {
 
 /* Custom scrollbar for a modern look */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 4px;
   height: 8px;
 }
 

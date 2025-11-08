@@ -40,6 +40,7 @@ const TtsSynthesizer = ({ onSynthesize, isSynthesizing, selectedFile }) => {
           placeholder="Enter text to synthesize..."
           disabled={isSynthesizing}
         />
+
         <button
           type="submit"
           disabled={isSynthesizing || !text.trim()}

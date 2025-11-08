@@ -10,7 +10,7 @@ const LoadingSpinner = () => (
 )
 
 // Add onSynthesize, isSynthesizing, and selectedFile to the props
-const Sidebar = ({ audioFilesCount, loading, fileTree, onSelectFile, onDeleteFile, onSynthesize, isSynthesizing, selectedFile }) => {
+const Sidebar = ({ audioFilesCount, loading, fileTree, onSelectFile, onDeleteFile, onSynthesize, isSynthesizing, selectedFile, currentlyPlaying }) => {
   return (
     <aside className="w-[300px] bg-white/80 backdrop-blur-lg border-r border-slate-200 flex flex-col">
       {
@@ -25,7 +25,7 @@ const Sidebar = ({ audioFilesCount, loading, fileTree, onSelectFile, onDeleteFil
         // </div>
       }
       <div className="flex-1 overflow-y-auto p-2">
-        {loading ? <LoadingSpinner /> : <FileTree fileTree={fileTree} onSelectFile={onSelectFile} onDeleteFile={onDeleteFile} />}
+        {loading ? <LoadingSpinner /> : <FileTree fileTree={fileTree} onSelectFile={onSelectFile} onDeleteFile={onDeleteFile} currentlyPlaying={currentlyPlaying} />}
       </div>
       {/* Add the TTS component at the bottom, passing the selectedFile prop */}
       <TtsSynthesizer onSynthesize={onSynthesize} isSynthesizing={isSynthesizing} selectedFile={selectedFile} />

@@ -2,12 +2,13 @@ import React, { useState } from 'react'
 import { DeleteOutlined, CloseOutlined } from '@ant-design/icons'
 
 // Internal component to render each item in the tree recursively
-const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile }) => {
+const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile, currentlyPlaying }) => {
   const [isExpanded, setIsExpanded] = useState(level < 1) // Auto-expand first level
   const [showDelete, setShowDelete] = useState(false)
   const marginLeft = `${level * 0}px`
   const hasChildren = item.children && item.children.length > 0
   const isfolder = item.type === 'folder'
+  const isPlaying = item.type === 'file' && currentlyPlaying === item.data.path
 
 
   const getIcon = () => {
@@ -33,8 +34,10 @@ const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile }) => {
   // Common wrapper div props for both files and folders
   const commonWrapperProps = {
     className: `flex items-center px-2 rounded-lg cursor-default transition-all duration-200 ${
-      isfolder && isExpanded ? 'bg-slate-50' : ''
-    } hover:bg-slate-100 relative`,
+      isPlaying 
+        ? 'bg-indigo-100 border-l-4 border-indigo-500' 
+        : `${isfolder && isExpanded ? 'bg-slate-50' : ''} hover:bg-slate-100`
+    } relative`,
     style: { marginLeft },
     onMouseEnter: () => setShowDelete(true),
     onMouseLeave: () => setShowDelete(false)
@@ -92,7 +95,14 @@ const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile }) => {
       {isExpanded && hasChildren && (
         <div className="border-slate-200 ml-3.5">
           {item.children.map((child, index) => (
-            <TreeItem key={index} item={child} level={level + 1} onSelectFile={onSelectFile} onDeleteFile={onDeleteFile} />
+            <TreeItem 
+              key={index} 
+              item={child} 
+              level={level + 1} 
+              onSelectFile={onSelectFile} 
+              onDeleteFile={onDeleteFile} 
+              currentlyPlaying={currentlyPlaying} 
+            />
           ))}
         </div>
       )}
@@ -101,7 +111,7 @@ const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile }) => {
 }
 
 // Main component to render the entire file tree
-const FileTree = ({ fileTree, onSelectFile, onDeleteFile }) => {
+const FileTree = ({ fileTree, onSelectFile, onDeleteFile, currentlyPlaying }) => {
   if (!fileTree || !fileTree.children || fileTree.children.length === 0) {
     return (
       <div className="text-center text-slate-500 py-16">
@@ -115,7 +125,14 @@ const FileTree = ({ fileTree, onSelectFile, onDeleteFile }) => {
   return (
     <div>
       {fileTree.children.map((item, index) => (
-        <TreeItem key={index} item={item} level={0} onSelectFile={onSelectFile} onDeleteFile={onDeleteFile} />
+        <TreeItem 
+          key={index} 
+          item={item} 
+          level={0} 
+          onSelectFile={onSelectFile} 
+          onDeleteFile={onDeleteFile} 
+          currentlyPlaying={currentlyPlaying} 
+        />
       ))}
     </div>
   )

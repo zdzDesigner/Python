@@ -16,6 +16,7 @@ const App = () => {
   const [audioUrl, setAudioUrl] = useState(null)
   const [isSynthesizing, setIsSynthesizing] = useState(false)
   const [ttsJsonData, setTtsJsonData] = useState(null)
+  const [currentlyPlaying, setCurrentlyPlaying] = useState(null)
 
   const { showError, showSuccess } = useNotification()
 
@@ -44,6 +45,11 @@ const App = () => {
   const handleFileSelect = (fileData) => {
     setSelectedFile(fileData)
     setAudioUrl(`http://localhost:8081${fileData.url}`)
+    setCurrentlyPlaying(fileData.path) // Track currently playing file
+  }
+
+  const handlePlaybackComplete = () => {
+    setCurrentlyPlaying(null) // Clear currently playing when playback completes
   }
 
   const handleSynthesize = useCallback(
@@ -147,16 +153,17 @@ const App = () => {
           onSynthesize={handleSynthesize}
           isSynthesizing={isSynthesizing}
           selectedFile={selectedFile} // Pass selectedFile down
+          currentlyPlaying={currentlyPlaying}
         />
 
         <div className="flex-1 flex flex-col">
           <TextDataSettings onUploadSuccess={fetchAudioFiles} onJsonData={handleJsonData} />
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1">
             <TTSList jsonData={ttsJsonData} />
           </div>
           {
             <div style={{ height: 0 }}>
-              <AudioPlayer selectedFile={selectedFile} audioUrl={audioUrl} />
+              <AudioPlayer selectedFile={selectedFile} audioUrl={audioUrl} onPlaybackComplete={handlePlaybackComplete} />
             </div>
           }
         </div>

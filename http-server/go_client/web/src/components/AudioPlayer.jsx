@@ -10,7 +10,7 @@ const WelcomeScreen = () => (
   </div>
 );
 
-const Player = ({ selectedFile, audioUrl }) => {
+const Player = ({ selectedFile, audioUrl, onPlaybackComplete }) => {
   const getIcon = () => {
     if (!selectedFile) return '🎵';
     const extension = selectedFile.name.split('.').pop().toLowerCase();
@@ -20,6 +20,12 @@ const Player = ({ selectedFile, audioUrl }) => {
       case 'ogg': return '🎶';
       case 'flac': return '🎼';
       default: return '🎵';
+    }
+  };
+
+  const handlePlaybackComplete = () => {
+    if (onPlaybackComplete) {
+      onPlaybackComplete();
     }
   };
 
@@ -38,7 +44,13 @@ const Player = ({ selectedFile, audioUrl }) => {
         <div className="p-6">
           {audioUrl && (
             <div className="mb-6">
-              <audio controls autoPlay className="w-full h-14" key={audioUrl}>
+              <audio 
+                controls 
+                autoPlay 
+                className="w-full h-14" 
+                key={audioUrl}
+                onEnded={handlePlaybackComplete}
+              >
                 <source src={audioUrl} type={`audio/${selectedFile.name.split('.').pop()}`} />
                 Your browser does not support the audio element.
               </audio>
@@ -73,12 +85,12 @@ const Player = ({ selectedFile, audioUrl }) => {
   );
 };
 
-const AudioPlayer = ({ selectedFile, audioUrl }) => {
+const AudioPlayer = ({ selectedFile, audioUrl, onPlaybackComplete }) => {
   return (
     <main className="flex-1 flex flex-col overflow-hidden bg-slate-100/50">
       <div className="flex-1 overflow-y-auto p-6">
         {selectedFile ? (
-          <Player selectedFile={selectedFile} audioUrl={audioUrl} />
+          <Player selectedFile={selectedFile} audioUrl={audioUrl} onPlaybackComplete={onPlaybackComplete} />
         ) : (
           <WelcomeScreen />
         )}

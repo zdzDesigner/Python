@@ -210,3 +210,18 @@ AI有声书阅读平台
   delay:延迟
 }
 并把解析的数据渲染到列表中
+@/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TTSList.jsx  这里的结构改成table 使用
+{
+  speaker:角色
+  content:文本内容
+  tone:情感
+  intensity:情感比重
+  delay:延迟
+}
+标题
+
+### 删除音频
+@/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/FileTree.jsx, 在删除列表中的文件成功后，不要重新请求列表，只要删除当前的元素就可以了
+
+### 正在播放的文件tag
+在 @/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/AudioPlayer.jsx 组建中添加播放完成事件；在@/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/FileTree.jsx 组建中列表中设置正在播放的音频元素添加背景色
