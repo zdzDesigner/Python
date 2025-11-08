@@ -57,6 +57,7 @@ const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile }) => {
         <CloseOutlined
           onClick={(e) => {
             e.stopPropagation()
+            console.log(item.data)
             onDeleteFile(item.data.path)
           }}
           title={`Delete ${item.type}`}

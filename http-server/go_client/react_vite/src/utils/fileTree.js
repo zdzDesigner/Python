@@ -12,7 +12,7 @@ export const buildFileTree = (files) => {
   }
 
   files.forEach(file => {
-    const pathParts = file.Name.split('/');
+    const pathParts = file.name.split('/');
     let currentLevel = root.children;
 
     pathParts.forEach((part, index) => {

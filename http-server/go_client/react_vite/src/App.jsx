@@ -40,7 +40,7 @@ const App = () => {
 
   const handleFileSelect = (fileData) => {
     setSelectedFile(fileData)
-    setAudioUrl(`http://localhost:8081${fileData.URL}`)
+    setAudioUrl(`http://localhost:8081${fileData.url}`)
   }
 
   const handleSynthesize = useCallback(
@@ -48,7 +48,7 @@ const App = () => {
       setIsSynthesizing(true)
       try {
         // Use the selected file's path as the speaker audio, or a default if none is selected.
-        const speakerAudioPath = selectedFile ? selectedFile.Path : '/home/zdz/temp/TTS/assets/self_voice.wav'
+        const speakerAudioPath = selectedFile.path
 
         const requestBody = {
           text: text,
@@ -92,6 +92,7 @@ const App = () => {
   ) // Add selectedFile to the dependency array
 
   const handleDeleteFile = async (filePath) => {
+    console.log({ filePath })
     try {
       const response = await fetch('http://localhost:8081/api/delete-file', {
         method: 'DELETE',
@@ -109,7 +110,7 @@ const App = () => {
       await fetchAudioFiles()
 
       // If the deleted file was currently selected, clear the selection
-      if (selectedFile && selectedFile.Path === filePath) {
+      if (selectedFile && selectedFile.path === filePath) {
         setSelectedFile(null)
         setAudioUrl(null)
       }
