@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-const TtsSynthesizer = ({ onSynthesize, isSynthesizing, selectedFile }) => {
+const TTSSynthesizer = ({ onSynthesize, isSynthesizing, selectedFile }) => {
   const [text, setText] = useState('你好，这是一个在网页上生成的语音。')
 
   const handleSubmit = (e) => {
@@ -62,12 +62,14 @@ const TtsSynthesizer = ({ onSynthesize, isSynthesizing, selectedFile }) => {
             'Generate Audio'
           )}
         </button>
-        <div className="text-xs text-center text-slate-500 mt-2.5 px-2 py-1.5 bg-slate-100 rounded-md">
-          Reference voice: <span className="font-semibold text-slate-700">{referenceVoice}</span>
-        </div>
+        {
+          // <div className="text-xs text-center text-slate-500 mt-2.5 px-2 py-1.5 bg-slate-100 rounded-md">
+          //   Reference voice: <span className="font-semibold text-slate-700">{referenceVoice}</span>
+          // </div>
+        }
       </form>
     </div>
   )
 }
 
-export default TtsSynthesizer
+export default TTSSynthesizer

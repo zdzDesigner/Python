@@ -1,6 +1,6 @@
 import React from 'react'
 import FileTree from './FileTree'
-import TtsSynthesizer from './TtsSynthesizer' // Import the new component
+import TTSSynthesizer from './TTSSynthesizer' // Import the new component
 
 const LoadingSpinner = () => (
   <div className="flex flex-col items-center justify-center h-full text-slate-500">
@@ -28,7 +28,7 @@ const Sidebar = ({ audioFilesCount, loading, fileTree, onSelectFile, onDeleteFil
         {loading ? <LoadingSpinner /> : <FileTree fileTree={fileTree} onSelectFile={onSelectFile} onDeleteFile={onDeleteFile} currentlyPlaying={currentlyPlaying} />}
       </div>
       {/* Add the TTS component at the bottom, passing the selectedFile prop */}
-      <TtsSynthesizer onSynthesize={onSynthesize} isSynthesizing={isSynthesizing} selectedFile={selectedFile} />
+      <TTSSynthesizer onSynthesize={onSynthesize} isSynthesizing={isSynthesizing} selectedFile={selectedFile} />
     </aside>
   )
 }
