@@ -7,9 +7,11 @@ const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile }) => {
   const [showDelete, setShowDelete] = useState(false)
   const marginLeft = `${level * 0}px`
   const hasChildren = item.children && item.children.length > 0
+  const isfolder = item.type === 'folder'
+
 
   const getIcon = () => {
-    if (item.type === 'folder') {
+    if (isfolder) {
       return isExpanded ? '📂' : '📁'
     } else {
       const extension = item.name.split('.').pop().toLowerCase()
@@ -31,7 +33,7 @@ const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile }) => {
   // Common wrapper div props for both files and folders
   const commonWrapperProps = {
     className: `flex items-center px-2 rounded-lg cursor-default transition-all duration-200 ${
-      item.type === 'folder' && isExpanded ? 'bg-slate-50' : ''
+      isfolder && isExpanded ? 'bg-slate-50' : ''
     } hover:bg-slate-100 relative`,
     style: { marginLeft },
     onMouseEnter: () => setShowDelete(true),
@@ -41,16 +43,13 @@ const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile }) => {
   // Common content for both files and folders
   const itemContent = (
     <>
-      {item.type === 'folder' && (
+      {isfolder && (
         <span className="inline-block mr-2 text-sm transition-transform duration-200 text-slate-500" style={{ transform: isExpanded ? 'rotate(90deg)' : '' }}>
           ▶
         </span>
       )}
-      <span className="mr-2 text-xl">{getIcon()}</span>
-      <span
-        className={`truncate flex-grow ${item.type === 'folder' ? 'text-slate-800 font-semibold' : 'text-slate-700 text-sm font-medium'}`}
-        title={item.name}
-      >
+      <span className={`mr-2 p-2 ${isfolder ? 'text-ms' : 'text-xs'}`}>{getIcon()}</span>
+      <span className={`truncate flex-grow ${isfolder ? 'text-sm font-semibold' : 'text-sm font-medium'}`} title={item.name}>
         {item.name}
       </span>
       {showDelete && (
@@ -89,7 +88,7 @@ const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile }) => {
 
   return (
     <div>
-      <div onClick={() => setIsExpanded(!isExpanded)}>{itemContent}</div>
+      <div className="py-1" onClick={() => setIsExpanded(!isExpanded)}>{itemContent}</div>
       {isExpanded && hasChildren && (
         <div className="border-slate-200 ml-3.5">
           {item.children.map((child, index) => (

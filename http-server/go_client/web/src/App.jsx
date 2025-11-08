@@ -151,7 +151,9 @@ const App = () => {
             <TTSList jsonData={ttsJsonData} />
           </div>
           {
-            // <AudioPlayer selectedFile={selectedFile} audioUrl={audioUrl} />
+            <div style={{ height: 0 }} >
+              <AudioPlayer selectedFile={selectedFile} audioUrl={audioUrl} />
+            </div>
           }
         </div>
       </div>
