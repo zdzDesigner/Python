@@ -90,7 +90,7 @@ const TTSList = ({ jsonData }) => {
         dataSource={ttsData}
         columns={columns}
         size="small"
-        // rowKey={(record, index) => `${record.speaker}-${record.content}-${index}`}
+        rowKey={(record, index) => `${record.speaker}-${record.content}-${index}`}
         pagination={false}
         // pagination={{
         //   pageSize: 10,

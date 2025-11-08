@@ -96,26 +96,30 @@ const App = () => {
     [fetchAudioFiles, selectedFile, showError, showSuccess]
   ) // Add selectedFile to the dependency array
 
-  const handleDeleteFile = async (filePath) => {
-    console.log({ filePath })
+  const handleDeleteFile = async (delname) => {
+    console.log({ delname })
     try {
       const response = await fetch('http://localhost:8081/api/delete-file', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ path: filePath })
+        body: JSON.stringify({ path: delname })
       })
 
       if (!response.ok) {
         throw new Error(`Delete API error! status: ${response.status}`)
       }
 
-      // Refresh the file list after deletion
-      await fetchAudioFiles()
+      // await fetchAudioFiles()
+
+      // Remove the file from the local state instead of re-fetching
+      const new_audios = audioFiles.filter((file) => file.name !== delname)
+      setAudioFiles(new_audios)
+      setFileTree(buildFileTree(new_audios))
 
       // If the deleted file was currently selected, clear the selection
-      if (selectedFile && selectedFile.path === filePath) {
+      if (selectedFile && selectedFile.path === delname) {
         setSelectedFile(null)
         setAudioUrl(null)
       }
@@ -151,7 +155,7 @@ const App = () => {
             <TTSList jsonData={ttsJsonData} />
           </div>
           {
-            <div style={{ height: 0 }} >
+            <div style={{ height: 0 }}>
               <AudioPlayer selectedFile={selectedFile} audioUrl={audioUrl} />
             </div>
           }
