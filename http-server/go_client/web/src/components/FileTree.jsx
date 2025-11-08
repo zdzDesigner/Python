@@ -30,7 +30,7 @@ const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile }) => {
 
   // Common wrapper div props for both files and folders
   const commonWrapperProps = {
-    className: `flex items-center p-2 rounded-lg cursor-default transition-all duration-200 ${
+    className: `flex items-center px-2 rounded-lg cursor-default transition-all duration-200 ${
       item.type === 'folder' && isExpanded ? 'bg-slate-50' : ''
     } hover:bg-slate-100 relative`,
     style: { marginLeft },

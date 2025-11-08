@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { UploadOutlined, EditOutlined } from '@ant-design/icons';
-import { Button, Upload, Modal, Typography, message } from 'antd';
-import { useNotification } from '../utils/NotificationContext';
+import { Button, Upload, Modal, message, Typography } from 'antd';
 
 const { TextArea } = Typography;
 
-const Header = ({ onUploadSuccess }) => {
+const TextDataSettings = ({ onUploadSuccess }) => {
   const { showError, showSuccess } = useNotification();
   const [jsonModalVisible, setJsonModalVisible] = useState(false);
   const [jsonInput, setJsonInput] = useState('');
@@ -47,21 +46,16 @@ const Header = ({ onUploadSuccess }) => {
   };
 
   return (
-    <div className="w-full bg-white/80 backdrop-blur-lg border-b border-slate-200 p-4 flex justify-between items-center">
-      <div className="text-lg font-semibold text-slate-800">
-        文本数据
-      </div>
-      <div className="flex space-x-3">
-        <Upload {...uploadProps}>
-          <Button icon={<UploadOutlined />}>Upload File</Button>
-        </Upload>
-        <Button 
-          icon={<EditOutlined />} 
-          onClick={() => setJsonModalVisible(true)}
-        >
-          Manual Input
-        </Button>
-      </div>
+    <div className="w-full bg-white/80 backdrop-blur-lg border-b border-slate-200 p-3 flex justify-end items-center space-x-3">
+      <Upload {...uploadProps}>
+        <Button icon={<UploadOutlined />}>Upload File</Button>
+      </Upload>
+      <Button 
+        icon={<EditOutlined />} 
+        onClick={() => setJsonModalVisible(true)}
+      >
+        Manual Input
+      </Button>
 
       <Modal
         title="Manual JSON Input"
@@ -108,4 +102,4 @@ const Header = ({ onUploadSuccess }) => {
   );
 };
 
-export default Header;
+export default TextDataSettings;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import Header from './components/Header'
+import TextDataSettings from './components/TextDataSettings'
 import Sidebar from './components/Sidebar'
 import AudioPlayer from './components/AudioPlayer'
 import Footer from './components/Footer'
@@ -139,8 +139,8 @@ const App = () => {
           selectedFile={selectedFile} // Pass selectedFile down
         />
 
-        <div className="flex-1">
-          <Header onUploadSuccess={fetchAudioFiles} />
+        <div className="flex-1 flex flex-col">
+          <TextDataSettings onUploadSuccess={fetchAudioFiles} />
           <AudioPlayer selectedFile={selectedFile} audioUrl={audioUrl} />
         </div>
       </div>
