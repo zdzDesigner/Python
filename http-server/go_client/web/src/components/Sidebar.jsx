@@ -9,16 +9,8 @@ const LoadingSpinner = () => (
   </div>
 )
 
-const ErrorDisplay = ({ error }) => (
-  <div className="m-2 bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-lg text-sm">
-    <p className="font-bold">Error loading files</p>
-    <p className="mt-1">{error}</p>
-    <p className="mt-1">Please ensure the Go API server is running on port 8081.</p>
-  </div>
-)
-
 // Add onSynthesize, isSynthesizing, and selectedFile to the props
-const Sidebar = ({ audioFilesCount, loading, error, fileTree, onSelectFile, onDeleteFile, onSynthesize, isSynthesizing, selectedFile }) => {
+const Sidebar = ({ audioFilesCount, loading, fileTree, onSelectFile, onDeleteFile, onSynthesize, isSynthesizing, selectedFile }) => {
   return (
     <aside className="w-[300px] bg-white/80 backdrop-blur-lg border-r border-slate-200 flex flex-col">
       {
@@ -33,7 +25,7 @@ const Sidebar = ({ audioFilesCount, loading, error, fileTree, onSelectFile, onDe
         // </div>
       }
       <div className="flex-1 overflow-y-auto p-2">
-        {loading ? <LoadingSpinner /> : error ? <ErrorDisplay error={error} /> : <FileTree fileTree={fileTree} onSelectFile={onSelectFile} onDeleteFile={onDeleteFile} />}
+        {loading ? <LoadingSpinner /> : <FileTree fileTree={fileTree} onSelectFile={onSelectFile} onDeleteFile={onDeleteFile} />}
       </div>
       {/* Add the TTS component at the bottom, passing the selectedFile prop */}
       <TtsSynthesizer onSynthesize={onSynthesize} isSynthesizing={isSynthesizing} selectedFile={selectedFile} />

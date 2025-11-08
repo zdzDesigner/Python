@@ -4,16 +4,18 @@ import Sidebar from './components/Sidebar'
 import AudioPlayer from './components/AudioPlayer'
 import Footer from './components/Footer'
 import { buildFileTree } from './utils/fileTree'
+import { useNotification } from './utils/NotificationContext'
 import './App.css'
 
 const App = () => {
   const [audioFiles, setAudioFiles] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [fileTree, setFileTree] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
   const [audioUrl, setAudioUrl] = useState(null)
   const [isSynthesizing, setIsSynthesizing] = useState(false)
+  
+  const { showError, showSuccess } = useNotification()
 
   const fetchAudioFiles = useCallback(async () => {
     setLoading(true)
@@ -25,14 +27,13 @@ const App = () => {
       const data = await response.json()
       setAudioFiles(data.files || [])
       setFileTree(buildFileTree(data.files))
-      setError(null)
     } catch (err) {
-      setError(err.message)
+      showError('Error fetching audio files', err.message)
       console.error('Error fetching audio files:', err)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [showError])
 
   useEffect(() => {
     fetchAudioFiles()
@@ -48,7 +49,7 @@ const App = () => {
       setIsSynthesizing(true)
       try {
         // Use the selected file's path as the speaker audio, or a default if none is selected.
-        const speakerAudioPath = selectedFile.path
+        const speakerAudioPath = selectedFile?.path
 
         const requestBody = {
           text: text,
@@ -81,14 +82,16 @@ const App = () => {
 
         // Refresh the file list to show the new file in the sidebar
         await fetchAudioFiles()
+        
+        showSuccess('Audio synthesized successfully', 'The new audio file has been created.')
       } catch (err) {
         console.error('Error synthesizing audio:', err)
-        // Optionally, set an error state to show in the UI
+        showError('Error synthesizing audio', err.message)
       } finally {
         setIsSynthesizing(false)
       }
     },
-    [fetchAudioFiles, selectedFile]
+    [fetchAudioFiles, selectedFile, showError, showSuccess]
   ) // Add selectedFile to the dependency array
 
   const handleDeleteFile = async (filePath) => {
@@ -114,9 +117,11 @@ const App = () => {
         setSelectedFile(null)
         setAudioUrl(null)
       }
+      
+      showSuccess('File deleted successfully', 'The file has been removed from the library.')
     } catch (err) {
       console.error('Error deleting file:', err)
-      setError(err.message)
+      showError('Error deleting file', err.message)
     }
   }
 
@@ -130,7 +135,6 @@ const App = () => {
         <Sidebar
           audioFilesCount={audioFiles.length}
           loading={loading}
-          error={error}
           fileTree={fileTree}
           onSelectFile={handleFileSelect}
           onDeleteFile={handleDeleteFile}
