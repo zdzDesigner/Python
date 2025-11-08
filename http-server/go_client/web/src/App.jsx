@@ -14,7 +14,7 @@ const App = () => {
   const [selectedFile, setSelectedFile] = useState(null)
   const [audioUrl, setAudioUrl] = useState(null)
   const [isSynthesizing, setIsSynthesizing] = useState(false)
-  
+
   const { showError, showSuccess } = useNotification()
 
   const fetchAudioFiles = useCallback(async () => {
@@ -82,7 +82,7 @@ const App = () => {
 
         // Refresh the file list to show the new file in the sidebar
         await fetchAudioFiles()
-        
+
         showSuccess('Audio synthesized successfully', 'The new audio file has been created.')
       } catch (err) {
         console.error('Error synthesizing audio:', err)
@@ -117,7 +117,7 @@ const App = () => {
         setSelectedFile(null)
         setAudioUrl(null)
       }
-      
+
       showSuccess('File deleted successfully', 'The file has been removed from the library.')
     } catch (err) {
       console.error('Error deleting file:', err)
@@ -127,10 +127,6 @@ const App = () => {
 
   return (
     <div className="flex flex-col h-screen bg-slate-50 text-slate-800 cursor-default">
-      {
-        // <Header />
-      }
-
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
           audioFilesCount={audioFiles.length}
@@ -142,7 +138,11 @@ const App = () => {
           isSynthesizing={isSynthesizing}
           selectedFile={selectedFile} // Pass selectedFile down
         />
-        <AudioPlayer selectedFile={selectedFile} audioUrl={audioUrl} />
+
+        <div className="flex-1">
+          <Header onUploadSuccess={fetchAudioFiles} />
+          <AudioPlayer selectedFile={selectedFile} audioUrl={audioUrl} />
+        </div>
       </div>
 
       <Footer />

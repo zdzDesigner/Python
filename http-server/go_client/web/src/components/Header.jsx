@@ -1,18 +1,110 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { UploadOutlined, EditOutlined } from '@ant-design/icons';
+import { Button, Upload, Modal, Typography, message } from 'antd';
+import { useNotification } from '../utils/NotificationContext';
 
-const Header = () => {
+const { TextArea } = Typography;
+
+const Header = ({ onUploadSuccess }) => {
+  const { showError, showSuccess } = useNotification();
+  const [jsonModalVisible, setJsonModalVisible] = useState(false);
+  const [jsonInput, setJsonInput] = useState('');
+  const [formattedJson, setFormattedJson] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleJsonSubmit = () => {
+    try {
+      const parsedJson = JSON.parse(jsonInput);
+      const formatted = JSON.stringify(parsedJson, null, 2);
+      setFormattedJson(formatted);
+      showSuccess('JSON Parsed Successfully', 'The JSON has been validated and formatted.');
+    } catch (error) {
+      showError('Invalid JSON', 'Please enter valid JSON data.');
+      return;
+    }
+  };
+
+  const uploadProps = {
+    name: 'file',
+    action: 'http://localhost:8081/api/upload', // Assuming this is the upload endpoint
+    headers: {
+      authorization: 'authorization-text',
+    },
+    onChange(info) {
+      if (info.file.status !== 'uploading') {
+        console.log(info.file, info.fileList);
+      }
+      if (info.file.status === 'done') {
+        message.success(`${info.file.name} file uploaded successfully`);
+        if (onUploadSuccess) {
+          onUploadSuccess(); // Refresh the file list after upload
+        }
+      } else if (info.file.status === 'error') {
+        message.error(`${info.file.name} file upload failed.`);
+        showError('Upload Failed', `Failed to upload ${info.file.name}`);
+      }
+    },
+  };
+
   return (
-    <header className="bg-white/80 backdrop-blur-lg border-b border-slate-200 shadow-sm z-10">
-      <div className="container mx-auto px-6 py-3 flex justify-between items-center">
-        <h1 className="text-xl font-bold tracking-wider flex items-center text-slate-900">
-          <svg className="w-7 h-7 mr-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"></path></svg>
-          AudioHub
-        </h1>
-        <div className="text-sm text-slate-500">
-          Go + React Audio Player
-        </div>
+    <div className="w-full bg-white/80 backdrop-blur-lg border-b border-slate-200 p-4 flex justify-between items-center">
+      <div className="text-lg font-semibold text-slate-800">
+        文本数据
       </div>
-    </header>
+      <div className="flex space-x-3">
+        <Upload {...uploadProps}>
+          <Button icon={<UploadOutlined />}>Upload File</Button>
+        </Upload>
+        <Button 
+          icon={<EditOutlined />} 
+          onClick={() => setJsonModalVisible(true)}
+        >
+          Manual Input
+        </Button>
+      </div>
+
+      <Modal
+        title="Manual JSON Input"
+        open={jsonModalVisible}
+        onCancel={() => {
+          setJsonModalVisible(false);
+          setJsonInput('');
+          setFormattedJson('');
+        }}
+        footer={null}
+        width={700}
+      >
+        <div className="space-y-4">
+          <TextArea
+            rows={8}
+            placeholder="Paste your JSON data here..."
+            value={jsonInput}
+            onChange={(e) => setJsonInput(e.target.value)}
+            style={{ fontFamily: 'monospace', fontSize: '14px' }}
+          />
+          <div className="flex justify-end">
+            <Button 
+              type="primary" 
+              onClick={handleJsonSubmit}
+              disabled={!jsonInput.trim()}
+            >
+              Format JSON
+            </Button>
+          </div>
+          {formattedJson && (
+            <div className="mt-4">
+              <h4 className="font-medium mb-2">Formatted JSON:</h4>
+              <TextArea
+                rows={10}
+                value={formattedJson}
+                readOnly
+                style={{ fontFamily: 'monospace', fontSize: '14px', backgroundColor: '#f9fafb' }}
+              />
+            </div>
+          )}
+        </div>
+      </Modal>
+    </div>
   );
 };
 
