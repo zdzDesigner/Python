@@ -5,7 +5,7 @@ import { DeleteOutlined, CloseOutlined } from '@ant-design/icons'
 const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile }) => {
   const [isExpanded, setIsExpanded] = useState(level < 1) // Auto-expand first level
   const [showDelete, setShowDelete] = useState(false)
-  const marginLeft = `${level * 20}px`
+  const marginLeft = `${level * 0}px`
   const hasChildren = item.children && item.children.length > 0
 
   const getIcon = () => {
@@ -34,15 +34,15 @@ const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile }) => {
       item.type === 'folder' && isExpanded ? 'bg-slate-50' : ''
     } hover:bg-slate-100 relative`,
     style: { marginLeft },
-    onMouseEnter: () => setShowDelete(true)
-    // onMouseLeave: () => setShowDelete(false)
+    onMouseEnter: () => setShowDelete(true),
+    onMouseLeave: () => setShowDelete(false)
   }
 
   // Common content for both files and folders
   const itemContent = (
     <>
       {item.type === 'folder' && (
-        <span className="mr-2 text-sm transition-transform duration-200 text-slate-500" style={{ transform: isExpanded ? 'rotate(90deg)' : '' }}>
+        <span className="inline-block mr-2 text-sm transition-transform duration-200 text-slate-500" style={{ transform: isExpanded ? 'rotate(90deg)' : '' }}>
           ▶
         </span>
       )}
@@ -80,7 +80,7 @@ const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile }) => {
 
   if (item.type === 'file') {
     return (
-      <div {...commonWrapperProps} className={`${commonWrapperProps.className} mb-2.5 border-b-1 p-10`} onClick={() => onSelectFile(item.data)}>
+      <div {...commonWrapperProps} className={`${commonWrapperProps.className}`} onClick={() => onSelectFile(item.data)}>
         {itemContent}
       </div>
     )
@@ -90,7 +90,7 @@ const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile }) => {
     <div>
       <div onClick={() => setIsExpanded(!isExpanded)}>{itemContent}</div>
       {isExpanded && hasChildren && (
-        <div className="mt-10 border-slate-200 ml-3.5 pl-3">
+        <div className="border-slate-200 ml-3.5">
           {item.children.map((child, index) => (
             <TreeItem key={index} item={child} level={level + 1} onSelectFile={onSelectFile} onDeleteFile={onDeleteFile} />
           ))}
