@@ -13,7 +13,7 @@ const WelcomeScreen = () => (
 const Player = ({ selectedFile, audioUrl }) => {
   const getIcon = () => {
     if (!selectedFile) return '🎵';
-    const extension = selectedFile.Name.split('.').pop().toLowerCase();
+    const extension = selectedFile.name.split('.').pop().toLowerCase();
     switch (extension) {
       case 'mp3': return '🎵';
       case 'wav': return '🔊';
@@ -30,8 +30,8 @@ const Player = ({ selectedFile, audioUrl }) => {
           <div className="text-5xl mb-3 animate-bounce-short">
             {getIcon()}
           </div>
-          <h3 className="font-bold text-xl truncate" title={selectedFile.Name}>
-            {selectedFile.Name.split('/').pop()}
+          <h3 className="font-bold text-xl truncate" title={selectedFile.name}>
+            {selectedFile.name.split('/').pop()}
           </h3>
         </div>
         
@@ -39,7 +39,7 @@ const Player = ({ selectedFile, audioUrl }) => {
           {audioUrl && (
             <div className="mb-6">
               <audio controls autoPlay className="w-full h-14" key={audioUrl}>
-                <source src={audioUrl} type={`audio/${selectedFile.Name.split('.').pop()}`} />
+                <source src={audioUrl} type={`audio/${selectedFile.name.split('.').pop()}`} />
                 Your browser does not support the audio element.
               </audio>
             </div>
@@ -51,11 +51,11 @@ const Player = ({ selectedFile, audioUrl }) => {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-xs text-slate-500">Name</p>
-                  <p className="font-medium text-slate-800">{selectedFile.Name.split('/').pop()}</p>
+                  <p className="font-medium text-slate-800">{selectedFile.name.split('/').pop()}</p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Type</p>
-                  <p className="font-medium text-slate-800">{selectedFile.Name.split('.').pop().toUpperCase()}</p>
+                  <p className="font-medium text-slate-800">{selectedFile.name.split('.').pop().toUpperCase()}</p>
                 </div>
               </div>
             </div>
@@ -63,7 +63,7 @@ const Player = ({ selectedFile, audioUrl }) => {
             <div className="bg-slate-50/80 p-4 rounded-lg ring-1 ring-slate-200/50">
               <h4 className="font-semibold text-slate-600 mb-2">Full Path</h4>
               <p className="font-mono text-xs break-all bg-white p-3 rounded border border-slate-200">
-                {selectedFile.Path}
+                {selectedFile.path}
               </p>
             </div>
           </div>

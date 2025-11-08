@@ -9,7 +9,7 @@ const TtsSynthesizer = ({ onSynthesize, isSynthesizing, selectedFile }) => {
     onSynthesize(text)
   }
 
-  const referenceVoice = selectedFile ? selectedFile.Name.split('/').pop() : 'Default'
+  const referenceVoice = selectedFile ? selectedFile.name.split('/').pop() : 'Default'
 
   return (
     <div className="p-4 border-t border-slate-200">

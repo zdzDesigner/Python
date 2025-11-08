@@ -19,9 +19,9 @@ import (
 
 // FileItem represents a file or folder for the audio library API.
 type FileItem struct {
-	Name string `json:"Name"` // Name in "folder/file" format
-	Path string `json:"Path"` // Full path of the audio file
-	URL  string `json:"URL"`  // URL for accessing the audio file via the API
+	Name string `json:"name"` // Name in "folder/file" format
+	Path string `json:"path"` // Full path of the audio file
+	URL  string `json:"url"`  // URL for accessing the audio file via the API
 }
 
 // TTSRequest holds parameters for a text-to-speech synthesis request.
