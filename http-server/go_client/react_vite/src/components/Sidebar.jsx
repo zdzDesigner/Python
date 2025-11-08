@@ -18,7 +18,7 @@ const ErrorDisplay = ({ error }) => (
 )
 
 // Add onSynthesize, isSynthesizing, and selectedFile to the props
-const Sidebar = ({ audioFilesCount, loading, error, fileTree, onSelectFile, onSynthesize, isSynthesizing, selectedFile }) => {
+const Sidebar = ({ audioFilesCount, loading, error, fileTree, onSelectFile, onDeleteFile, onSynthesize, isSynthesizing, selectedFile }) => {
   return (
     <aside className="w-[300px] bg-white/80 backdrop-blur-lg border-r border-slate-200 flex flex-col">
       {
@@ -33,7 +33,7 @@ const Sidebar = ({ audioFilesCount, loading, error, fileTree, onSelectFile, onSy
         // </div>
       }
       <div className="flex-1 overflow-y-auto p-2">
-        {loading ? <LoadingSpinner /> : error ? <ErrorDisplay error={error} /> : <FileTree fileTree={fileTree} onSelectFile={onSelectFile} />}
+        {loading ? <LoadingSpinner /> : error ? <ErrorDisplay error={error} /> : <FileTree fileTree={fileTree} onSelectFile={onSelectFile} onDeleteFile={onDeleteFile} />}
       </div>
       {/* Add the TTS component at the bottom, passing the selectedFile prop */}
       <TtsSynthesizer onSynthesize={onSynthesize} isSynthesizing={isSynthesizing} selectedFile={selectedFile} />

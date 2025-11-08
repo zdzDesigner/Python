@@ -4,7 +4,7 @@
  */
 
 /* Import a modern, clean font for better readability */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'); */
 
 /* Apply a base font and background color to the body */
 body {
@@ -12,6 +12,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #f9fafb; /* Light gray background */
+  padding: 0;
+  margin: 0;
 }
 
 /* Ensure the root element takes up the full height */

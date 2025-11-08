@@ -127,7 +127,6 @@ func ttsHandler(c *gin.Context) {
 	if _, err := os.Stat(outputDir); os.IsNotExist(err) {
 		os.Mkdir(outputDir, 0755)
 	}
-	fmt.Println("xxxxxx")
 
 	speakerBase := strings.TrimSuffix(filepath.Base(ttsReq.SpeakerAudioPath), filepath.Ext(ttsReq.SpeakerAudioPath))
 	rand.Seed(time.Now().UnixNano())
@@ -145,27 +144,17 @@ func ttsHandler(c *gin.Context) {
 	}
 
 	// After success, create a FileItem for the new file to return to the client.
-	cwd, err := os.Getwd()
+	absPath, err := filepath.Abs(ttsReq.OutputWavPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get current working directory: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to get absolute path: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not construct file path for response"})
 		return
 	}
 
-	fmt.Println(cwd, ttsReq.OutputWavPath)
-	// relPath, err := filepath.Rel(cwd, ttsReq.OutputWavPath)
-	// if err != nil {
-	// 	// This should ideally not happen if paths are correct, but handle it.
-	// 	fmt.Fprintf(os.Stderr, "Error creating relative path: %v\n", err)
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not construct file path for response"})
-	// 	return
-	// }
-
-	relPath := filepath.Join(cwd, ttsReq.OutputWavPath)
 	newFile := FileItem{
 		Name: filepath.ToSlash(ttsReq.OutputWavPath),
-		Path: ttsReq.OutputWavPath,
-		URL:  filepath.ToSlash(relPath),
+		Path: absPath,
+		URL:  "/api/audio-file/" + filepath.ToSlash(ttsReq.OutputWavPath),
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -226,6 +215,39 @@ func audioFileHandler(c *gin.Context) {
 	c.File(fullPath)
 }
 
+type DeleteFileRequest struct {
+	Path string `json:"path" binding:"required"`
+}
+
+func deleteAudioFileHandler(c *gin.Context) {
+	var req DeleteFileRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
+		return
+	}
+
+	// Security check: only allow deleting files from the 'output' directory
+	if !strings.HasPrefix(req.Path, "output/") {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Permission denied: can only delete files from the output directory"})
+		return
+	}
+
+	// Sanitize the path to prevent directory traversal
+	cleanPath := filepath.Clean(req.Path)
+	if strings.Contains(cleanPath, "..") {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file path"})
+		return
+	}
+
+	if err := os.Remove(cleanPath); err != nil {
+		fmt.Fprintf(os.Stderr, "Error deleting file %s: %v\n", cleanPath, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete file"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "File deleted successfully"})
+}
+
 // --- Directory Reading Logic (unchanged) ---
 
 func ReadDirectoryRecursive(rootPath string) ([]FileItem, error) {
@@ -263,9 +285,14 @@ func ReadDirectoryRecursive(rootPath string) ([]FileItem, error) {
 			uiName = "output/" + uiName
 		}
 
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			return err
+		}
+
 		fileItem := FileItem{
 			Name: uiName,
-			Path: path,
+			Path: absPath,
 			URL:  "/api/audio-file/" + uiName,
 		}
 		fileList = append(fileList, fileItem)
@@ -282,7 +309,7 @@ func ReadDirectoryRecursive(rootPath string) ([]FileItem, error) {
 func corsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 		if c.Request.Method == http.MethodOptions {
@@ -313,6 +340,7 @@ func main() {
 		api.GET("/audio-files", audioFilesHandler)
 		api.GET("/audio-file/*path", audioFileHandler)
 		api.POST("/tts", ttsHandler)
+		api.DELETE("/delete-file", deleteAudioFileHandler)
 	}
 
 	// Health check route
@@ -328,3 +356,4 @@ func main() {
 		os.Exit(1)
 	}
 }
+
