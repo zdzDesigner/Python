@@ -54,7 +54,7 @@ const App = () => {
       const requestBody = {
         text: text,
         speaker_audio_path: speakerAudioPath,
-        output_wav_path: `/home/zdz/Documents/Try/TTS/audio/audiobook_manager/wav/synthesis_${Date.now()}.wav`,
+        output_wav_path: "", // The backend will generate the path
         emotion_text: "default",
         emotion_alpha: 0.7,
         interval_silence: 500,

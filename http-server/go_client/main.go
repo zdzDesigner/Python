@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"math/rand"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -27,7 +28,7 @@ type FileItem struct {
 type TTSRequest struct {
 	Text             string  `json:"text" binding:"required"`
 	SpeakerAudioPath string  `json:"speaker_audio_path" binding:"required"`
-	OutputWavPath    string  `json:"output_wav_path" binding:"required"`
+	OutputWavPath    string  `json:"output_wav_path"`
 	EmotionText      string  `json:"emotion_text,omitempty"`
 	EmotionAlpha     float64 `json:"emotion_alpha,omitempty"`
 	IntervalSilence  int     `json:"interval_silence,omitempty"`
@@ -121,6 +122,20 @@ func ttsHandler(c *gin.Context) {
 
 	fmt.Printf("Received TTS request: %+v\n", ttsReq)
 
+	// --- New output path generation ---
+	outputDir := "output/"
+	if _, err := os.Stat(outputDir); os.IsNotExist(err) {
+		os.Mkdir(outputDir, 0755)
+	}
+	fmt.Println("xxxxxx")
+
+	speakerBase := strings.TrimSuffix(filepath.Base(ttsReq.SpeakerAudioPath), filepath.Ext(ttsReq.SpeakerAudioPath))
+	rand.Seed(time.Now().UnixNano())
+	randomInt := rand.Intn(100000)
+	newFileName := fmt.Sprintf("%s_%d.wav", speakerBase, randomInt)
+	ttsReq.OutputWavPath = filepath.Join(outputDir, newFileName)
+	// --- End of new output path generation ---
+
 	externalApiURL := "http://127.0.0.1:8800/inference"
 
 	if err := synthesizeSpeech(externalApiURL, ttsReq); err != nil {
@@ -130,19 +145,27 @@ func ttsHandler(c *gin.Context) {
 	}
 
 	// After success, create a FileItem for the new file to return to the client.
-	audioRootPath := "/home/zdz/Documents/Try/TTS/audio/audiobook_manager/wav"
-	relPath, err := filepath.Rel(audioRootPath, ttsReq.OutputWavPath)
+	cwd, err := os.Getwd()
 	if err != nil {
-		// This should ideally not happen if paths are correct, but handle it.
-		fmt.Fprintf(os.Stderr, "Error creating relative path: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to get current working directory: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not construct file path for response"})
 		return
 	}
 
+	fmt.Println(cwd, ttsReq.OutputWavPath)
+	// relPath, err := filepath.Rel(cwd, ttsReq.OutputWavPath)
+	// if err != nil {
+	// 	// This should ideally not happen if paths are correct, but handle it.
+	// 	fmt.Fprintf(os.Stderr, "Error creating relative path: %v\n", err)
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not construct file path for response"})
+	// 	return
+	// }
+
+	relPath := filepath.Join(cwd, ttsReq.OutputWavPath)
 	newFile := FileItem{
-		Name: filepath.ToSlash(relPath),
+		Name: filepath.ToSlash(ttsReq.OutputWavPath),
 		Path: ttsReq.OutputWavPath,
-		URL:  "/api/audio-file/" + filepath.ToSlash(relPath),
+		URL:  filepath.ToSlash(relPath),
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -152,16 +175,25 @@ func ttsHandler(c *gin.Context) {
 }
 
 func audioFilesHandler(c *gin.Context) {
-	rootPath := "/home/zdz/Documents/Try/TTS/audio/audiobook_manager/wav"
-	fileList, err := ReadDirectoryRecursive(rootPath)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+	rootPaths := []string{
+		"/home/zdz/Documents/Try/TTS/audio/audiobook_manager/wav",
+		"output",
+	}
+
+	var allFiles []FileItem
+	for _, p := range rootPaths {
+		fileList, err := ReadDirectoryRecursive(p)
+		if err != nil {
+			// Decide if you want to fail entirely or just log the error and continue
+			fmt.Fprintf(os.Stderr, "Error reading directory %s: %v\n", p, err)
+			continue
+		}
+		allFiles = append(allFiles, fileList...)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"files": fileList,
-		"count": len(fileList),
+		"files": allFiles,
+		"count": len(allFiles),
 	})
 }
 
@@ -175,7 +207,17 @@ func audioFileHandler(c *gin.Context) {
 		return
 	}
 
-	fullPath := filepath.Join("/home/zdz/Documents/Try/TTS/audio/audiobook_manager/wav", filePath)
+	// Determine the correct base path. This is a security risk if not handled carefully.
+	// For this example, we'll check which directory the file belongs to.
+	// A more robust solution might involve a map or a more secure way of resolving paths.
+	var fullPath string
+	if strings.HasPrefix(filePath, "output/") {
+		cwd, _ := os.Getwd()
+		fullPath = filepath.Join(cwd, filePath)
+	} else {
+		fullPath = filepath.Join("/home/zdz/Documents/Try/TTS/audio/audiobook_manager/wav", filePath)
+	}
+
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
 		return
@@ -210,15 +252,21 @@ func ReadDirectoryRecursive(rootPath string) ([]FileItem, error) {
 		if err != nil {
 			return err
 		}
+
 		if relPath == "." {
 			return nil
 		}
 
-		relPath = filepath.ToSlash(relPath)
+		// The Name for the UI should be prefixed if it's from the output directory.
+		uiName := filepath.ToSlash(relPath)
+		if filepath.Base(rootPath) == "output" {
+			uiName = "output/" + uiName
+		}
+
 		fileItem := FileItem{
-			Name: relPath,
+			Name: uiName,
 			Path: path,
-			URL:  "/api/audio-file/" + relPath,
+			URL:  "/api/audio-file/" + uiName,
 		}
 		fileList = append(fileList, fileItem)
 		return nil
