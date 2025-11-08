@@ -1,13 +1,12 @@
 import React, { useState } from 'react'
 import { UploadOutlined, EditOutlined } from '@ant-design/icons'
-import { Button, Upload, Modal, Input, message } from 'antd'
+import { Space, Button, Upload, Modal, Input, message } from 'antd'
 import { useNotification } from '../utils/NotificationContext'
 
 // const { TextArea } = Typography
-const { TextArea } = Input;
+const { TextArea } = Input
 
-
-const TextDataSettings = ({ onUploadSuccess }) => {
+const TextDataSettings = ({ onUploadSuccess, onJsonData }) => {
   const { showError, showSuccess } = useNotification()
   const [jsonModalVisible, setJsonModalVisible] = useState(false)
   const [jsonInput, setJsonInput] = useState('')
@@ -20,8 +19,13 @@ const TextDataSettings = ({ onUploadSuccess }) => {
       const formatted = JSON.stringify(parsedJson, null, 2)
       setFormattedJson(formatted)
       showSuccess('JSON Parsed Successfully', 'The JSON has been validated and formatted.')
+      if (onJsonData) {
+        onJsonData(jsonInput) // Pass the JSON input to parent component
+      }
+      setJsonModalVisible(false) // Close the modal after successful submission
     } catch (error) {
       showError('Invalid JSON', 'Please enter valid JSON data.')
+      setFormattedJson(error.message)
       return
     }
   }
@@ -50,12 +54,14 @@ const TextDataSettings = ({ onUploadSuccess }) => {
 
   return (
     <div className="w-full bg-white/80 backdrop-blur-lg border-b border-slate-200 p-3 flex justify-end items-center space-x-3">
-      <Upload {...uploadProps}>
-        <Button icon={<UploadOutlined />}>Upload File</Button>
-      </Upload>
-      <Button icon={<EditOutlined />} onClick={() => setJsonModalVisible(true)}>
-        Manual Input
-      </Button>
+      <Space>
+        <Upload {...uploadProps}>
+          <Button icon={<UploadOutlined />}>Upload File</Button>
+        </Upload>
+        <Button icon={<EditOutlined />} onClick={() => setJsonModalVisible(true)}>
+          Manual Input
+        </Button>
+      </Space>
 
       <Modal
         title="Manual JSON Input"
@@ -78,14 +84,14 @@ const TextDataSettings = ({ onUploadSuccess }) => {
               style={{ fontFamily: 'monospace', fontSize: '14px' }}
             />
           }
-          <div className="flex justify-end">
+          <div className="flex justify-end py-4">
             <Button type="primary" onClick={handleJsonSubmit} disabled={!jsonInput.trim()}>
-              Format JSON
+              确定
             </Button>
           </div>
           {formattedJson && (
             <div className="mt-4">
-              <h4 className="font-medium mb-2">Formatted JSON:</h4>
+              <h4 className="font-medium mb-2">Formatted JSON Error:</h4>
               <TextArea rows={10} value={formattedJson} readOnly style={{ fontFamily: 'monospace', fontSize: '14px', backgroundColor: '#f9fafb' }} />
             </div>
           )}

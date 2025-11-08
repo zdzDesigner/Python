@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import TextDataSettings from './components/TextDataSettings'
+import TTSList from './components/TTSList'
 import Sidebar from './components/Sidebar'
 import AudioPlayer from './components/AudioPlayer'
 import Footer from './components/Footer'
@@ -14,6 +15,7 @@ const App = () => {
   const [selectedFile, setSelectedFile] = useState(null)
   const [audioUrl, setAudioUrl] = useState(null)
   const [isSynthesizing, setIsSynthesizing] = useState(false)
+  const [ttsJsonData, setTtsJsonData] = useState(null)
 
   const { showError, showSuccess } = useNotification()
 
@@ -125,6 +127,10 @@ const App = () => {
     }
   }
 
+  const handleJsonData = (jsonData) => {
+    setTtsJsonData(jsonData)
+  }
+
   return (
     <div className="flex flex-col h-screen bg-slate-50 text-slate-800 cursor-default">
       <div className="flex flex-1 overflow-hidden">
@@ -140,8 +146,13 @@ const App = () => {
         />
 
         <div className="flex-1 flex flex-col">
-          <TextDataSettings onUploadSuccess={fetchAudioFiles} />
-          <AudioPlayer selectedFile={selectedFile} audioUrl={audioUrl} />
+          <TextDataSettings onUploadSuccess={fetchAudioFiles} onJsonData={handleJsonData} />
+          <div className="flex-1 overflow-hidden">
+            <TTSList jsonData={ttsJsonData} />
+          </div>
+          {
+            // <AudioPlayer selectedFile={selectedFile} audioUrl={audioUrl} />
+          }
         </div>
       </div>
 

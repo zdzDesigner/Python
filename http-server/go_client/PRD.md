@@ -187,3 +187,26 @@ AI有声书阅读平台
 **文档版本**: v1.0  
 **创建日期**: 2025年11月6日  
 **最后更新**: 2025年11月6日
+
+
+
+### 上传章节文本
+
+### 拆分章节文本
+创建TTSList组建放到TextDataSettings下方,在TTSList组建中把上传的JSON文件拆分出每项为
+{
+  "speaker": "旁白",
+  "content": "夜，已经很深了。",
+  "tone": "neutral",
+  "intensity": 5,
+  "delay": 500
+}
+这个结构的数据，
+{
+  speaker:角色
+  content:文本内容
+  tone:情感
+  intensity:情感比重
+  delay:延迟
+}
+并把解析的数据渲染到列表中
