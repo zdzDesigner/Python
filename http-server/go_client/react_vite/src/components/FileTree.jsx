@@ -58,7 +58,7 @@ const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile }) => {
           onClick={(e) => {
             e.stopPropagation()
             console.log(item.data)
-            onDeleteFile(item.data.path)
+            onDeleteFile(item.data.name)
           }}
           title={`Delete ${item.type}`}
         />

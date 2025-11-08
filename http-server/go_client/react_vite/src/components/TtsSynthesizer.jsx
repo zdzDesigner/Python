@@ -62,7 +62,7 @@ const TtsSynthesizer = ({ onSynthesize, isSynthesizing, selectedFile }) => {
           )}
         </button>
         <div className="text-xs text-center text-slate-500 mt-2.5 px-2 py-1.5 bg-slate-100 rounded-md">
-          Reference voice: <span className="font-semibold text-slate-700 truncate">{referenceVoice}</span>
+          Reference voice: <span className="font-semibold text-slate-700">{referenceVoice}</span>
         </div>
       </form>
     </div>
