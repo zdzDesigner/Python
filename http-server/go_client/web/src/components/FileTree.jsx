@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { DeleteOutlined, CloseOutlined } from '@ant-design/icons'
 
 // Internal component to render each item in the tree recursively
-const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile, currentlyPlaying }) => {
+const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile, currentlyPlaying, onPauseCurrent }) => {
   const [isExpanded, setIsExpanded] = useState(level < 1) // Auto-expand first level
   const [showDelete, setShowDelete] = useState(false)
   const marginLeft = `${level * 0}px`
@@ -83,7 +83,18 @@ const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile, currentlyPlayin
 
   if (item.type === 'file') {
     return (
-      <div {...commonWrapperProps} className={`${commonWrapperProps.className}`} onClick={() => onSelectFile(item.data)}>
+      <div 
+        {...commonWrapperProps} 
+        className={`${commonWrapperProps.className}`} 
+        onClick={() => {
+          if (isPlaying && onPauseCurrent) {
+            // If the item clicked is the currently playing file, toggle it
+            onPauseCurrent();
+          } else {
+            onSelectFile(item.data);
+          }
+        }}
+      >
         {itemContent}
       </div>
     )
@@ -102,6 +113,7 @@ const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile, currentlyPlayin
               onSelectFile={onSelectFile} 
               onDeleteFile={onDeleteFile} 
               currentlyPlaying={currentlyPlaying} 
+              onPauseCurrent={onPauseCurrent}
             />
           ))}
         </div>
@@ -111,7 +123,7 @@ const TreeItem = ({ item, level = 0, onSelectFile, onDeleteFile, currentlyPlayin
 }
 
 // Main component to render the entire file tree
-const FileTree = ({ fileTree, onSelectFile, onDeleteFile, currentlyPlaying }) => {
+const FileTree = ({ fileTree, onSelectFile, onDeleteFile, currentlyPlaying, onPauseCurrent }) => {
   if (!fileTree || !fileTree.children || fileTree.children.length === 0) {
     return (
       <div className="text-center text-slate-500 py-16">
@@ -132,6 +144,7 @@ const FileTree = ({ fileTree, onSelectFile, onDeleteFile, currentlyPlaying }) =>
           onSelectFile={onSelectFile} 
           onDeleteFile={onDeleteFile} 
           currentlyPlaying={currentlyPlaying} 
+          onPauseCurrent={onPauseCurrent}
         />
       ))}
     </div>

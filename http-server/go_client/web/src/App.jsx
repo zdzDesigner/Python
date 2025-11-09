@@ -17,6 +17,7 @@ const App = () => {
   const [isSynthesizing, setIsSynthesizing] = useState(false)
   const [ttsJsonData, setTtsJsonData] = useState(null)
   const [currentlyPlaying, setCurrentlyPlaying] = useState(null)
+  const pauseCallbackRef = React.useRef(null) // To store the pause function from AudioPlayer
 
   const { showError, showSuccess } = useNotification()
 
@@ -50,6 +51,21 @@ const App = () => {
 
   const handlePlaybackComplete = () => {
     setCurrentlyPlaying(null) // Clear currently playing when playback completes
+  }
+
+  // Function to toggle the currently playing audio (play/pause)
+  const handleToggleCurrent = () => {
+    if (pauseCallbackRef.current) {
+      // For now, we'll just call the pause function
+      // To properly implement toggle, we need to know if audio is currently playing
+      // This requires more complex state management between components
+      pauseCallbackRef.current()
+    } else {
+      // If no pause callback is available, just select the current file again
+      if (selectedFile) {
+        handleFileSelect(selectedFile)
+      }
+    }
   }
 
   const handleSynthesize = useCallback(
@@ -154,18 +170,26 @@ const App = () => {
           isSynthesizing={isSynthesizing}
           selectedFile={selectedFile} // Pass selectedFile down
           currentlyPlaying={currentlyPlaying}
+          onPauseCurrent={handleToggleCurrent}
         />
 
         <div className="flex-1 flex flex-col">
           <TextDataSettings onUploadSuccess={fetchAudioFiles} onJsonData={handleJsonData} />
+          {
+            <div style={{ height: 300 }}>
+              <AudioPlayer
+                selectedFile={selectedFile}
+                audioUrl={audioUrl}
+                onPlaybackComplete={handlePlaybackComplete}
+                onPauseRequested={(callback) => {
+                  pauseCallbackRef.current = callback
+                }}
+              />
+            </div>
+          }
           <div className="flex-1">
             <TTSList jsonData={ttsJsonData} />
           </div>
-          {
-            <div style={{ height: 0 }}>
-              <AudioPlayer selectedFile={selectedFile} audioUrl={audioUrl} onPlaybackComplete={handlePlaybackComplete} />
-            </div>
-          }
         </div>
       </div>
 

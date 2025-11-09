@@ -204,6 +204,7 @@ AI有声书阅读平台
 这个结构的数据，
 {
   speaker:角色
+  dubbing:配音
   content:文本内容
   tone:情感
   intensity:情感比重
@@ -225,3 +226,25 @@ AI有声书阅读平台
 
 ### 正在播放的文件tag
 在 @/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/AudioPlayer.jsx 组建中添加播放完成事件；在@/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/FileTree.jsx 组建中列表中设置正在播放的音频元素添加背景色
+
+
+### 关闭正在播放的文件tag
+在 @/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/AudioPlayer.jsx 组建中添加播放暂停事件；在@/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/FileTree.jsx 组建中在列表中点击正在播放的音频元素暂停播放当前音频, 列表元素恢复默认, 
+- fix
+onPauseCurrent 并未添加到@web/src/App.jsx 中
+
+
+
+### 添加配音
+在 @/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TTSList.jsx 中的table ,添加 dubbing 字段为配音
+{
+  speaker:角色
+  dubbing:配音
+  content:文本内容
+  tone:情感
+  intensity:情感比重
+  delay:延迟
+}
+
+配音字段可以用ant-design 的select组件来选择
+

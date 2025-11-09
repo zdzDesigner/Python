@@ -1,29 +1,29 @@
 # Project Summary
 
 ## Overall Goal
-Implement ant-design notifications for error handling and add a TextDataSettings component with file upload and manual JSON input capabilities to a React web application for an audio server.
+Implement multiple features in an audio server web application: ant-design notifications for error handling, TextDataSettings component with upload and manual JSON input capabilities, TTSList component to display JSON data in a table with Chinese labels, optimized file deletion, playback complete event, and highlighting of currently playing audio in the file tree.
 
 ## Key Knowledge
 - Project uses React with ant-design (antd) for UI components and notifications
 - Backend API server runs on http://localhost:8081
-- Created a NotificationContext with error, success, warning, and info notification methods
-- TextDataSettings component provides both file upload functionality to /api/upload endpoint and manual JSON input features
-- Error handling has been replaced with professional ant-design notifications throughout the application
-- Project structure includes components, utils, and notification context files
-- File upload connects to /api/upload endpoint with success/error callbacks
-- JSON input feature validates and formats JSON data in a modal interface
+- Notification system implemented using antd's notification API with a global NotificationContext
+- TextDataSettings component provides both file upload and manual JSON input features for TTS data
+- TTSList component displays JSON data in a table with Chinese column headers (序号, 角色, 文本内容, 情感, 情感比重, 延迟)
+- File deletion now updates local state instead of re-fetching data for better performance
+- AudioPlayer component includes playback complete event handling
+- Currently playing audio file is highlighted in the file tree with light indigo background and left border
+- JSON data follows the format: {speaker, content, tone, intensity, delay}
+- Component hierarchy includes App, Sidebar, FileTree, AudioPlayer, TextDataSettings, and TTSList components
 
 ## Recent Actions
-- Installed antd library using `yarn add antd`
-- Created NotificationContext.jsx in utils/ folder with proper provider pattern
-- Updated main.jsx to wrap the app with NotificationProvider
-- Updated App.jsx to use notification context instead of error state
-- Updated Sidebar.jsx to remove old error display
-- Created TextDataSettings.jsx component with upload and JSON input features
-- Integrated TextDataSettings component into the main application layout
-- Added antd CSS reset to App.css
-- Fixed import statements to ensure proper component loading
-- Successfully implemented modal functionality for manual JSON input
+- Implemented notification system using antd throughout the application
+- Created TextDataSettings component with file upload and JSON input validation
+- Created TTSList component with table display and scroll functionality
+- Optimized file deletion to update local state instead of re-fetching the entire list
+- Added playback complete event handling to AudioPlayer component
+- Implemented highlighting for currently playing audio in the file tree
+- Updated component hierarchy to pass currently playing state through props
+- Integrated notification context and updated error handling across all components
 
 ## Current Plan
 1. [DONE] Install antd library for UI components and notifications
@@ -33,10 +33,15 @@ Implement ant-design notifications for error handling and add a TextDataSettings
 5. [DONE] Update Sidebar.jsx to remove old error display
 6. [DONE] Create TextDataSettings component with upload and manual input features
 7. [DONE] Integrate TextDataSettings component into the application layout
-8. [DONE] Add JSON validation and formatting functionality
-9. [DONE] Test implementation to ensure functionality works correctly
+8. [DONE] Create TTSList component to display JSON data in table format
+9. [DONE] Add Chinese column headers to the TTS table
+10. [DONE] Add scroll functionality to the TTS table
+11. [DONE] Optimize file deletion to update local state instead of re-fetching
+12. [DONE] Add playback complete event to AudioPlayer component
+13. [DONE] Highlight currently playing audio in the file tree
+14. [DONE] Update component hierarchy to pass necessary state through props
 
 ---
 
 ## Summary Metadata
-**Update time**: 2025-11-08T12:16:53.502Z 
+**Update time**: 2025-11-08T15:23:34.042Z 
