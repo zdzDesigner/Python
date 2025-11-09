@@ -289,6 +289,8 @@ speaker_audio_path参数设置为当前tr中的dubbing的值
 - 训练后的播放
 在 @web/src/components/TTSList.jsx 组建中点击ExperimentOutlined(训练按钮)等待完成后，把返回的数据记录到当前record.outpath中, 点击PlayCircleOutlined(播放按钮)播放音频
 
+- 训练前的状态
+在 @web/src/components/TTSList.jsx 组建中点击ExperimentOutlined(训练按钮)等待完成后，把返回的数据记录到当前record.outpath中, 点击PlayCircleOutlined(播放按钮)播放音频
 
 - 左侧训练(不用刷新列表)
 在@web/src/components/Sidebar.jsx 组件中TTSSynthesizer训练完成后，
