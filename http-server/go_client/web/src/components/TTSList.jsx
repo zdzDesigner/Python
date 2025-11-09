@@ -13,6 +13,8 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   const [tableHeight, setTableHeight] = useState('calc(100vh - 200px)')
   // State to track currently training records
   const [trainingRecords, setTrainingRecords] = useState({});
+  // State to track the output paths for trained records
+  const [trainedRecords, setTrainedRecords] = useState({});
 
   const { showError, showSuccess } = useNotification();
 
@@ -65,9 +67,22 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
       // Call synthesizeTTS with the record data
       const result = await synthesizeTTS(null, null, record);
 
-      // If result.newFile exists, notify parent component
-      if (result.newFile && onSynthesizeComplete) {
-        // onSynthesizeComplete(result.newFile);
+      // If result contains an output path, save it to the trained records
+      if (result.newFile && result.newFile.path) {
+        // Save the output path for this record
+        setTrainedRecords(prev => ({
+          ...prev,
+          [recordKey]: result.newFile.name
+        }));
+        
+        showSuccess('训练成功', '音频文件已生成');
+      } else if (result.outpath) {
+        // If result has outpath directly
+        setTrainedRecords(prev => ({
+          ...prev,
+          [recordKey]: result.outpath
+        }));
+        
         showSuccess('训练成功', '音频文件已生成');
       } else {
         showSuccess('训练成功', '音频文件已生成');
@@ -82,6 +97,26 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         delete newRecords[recordKey];
         return newRecords;
       });
+    }
+  };
+
+  const handlePlay = (record) => {
+    const recordKey = `${record.speaker}-${record.content}`;
+    const outpath = trainedRecords[recordKey];
+
+    console.log({record,outpath})
+    if (outpath) {
+      // Create a full URL for the audio file
+      const audioUrl = `http://localhost:8081/api/audio-file${outpath.startsWith('/') ? outpath : '/' + outpath}`;
+      
+      // Create an audio element and play it
+      const audio = new Audio(audioUrl);
+      audio.play().catch(error => {
+        console.error('Error playing audio:', error);
+        showError('播放失败', error.message);
+      });
+    } else {
+      showError('播放失败', '音频文件未生成，请先训练此条数据');
     }
   };
 
@@ -168,8 +203,9 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
             />
             <Button 
               icon={<PlayCircleOutlined />} 
-              onClick={() => console.log('Play action for:', record)}
+              onClick={() => handlePlay(record)}
               disabled={isTraining}
+              title="播放训练后的音频"
             />
           </Space>
         );
