@@ -2,13 +2,17 @@ import React, { useState, useEffect } from 'react'
 import { Card, Table, Tag, Typography, Select, Button, Space } from 'antd'
 import { PlayCircleOutlined, ExperimentOutlined } from '@ant-design/icons'
 import { audio_text } from '@/assets/audio_text'
+import { synthesizeTTS } from '@/service/api/tts'
+import { useNotification } from '@/utils/NotificationContext'
 
 const { Text } = Typography
 const { Option } = Select
 
-const TTSList = ({ jsonData, audioFiles }) => {
+const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   // State to store the table height
   const [tableHeight, setTableHeight] = useState('calc(100vh - 200px)')
+
+  const { showError, showSuccess } = useNotification();
 
   // console.log({jsonData})
   jsonData = audio_text.map((item) => ({ ...item, dubbing: '请选择' }))
@@ -45,6 +49,26 @@ const TTSList = ({ jsonData, audioFiles }) => {
       window.removeEventListener('resize', updateTableHeight)
     }
   }, [])
+
+  const handleTrain = async (record) => {
+    try {
+      console.log('Training with record:', record);
+
+      // Call synthesizeTTS with the record data
+      const result = await synthesizeTTS(null, null, record);
+
+      // If result.newFile exists, notify parent component
+      if (result.newFile && onSynthesizeComplete) {
+        onSynthesizeComplete(result.newFile);
+        showSuccess('训练成功', '音频文件已生成');
+      } else {
+        showSuccess('训练成功', '音频文件已生成');
+      }
+    } catch (error) {
+      console.error('Error during training:', error);
+      showError('训练失败', error.message);
+    }
+  };
 
   const columns = [
     // {
@@ -113,7 +137,11 @@ const TTSList = ({ jsonData, audioFiles }) => {
       fixed: 'right',
       render: (text, record) => (
         <Space size="middle">
-          <Button icon={<ExperimentOutlined />} onClick={() => console.log('Train action for:', record)} />
+          <Button 
+            icon={<ExperimentOutlined />} 
+            onClick={() => handleTrain(record)} 
+            title="训练此条数据"
+          />
           <Button icon={<PlayCircleOutlined />} onClick={() => console.log('Play action for:', record)} />
         </Space>
       )

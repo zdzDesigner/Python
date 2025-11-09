@@ -277,6 +277,8 @@ onPauseCurrent 并未添加到@web/src/App.jsx 中
 同时也要修正 @web/src/App.jsx 中调用synthesizeTTS的传参
 
 
+speaker_audio_path参数设置为当前tr中的dubbing的值
+
 
 
 
