@@ -257,10 +257,29 @@ onPauseCurrent 并未添加到@web/src/App.jsx 中
 抽象 @web/src/App.jsx 组件中的 fetch 'http://localhost:8081/api/tts' 接口到 src/service/api/tts.js 文件中
 
 
+    text: text,
+    speaker_audio_path: speakerAudioPath,
+    output_wav_path: '', // The backend will generate the path
+    emotion_text: 'default',
+    emotion_alpha: 0.7,
+    interval_silence: 500
 
 
-@web/src/components/TTSList.jsx
-ExperimentOutlined
+
+在 @web/src/components/TTSList.jsx 组建中点击ExperimentOutlined(训练按钮) 调用@web/src/service/api/tts.js 中的 synthesizeTTS 接口, synthesizeTTS接口的参数调整为 当前tr中的的数据，对应关系如下
+{
+  speaker_audio_path:dubbing
+  text:content
+  emotion_text:tone
+  emotion_alpha:intensity
+  interval_silence:delay
+}
+同时也要修正 @web/src/App.jsx 中调用synthesizeTTS的传参
 
 
+
+
+
+
+## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档

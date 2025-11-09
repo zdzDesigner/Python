@@ -6,6 +6,7 @@ import AudioPlayer from './components/AudioPlayer'
 import Footer from './components/Footer'
 import { buildFileTree } from './utils/fileTree'
 import { useNotification } from './utils/NotificationContext'
+import { synthesizeTTS, fetchAudioFiles as fetchAudioFilesAPI, deleteAudioFile } from './service/api/tts'
 import './App.css'
 
 const App = () => {
@@ -24,13 +25,9 @@ const App = () => {
   const fetchAudioFiles = useCallback(async () => {
     setLoading(true)
     try {
-      const response = await fetch('http://localhost:8081/api/audio-files')
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      const data = await response.json()
-      setAudioFiles(data.files || [])
-      setFileTree(buildFileTree(data.files))
+      const data = await fetchAudioFilesAPI()
+      setAudioFiles(data)
+      setFileTree(buildFileTree(data))
     } catch (err) {
       showError('Error fetching audio files', err.message)
       console.error('Error fetching audio files:', err)
@@ -75,29 +72,7 @@ const App = () => {
         // Use the selected file's path as the speaker audio, or a default if none is selected.
         const speakerAudioPath = selectedFile?.path
 
-        const requestBody = {
-          text: text,
-          speaker_audio_path: speakerAudioPath,
-          output_wav_path: '', // The backend will generate the path
-          emotion_text: 'default',
-          emotion_alpha: 0.7,
-          interval_silence: 500
-        }
-
-        const response = await fetch('http://localhost:8081/api/tts', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(requestBody)
-        })
-
-        if (!response.ok) {
-          const errorBody = await response.text()
-          throw new Error(`TTS API error! status: ${response.status}, body: ${errorBody}`)
-        }
-
-        const result = await response.json()
+        const result = await synthesizeTTS(text, speakerAudioPath)
 
         // Immediately select the new file for playback
         if (result.newFile) {
@@ -121,19 +96,7 @@ const App = () => {
   const handleDeleteFile = async (delname) => {
     console.log({ delname })
     try {
-      const response = await fetch('http://localhost:8081/api/delete-file', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ path: delname })
-      })
-
-      if (!response.ok) {
-        throw new Error(`Delete API error! status: ${response.status}`)
-      }
-
-      // await fetchAudioFiles()
+      await deleteAudioFile(delname)
 
       // Remove the file from the local state instead of re-fetching
       const new_audios = audioFiles.filter((file) => file.name !== delname)
