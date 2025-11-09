@@ -11,6 +11,8 @@ const { Option } = Select
 const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   // State to store the table height
   const [tableHeight, setTableHeight] = useState('calc(100vh - 200px)')
+  // State to track currently training records
+  const [trainingRecords, setTrainingRecords] = useState({});
 
   const { showError, showSuccess } = useNotification();
 
@@ -51,6 +53,12 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   }, [])
 
   const handleTrain = async (record) => {
+    // Generate a unique key for the record
+    const recordKey = `${record.speaker}-${record.content}`;
+    
+    // Mark this record as currently training
+    setTrainingRecords(prev => ({ ...prev, [recordKey]: true }));
+
     try {
       console.log('Training with record:', record);
 
@@ -59,7 +67,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
 
       // If result.newFile exists, notify parent component
       if (result.newFile && onSynthesizeComplete) {
-        onSynthesizeComplete(result.newFile);
+        // onSynthesizeComplete(result.newFile);
         showSuccess('训练成功', '音频文件已生成');
       } else {
         showSuccess('训练成功', '音频文件已生成');
@@ -67,6 +75,13 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     } catch (error) {
       console.error('Error during training:', error);
       showError('训练失败', error.message);
+    } finally {
+      // Remove the training state for this record
+      setTrainingRecords(prev => {
+        const newRecords = { ...prev };
+        delete newRecords[recordKey];
+        return newRecords;
+      });
     }
   };
 
@@ -93,7 +108,10 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
       key: 'dubbing',
       fixed: 'left',
       render: (text, record) => (
-        <Select style={{ width: '100%' }} defaultValue={text} onChange={(value) => console.log('Selected dubbing:', value, 'for record:', record)}>
+        <Select style={{ width: '100%' }} defaultValue={text} onChange={(value) => {
+          console.log('Selected dubbing:', value, 'for record:', record)
+          record.dubbing = value
+        }}>
           {audioFiles &&
             audioFiles.map((file) => (
               <Option key={file.path} value={file.path}>
@@ -135,16 +153,27 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
       key: 'action',
       width: 100,
       fixed: 'right',
-      render: (text, record) => (
-        <Space size="middle">
-          <Button 
-            icon={<ExperimentOutlined />} 
-            onClick={() => handleTrain(record)} 
-            title="训练此条数据"
-          />
-          <Button icon={<PlayCircleOutlined />} onClick={() => console.log('Play action for:', record)} />
-        </Space>
-      )
+      render: (text, record) => {
+        const recordKey = `${record.speaker}-${record.content}`;
+        const isTraining = trainingRecords[recordKey];
+        
+        return (
+          <Space size="middle">
+            <Button 
+              icon={<ExperimentOutlined />} 
+              onClick={() => handleTrain(record)} 
+              title="训练此条数据"
+              loading={isTraining}
+              disabled={isTraining}
+            />
+            <Button 
+              icon={<PlayCircleOutlined />} 
+              onClick={() => console.log('Play action for:', record)}
+              disabled={isTraining}
+            />
+          </Space>
+        );
+      }
     }
   ]
 

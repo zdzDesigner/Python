@@ -266,6 +266,7 @@ onPauseCurrent 并未添加到@web/src/App.jsx 中
 
 
 
+### 点击训练
 在 @web/src/components/TTSList.jsx 组建中点击ExperimentOutlined(训练按钮) 调用@web/src/service/api/tts.js 中的 synthesizeTTS 接口, synthesizeTTS接口的参数调整为 当前tr中的的数据，对应关系如下
 {
   speaker_audio_path:dubbing
@@ -277,9 +278,20 @@ onPauseCurrent 并未添加到@web/src/App.jsx 中
 同时也要修正 @web/src/App.jsx 中调用synthesizeTTS的传参
 
 
+- 映射dubbing
 speaker_audio_path参数设置为当前tr中的dubbing的值
 
+- 训练过程
+在 @web/src/components/TTSList.jsx 组建中点击ExperimentOutlined(训练按钮)后，PlayCircleOutlined(播放按钮)设置禁用, ExperimentOutlined按钮也禁用，等待训练完成后恢复
 
+
+
+- 训练后的播放
+在 @web/src/components/TTSList.jsx 组建中点击ExperimentOutlined(训练按钮)等待完成后，把返回的数据记录到当前record.outpath中, 点击PlayCircleOutlined(播放按钮)播放音频
+
+
+- 左侧训练(不用刷新列表)
+在@web/src/components/Sidebar.jsx 组件中TTSSynthesizer训练完成后，
 
 
 

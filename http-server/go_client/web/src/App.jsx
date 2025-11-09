@@ -72,7 +72,7 @@ const App = () => {
         // Use the selected file's path as the speaker audio, or a default if none is selected.
         const speakerAudioPath = selectedFile?.path
 
-        const result = await synthesizeTTS(text, speakerAudioPath)
+        const result = await synthesizeTTS(text, speakerAudioPath, null)
 
         // Immediately select the new file for playback
         if (result.newFile) {
