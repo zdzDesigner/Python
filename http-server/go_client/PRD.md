@@ -211,7 +211,7 @@ AI有声书阅读平台
   delay:延迟
 }
 并把解析的数据渲染到列表中
-@/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TTSList.jsx  这里的结构改成table 使用
+@web/src/components/TTSList.jsx  这里的结构改成table 使用
 {
   speaker:角色
   content:文本内容
@@ -222,21 +222,21 @@ AI有声书阅读平台
 标题
 
 ### 删除音频
-@/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/FileTree.jsx, 在删除列表中的文件成功后，不要重新请求列表，只要删除当前的元素就可以了
+@web/src/components/FileTree.jsx, 在删除列表中的文件成功后，不要重新请求列表，只要删除当前的元素就可以了
 
 ### 正在播放的文件tag
-在 @/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/AudioPlayer.jsx 组建中添加播放完成事件；在@/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/FileTree.jsx 组建中列表中设置正在播放的音频元素添加背景色
+在 @web/src/components/AudioPlayer.jsx 组建中添加播放完成事件；在@web/src/components/FileTree.jsx 组建中列表中设置正在播放的音频元素添加背景色
 
 
 ### 关闭正在播放的文件tag
-在 @/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/AudioPlayer.jsx 组建中添加播放暂停事件；在@/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/FileTree.jsx 组建中在列表中点击正在播放的音频元素暂停播放当前音频, 列表元素恢复默认, 
+在 @web/src/components/AudioPlayer.jsx 组建中添加播放暂停事件；在@web/src/components/FileTree.jsx 组建中在列表中点击正在播放的音频元素暂停播放当前音频, 列表元素恢复默认, 
 - fix
 onPauseCurrent 并未添加到@web/src/App.jsx 中
 
 
 
 ### 添加配音
-在 @/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TTSList.jsx 中的table ,添加 dubbing 字段为配音
+在 @web/src/components/TTSList.jsx 中的table ,添加 dubbing 字段为配音
 {
   speaker:角色
   dubbing:配音
@@ -250,8 +250,17 @@ onPauseCurrent 并未添加到@web/src/App.jsx 中
 
 
 ### 添加训练和播放
-@/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TTSList.jsx
+@web/src/components/TTSList.jsx
   在table的最右侧添加一个操作选项，添加2个操作，第一个是训练图标，第二个是播放图标
 
 
-抽象 App.jsx  fetch 'http://localhost:8081/api/tts' 接口到 src/service/api/tts.js 文件中
+抽象 @web/src/App.jsx 组件中的 fetch 'http://localhost:8081/api/tts' 接口到 src/service/api/tts.js 文件中
+
+
+
+
+@web/src/components/TTSList.jsx
+ExperimentOutlined
+
+
+学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档

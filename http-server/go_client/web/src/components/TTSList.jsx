@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card, Table, Tag, Typography, Select, Button, Space } from 'antd'
 import { PlayCircleOutlined, ExperimentOutlined } from '@ant-design/icons'
 import { audio_text } from '@/assets/audio_text'
@@ -7,6 +7,9 @@ const { Text } = Typography
 const { Option } = Select
 
 const TTSList = ({ jsonData, audioFiles }) => {
+  // State to store the table height
+  const [tableHeight, setTableHeight] = useState('calc(100vh - 200px)')
+
   // console.log({jsonData})
   jsonData = audio_text.map((item) => ({ ...item, dubbing: '请选择' }))
 
@@ -24,6 +27,25 @@ const TTSList = ({ jsonData, audioFiles }) => {
     return <Tag color={color}>{tone || 'N/A'}</Tag>
   }
 
+  // Update table height when window is resized
+  useEffect(() => {
+    const updateTableHeight = () => {
+      const newHeight = window.innerHeight - 200 // Adjust this value as needed
+      setTableHeight(newHeight > 0 ? newHeight : 100) // Ensure minimum height
+    }
+
+    // Set initial height
+    updateTableHeight()
+
+    // Add resize event listener
+    window.addEventListener('resize', updateTableHeight)
+
+    // Cleanup event listener on component unmount
+    return () => {
+      window.removeEventListener('resize', updateTableHeight)
+    }
+  }, [])
+
   const columns = [
     // {
     //   title: '序号',
@@ -37,6 +59,7 @@ const TTSList = ({ jsonData, audioFiles }) => {
       width: 120,
       dataIndex: 'speaker',
       key: 'speaker',
+      fixed: 'left',
       render: (speaker) => <Text strong>{speaker || 'N/A'}</Text>
     },
     {
@@ -44,6 +67,7 @@ const TTSList = ({ jsonData, audioFiles }) => {
       width: 150,
       dataIndex: 'dubbing',
       key: 'dubbing',
+      fixed: 'left',
       render: (text, record) => (
         <Select style={{ width: '100%' }} defaultValue={text} onChange={(value) => console.log('Selected dubbing:', value, 'for record:', record)}>
           {audioFiles &&
@@ -86,6 +110,7 @@ const TTSList = ({ jsonData, audioFiles }) => {
       title: '操作',
       key: 'action',
       width: 100,
+      fixed: 'right',
       render: (text, record) => (
         <Space size="middle">
           <Button icon={<ExperimentOutlined />} onClick={() => console.log('Train action for:', record)} />
@@ -113,7 +138,8 @@ const TTSList = ({ jsonData, audioFiles }) => {
       //   showQuickJumper: true,
       //   showTotal: (total) => `共 ${total} 条`
       // }}
-      scroll={{ y: 'calc(100vh - 200px)' }}
+      scroll={{ y: tableHeight }}
+      // scroll={{ y: tableHeight, x: 'max-content' }}
       locale={{
         emptyText: jsonData ? 'JSON数据有效但不包含TTS条目' : '尚未提供JSON数据'
       }}
