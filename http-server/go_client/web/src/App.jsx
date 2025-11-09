@@ -175,8 +175,11 @@ const App = () => {
 
         <div className="flex-1 flex flex-col">
           <TextDataSettings onUploadSuccess={fetchAudioFiles} onJsonData={handleJsonData} />
+          <div className="flex-1">
+            <TTSList jsonData={ttsJsonData} audioFiles={audioFiles} />
+          </div>
           {
-            <div style={{ height: 300 }}>
+            <div style={{ height: 0 }}>
               <AudioPlayer
                 selectedFile={selectedFile}
                 audioUrl={audioUrl}
@@ -187,9 +190,6 @@ const App = () => {
               />
             </div>
           }
-          <div className="flex-1">
-            <TTSList jsonData={ttsJsonData} />
-          </div>
         </div>
       </div>
 

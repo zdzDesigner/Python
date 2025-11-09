@@ -11,7 +11,6 @@ const TextDataSettings = ({ onUploadSuccess, onJsonData }) => {
   const [jsonModalVisible, setJsonModalVisible] = useState(false)
   const [jsonInput, setJsonInput] = useState('')
   const [formattedJson, setFormattedJson] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
 
   const handleJsonSubmit = () => {
     try {
@@ -20,7 +19,7 @@ const TextDataSettings = ({ onUploadSuccess, onJsonData }) => {
       setFormattedJson(formatted)
       showSuccess('JSON Parsed Successfully', 'The JSON has been validated and formatted.')
       if (onJsonData) {
-        onJsonData(jsonInput) // Pass the JSON input to parent component
+        onJsonData(parsedJson) // Pass the JSON input to parent component
       }
       setJsonModalVisible(false) // Close the modal after successful submission
     } catch (error) {

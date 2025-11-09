@@ -1,30 +1,13 @@
-import React, { useState, useEffect } from 'react'
-import { Card, Table, Tag, Typography } from 'antd'
-import { audio_text } from '../assets/audio_text'
+import React from 'react'
+import { Card, Table, Tag, Typography, Select } from 'antd'
+import { audio_text } from '@/assets/audio_text'
 
 const { Text } = Typography
+const { Option } = Select
 
-const TTSList = ({ jsonData }) => {
-  const [ttsData, setTtsData] = useState([])
-  jsonData = JSON.stringify(audio_text)
-
-  useEffect(() => {
-    if (jsonData) {
-      try {
-        const parsedData = JSON.parse(jsonData)
-        if (Array.isArray(parsedData)) {
-          setTtsData(parsedData)
-        } else {
-          console.error('JSON data is not an array')
-        }
-      } catch (error) {
-        console.error('Error parsing JSON data:', error)
-      }
-    } else {
-      // Clear the data if jsonData is null/undefined
-      setTtsData([])
-    }
-  }, [jsonData])
+const TTSList = ({ jsonData, audioFiles }) => {
+  // console.log({jsonData})
+  jsonData = audio_text.map((item) => ({ ...item, dubbing: '请选择' }))
 
   const renderToneTag = (tone) => {
     const toneColors = {
@@ -54,6 +37,22 @@ const TTSList = ({ jsonData }) => {
       dataIndex: 'speaker',
       key: 'speaker',
       render: (speaker) => <Text strong>{speaker || 'N/A'}</Text>
+    },
+    {
+      title: '配音',
+      width: 150,
+      dataIndex: 'dubbing',
+      key: 'dubbing',
+      render: (text, record) => (
+        <Select style={{ width: '100%' }} defaultValue={text} onChange={(value) => console.log('Selected dubbing:', value, 'for record:', record)}>
+          {audioFiles &&
+            audioFiles.map((file) => (
+              <Option key={file.path} value={file.path}>
+                {file.name}
+              </Option>
+            ))}
+        </Select>
+      )
     },
     {
       title: '文本内容',
@@ -90,8 +89,8 @@ const TTSList = ({ jsonData }) => {
   }
   return (
     <Table
-      style={{ padding: 10, backgroundColor:'#fff'}}
-      dataSource={ttsData}
+      style={{ padding: 10, backgroundColor: '#fff' }}
+      dataSource={jsonData}
       columns={columns}
       size="small"
       rowKey={(record, index) => `${record.speaker}-${record.content}-${index}`}

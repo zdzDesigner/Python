@@ -246,5 +246,9 @@ onPauseCurrent 并未添加到@web/src/App.jsx 中
   delay:延迟
 }
 
-配音字段可以用ant-design 的select组件来选择
+配音字段可以用ant-design 的select组件, 数据使用左侧的音频列表数据(在select中可以不用树状表示)
 
+
+### 添加训练和播放
+@/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TTSList.jsx
+  在table的最右侧添加一个操作选项，添加2个操作，第一个是训练图标，第二个是播放图标
