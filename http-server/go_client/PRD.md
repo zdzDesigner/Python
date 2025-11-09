@@ -252,3 +252,6 @@ onPauseCurrent 并未添加到@web/src/App.jsx 中
 ### 添加训练和播放
 @/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TTSList.jsx
   在table的最右侧添加一个操作选项，添加2个操作，第一个是训练图标，第二个是播放图标
+
+
+抽象 App.jsx  fetch 'http://localhost:8081/api/tts' 接口到 src/service/api/tts.js 文件中

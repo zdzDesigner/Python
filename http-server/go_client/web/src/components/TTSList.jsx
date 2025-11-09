@@ -1,5 +1,6 @@
 import React from 'react'
-import { Card, Table, Tag, Typography, Select } from 'antd'
+import { Card, Table, Tag, Typography, Select, Button, Space } from 'antd'
+import { PlayCircleOutlined, ExperimentOutlined } from '@ant-design/icons'
 import { audio_text } from '@/assets/audio_text'
 
 const { Text } = Typography
@@ -80,6 +81,17 @@ const TTSList = ({ jsonData, audioFiles }) => {
       key: 'delay',
       width: 100,
       render: (delay) => `${delay || 0}ms`
+    },
+    {
+      title: '操作',
+      key: 'action',
+      width: 100,
+      render: (text, record) => (
+        <Space size="middle">
+          <Button icon={<ExperimentOutlined />} onClick={() => console.log('Train action for:', record)} />
+          <Button icon={<PlayCircleOutlined />} onClick={() => console.log('Play action for:', record)} />
+        </Space>
+      )
     }
   ]
 
