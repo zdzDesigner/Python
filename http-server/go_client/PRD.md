@@ -187,3 +187,115 @@ AI有声书阅读平台
 **文档版本**: v1.0  
 **创建日期**: 2025年11月6日  
 **最后更新**: 2025年11月6日
+
+
+
+### 上传章节文本
+
+### 拆分章节文本
+创建TTSList组建放到TextDataSettings下方,在TTSList组建中把上传的JSON文件拆分出每项为
+{
+  "speaker": "旁白",
+  "content": "夜，已经很深了。",
+  "tone": "neutral",
+  "intensity": 5,
+  "delay": 500
+}
+这个结构的数据，
+{
+  speaker:角色
+  dubbing:配音
+  content:文本内容
+  tone:情感
+  intensity:情感比重
+  delay:延迟
+}
+并把解析的数据渲染到列表中
+@web/src/components/TTSList.jsx  这里的结构改成table 使用
+{
+  speaker:角色
+  content:文本内容
+  tone:情感
+  intensity:情感比重
+  delay:延迟
+}
+标题
+
+### 删除音频
+@web/src/components/FileTree.jsx, 在删除列表中的文件成功后，不要重新请求列表，只要删除当前的元素就可以了
+
+### 正在播放的文件tag
+在 @web/src/components/AudioPlayer.jsx 组建中添加播放完成事件；在@web/src/components/FileTree.jsx 组建中列表中设置正在播放的音频元素添加背景色
+
+
+### 关闭正在播放的文件tag
+在 @web/src/components/AudioPlayer.jsx 组建中添加播放暂停事件；在@web/src/components/FileTree.jsx 组建中在列表中点击正在播放的音频元素暂停播放当前音频, 列表元素恢复默认, 
+- fix
+onPauseCurrent 并未添加到@web/src/App.jsx 中
+
+
+
+### 添加配音
+在 @web/src/components/TTSList.jsx 中的table ,添加 dubbing 字段为配音
+{
+  speaker:角色
+  dubbing:配音
+  content:文本内容
+  tone:情感
+  intensity:情感比重
+  delay:延迟
+}
+
+配音字段可以用ant-design 的select组件, 数据使用左侧的音频列表数据(在select中可以不用树状表示)
+
+
+### 添加训练和播放
+@web/src/components/TTSList.jsx
+  在table的最右侧添加一个操作选项，添加2个操作，第一个是训练图标，第二个是播放图标
+
+
+抽象 @web/src/App.jsx 组件中的 fetch 'http://localhost:8081/api/tts' 接口到 src/service/api/tts.js 文件中
+
+
+    text: text,
+    speaker_audio_path: speakerAudioPath,
+    output_wav_path: '', // The backend will generate the path
+    emotion_text: 'default',
+    emotion_alpha: 0.7,
+    interval_silence: 500
+
+
+
+### 点击训练
+在 @web/src/components/TTSList.jsx 组建中点击ExperimentOutlined(训练按钮) 调用@web/src/service/api/tts.js 中的 synthesizeTTS 接口, synthesizeTTS接口的参数调整为 当前tr中的的数据，对应关系如下
+{
+  speaker_audio_path:dubbing
+  text:content
+  emotion_text:tone
+  emotion_alpha:intensity
+  interval_silence:delay
+}
+同时也要修正 @web/src/App.jsx 中调用synthesizeTTS的传参
+
+
+- 映射dubbing
+speaker_audio_path参数设置为当前tr中的dubbing的值
+
+- 训练过程
+在 @web/src/components/TTSList.jsx 组建中点击ExperimentOutlined(训练按钮)后，PlayCircleOutlined(播放按钮)设置禁用, ExperimentOutlined按钮也禁用，等待训练完成后恢复
+
+
+
+- 训练后的播放
+在 @web/src/components/TTSList.jsx 组建中点击ExperimentOutlined(训练按钮)等待完成后，把返回的数据记录到当前record.outpath中, 点击PlayCircleOutlined(播放按钮)播放音频
+
+- 训练前的状态
+在 @web/src/components/TTSList.jsx 组建中点击ExperimentOutlined(训练按钮)等待完成后，把返回的数据记录到当前record.outpath中, 点击PlayCircleOutlined(播放按钮)播放音频
+
+- 左侧训练(不用刷新列表)
+在@web/src/components/Sidebar.jsx 组件中TTSSynthesizer训练完成后，
+
+
+
+## init
+学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档
