@@ -295,6 +295,16 @@ speaker_audio_path参数设置为当前tr中的dubbing的值
 - 左侧训练(不用刷新列表)
 在@web/src/components/Sidebar.jsx 组件中TTSSynthesizer训练完成后，
 
+### MD5 音频文件名
+ 在调用 /api/tts 接口，go 服务使用当前收到的   {
+        "text": "需要转换为语音的文本",
+        "speaker_audio_path": "参考音频文件的路径",
+        "output_wav_path": "", // 由后端生成
+        "emotion_text": "情感描述（如：happy, sad, angry）",
+        "emotion_alpha": 0.7, // 情感强度
+        "interval_silence": 500 // 静默间隔（毫秒）
+      }
+  这几个参数通过md5 这几个参数用于生成后的音频名称
 
 
 ## init
