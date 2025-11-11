@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { Card, Table, Tag, Typography, Select, Button, Space } from 'antd'
+import React, { useState, useEffect, useCallback } from 'react'
+import { Card, Table, Tag, Typography, Select, Button, Space, Modal } from 'antd'
 import { PlayCircleOutlined, ExperimentOutlined } from '@ant-design/icons'
 import { audio_text } from '@/assets/audio_text'
 import { synthesizeTTS } from '@/service/api/tts'
@@ -15,11 +15,35 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   const [trainingRecords, setTrainingRecords] = useState({});
   // State to track the output paths for trained records
   const [trainedRecords, setTrainedRecords] = useState({});
+  // State for character mapping modal
+  const [isMappingModalVisible, setIsMappingModalVisible] = useState(false);
+  // State for character mappings
+  const [characterMappings, setCharacterMappings] = useState({});
+  // State for table data
+  const [tableData, setTableData] = useState([]);
 
   const { showError, showSuccess } = useNotification();
 
+  // Update tableData when jsonData changes
+  useEffect(() => {
+    const initialData = jsonData ? jsonData.map((item) => ({ 
+      ...item, 
+      dubbing: item.dubbing || '请选择' 
+    })) : audio_text.map((item) => ({ ...item, dubbing: '请选择' }));
+    setTableData(initialData);
+  }, [jsonData]);
+
+  // Function to extract unique character names from tableData
+  const getUniqueCharacterNames = () => {
+    if (!tableData) return [];
+    const uniqueNames = [...new Set(tableData.map(item => item.speaker))];
+    return uniqueNames;
+  };
+
+  // Extract unique character names
+  const uniqueCharacterNames = getUniqueCharacterNames();
+
   // console.log({jsonData})
-  jsonData = audio_text.map((item) => ({ ...item, dubbing: '请选择' }))
 
   const renderToneTag = (tone) => {
     const toneColors = {
@@ -142,19 +166,26 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
       dataIndex: 'dubbing',
       key: 'dubbing',
       fixed: 'left',
-      render: (text, record) => (
-        <Select style={{ width: '100%' }} defaultValue={text} onChange={(value) => {
-          console.log('Selected dubbing:', value, 'for record:', record)
-          record.dubbing = value
-        }}>
-          {audioFiles &&
-            audioFiles.map((file) => (
-              <Option key={file.path} value={file.path}>
-                {file.name}
-              </Option>
-            ))}
-        </Select>
-      )
+      render: (text, record) => {
+        const recordKey = `${record.speaker}-${record.content}`;
+        return (
+          <Select 
+            style={{ width: '100%' }} 
+            value={text} 
+            onChange={(value) => {
+              console.log('Selected dubbing:', value, 'for record:', record);
+              updateTableDataDubbing(recordKey, value);
+            }}
+          >
+            {audioFiles &&
+              audioFiles.map((file) => (
+                <Option key={file.path} value={file.path}>
+                  {file.name}
+                </Option>
+              ))}
+          </Select>
+        );
+      }
     },
     {
       title: '文本内容',
@@ -213,14 +244,109 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     }
   ]
 
+  // Function to handle character mapping changes
+  const handleMappingChange = useCallback((characterName, audioPath) => {
+    setCharacterMappings(prev => ({
+      ...prev,
+      [characterName]: audioPath
+    }));
+  }, []);
+
+  // Function to handle modal confirmation
+  const handleModalOk = useCallback(() => {
+    // Apply the mappings to the table data
+    setTableData(prevData => {
+      return prevData.map(item => {
+        if (characterMappings[item.speaker]) {
+          return { ...item, dubbing: characterMappings[item.speaker] };
+        }
+        return item;
+      });
+    });
+    setIsMappingModalVisible(false);
+  }, [characterMappings]);
+
+  // Function to handle modal cancellation
+  const handleModalCancel = useCallback(() => {
+    setIsMappingModalVisible(false);
+    // Reset character mappings when modal is closed
+    setCharacterMappings({});
+  }, []);
+
+  // Function to update table data for a specific record
+  const updateTableDataDubbing = useCallback((recordKey, newDubbingValue) => {
+    setTableData(prevData => {
+      const newData = [...prevData];
+      const index = newData.findIndex(item => `${item.speaker}-${item.content}` === recordKey);
+      if (index !== -1) {
+        newData[index] = { ...newData[index], dubbing: newDubbingValue };
+      }
+      return newData;
+    });
+  }, []);
+
+  // Function to open the mapping modal
+  const openMappingModal = useCallback(() => {
+    // Initialize character mappings with current values
+    const initialMappings = {};
+    if (tableData) {
+      tableData.forEach(item => {
+        if (item.dubbing && item.dubbing !== '请选择') {
+          initialMappings[item.speaker] = item.dubbing;
+        }
+      });
+    }
+    setCharacterMappings(initialMappings);
+    setIsMappingModalVisible(true);
+  }, [tableData]);
+
   {
     // <Card className="w-full mt-4">
     // </Card>
   }
+
   return (
+    <>
+      <div style={{ padding: 10, marginBottom: 10 }}>
+        <Button type="primary" onClick={openMappingModal}>
+          角色配音
+        </Button>
+      </div>
+      <Modal
+        title="角色配音"
+        open={isMappingModalVisible}
+        onOk={handleModalOk}
+        onCancel={handleModalCancel}
+        width={600}
+      >
+        <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+          {uniqueCharacterNames.map((characterName, index) => (
+            <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <div style={{ flex: 1, textAlign: 'left' }}>
+                <strong>{characterName}</strong>
+              </div>
+              <div style={{ flex: 2, marginLeft: '20px' }}>
+                <Select 
+                  style={{ width: '100%' }} 
+                  placeholder="选择音频文件"
+                  value={characterMappings[characterName] || undefined}
+                  onChange={(value) => handleMappingChange(characterName, value)}
+                  allowClear
+                >
+                  {audioFiles && audioFiles.map((file) => (
+                    <Option key={file.path} value={file.path}>
+                      {file.name}
+                    </Option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Modal>
     <Table
       style={{ padding: 10, backgroundColor: '#fff' }}
-      dataSource={jsonData}
+      dataSource={tableData}
       columns={columns}
       size="small"
       rowKey={(record, index) => `${record.speaker}-${record.content}-${index}`}
@@ -234,9 +360,10 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
       scroll={{ y: tableHeight }}
       // scroll={{ y: tableHeight, x: 'max-content' }}
       locale={{
-        emptyText: jsonData ? 'JSON数据有效但不包含TTS条目' : '尚未提供JSON数据'
+        emptyText: tableData && tableData.length > 0 ? 'JSON数据有效但不包含TTS条目' : '尚未提供JSON数据'
       }}
     />
+    </>
   )
 }
 

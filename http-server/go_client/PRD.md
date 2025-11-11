@@ -307,5 +307,13 @@ speaker_audio_path参数设置为当前tr中的dubbing的值
   这几个参数通过md5 这几个参数用于生成后的音频名称
 
 
+
+
+### 添加角色配音(弹框)
+在 @/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TTSList.jsx 中的table上方添加一个"角色配音"按钮，点击这按钮打开一个弹框，弹框中的内容是一个列表，列表的每一行分为左右两块，左边显示jsonData数据的角色名称（需要去重），右边是一个select组建，select里面的内容使用当前TTSList的audioFiles参数，最终得到角色名称和音频地址的映射数据，点击确定
+ 后把映射的数据赋值到当前的table音频列中的select组建中
+
+
+
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档
