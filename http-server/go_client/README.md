@@ -1,2 +1,4 @@
-	rootPath := "/home/zdz/mnt/Documents/Try/Go/audio/source/assets"
+
+
+rootPath := "/home/zdz/mnt/Documents/Try/Go/audio/source/assets"
 
