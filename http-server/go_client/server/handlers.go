@@ -91,7 +91,7 @@ func ttsHandler(c *gin.Context) {
 
 func audioFilesHandler(c *gin.Context) {
 	rootPaths := []string{
-		"/home/zdz/Documents/Try/TTS/audio/audiobook_manager/wav",
+		GetAudioPath(),
 		"output",
 	}
 
@@ -130,7 +130,7 @@ func audioFileHandler(c *gin.Context) {
 		cwd, _ := os.Getwd()
 		fullPath = filepath.Join(cwd, filePath)
 	} else {
-		fullPath = filepath.Join("/home/zdz/Documents/Try/TTS/audio/audiobook_manager/wav", filePath)
+		fullPath = filepath.Join(GetAudioPath(), filePath)
 	}
 
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {

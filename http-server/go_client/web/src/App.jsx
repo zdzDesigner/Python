@@ -123,13 +123,13 @@ const App = () => {
   const handleTTSListSynthesize = useCallback(
     async (synthesizedFile) => {
       if (synthesizedFile) {
-        handleFileSelect(synthesizedFile);
-        await fetchAudioFiles();
-        showSuccess('Audio synthesized successfully', 'The new audio file has been created.');
+        handleFileSelect(synthesizedFile)
+        await fetchAudioFiles()
+        showSuccess('Audio synthesized successfully', 'The new audio file has been created.')
       }
     },
     [handleFileSelect, fetchAudioFiles, showSuccess]
-  );
+  )
 
   return (
     <div className="flex flex-col h-screen bg-slate-50 text-slate-800 cursor-default">
@@ -150,11 +150,7 @@ const App = () => {
         <div className="flex-1 flex flex-col">
           <TextDataSettings onUploadSuccess={fetchAudioFiles} onJsonData={handleJsonData} />
           <div className="flex-1">
-            <TTSList 
-              jsonData={ttsJsonData} 
-              audioFiles={audioFiles} 
-              onSynthesizeComplete={handleTTSListSynthesize}
-            />
+            <TTSList jsonData={ttsJsonData} audioFiles={audioFiles} onSynthesizeComplete={handleTTSListSynthesize} />
           </div>
           {
             <div style={{ height: 0 }}>
