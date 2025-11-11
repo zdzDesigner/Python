@@ -144,3 +144,13 @@ func ReadDirectoryRecursive(rootPath string) ([]FileItem, error) {
 	}
 	return fileList, nil
 }
+
+// GetAudioPath returns the audio path from environment variable AUDIO_PATH
+// with a fallback to the default path if the environment variable is not set
+func GetAudioPath() string {
+	audioPath := os.Getenv("AUDIO_PATH")
+	if audioPath == "" {
+		audioPath = "/home/zdz/Documents/Try/TTS/audio/audiobook_manager/wav"
+	}
+	return audioPath
+}
