@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { Card, Table, Tag, Typography, Select, Button, Space, Modal } from 'antd'
+
+
 import { PlayCircleOutlined, ExperimentOutlined } from '@ant-design/icons'
 import { audio_text } from '@/assets/audio_text'
 import { synthesizeTTS } from '@/service/api/tts'
@@ -33,15 +35,12 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     setTableData(initialData);
   }, [jsonData]);
 
-  // Function to extract unique character names from tableData
-  const getUniqueCharacterNames = () => {
+  // Extract unique character names using useMemo to prevent unnecessary recalculations
+  const uniqueCharacterNames = useMemo(() => {
     if (!tableData) return [];
     const uniqueNames = [...new Set(tableData.map(item => item.speaker))];
     return uniqueNames;
-  };
-
-  // Extract unique character names
-  const uniqueCharacterNames = getUniqueCharacterNames();
+  }, [tableData]);
 
   // console.log({jsonData})
 
@@ -144,6 +143,16 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     }
   };
 
+  // Memoize table audio files options to prevent re-renders
+  const tableAudioFileOptions = useMemo(() => {
+    if (!audioFiles) return [];
+    return audioFiles.map((file) => (
+      <Option key={file.path} value={file.path}>
+        {file.name}
+      </Option>
+    ));
+  }, [audioFiles]);
+
   const columns = [
     // {
     //   title: '序号',
@@ -177,12 +186,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
               updateTableDataDubbing(recordKey, value);
             }}
           >
-            {audioFiles &&
-              audioFiles.map((file) => (
-                <Option key={file.path} value={file.path}>
-                  {file.name}
-                </Option>
-              ))}
+            {tableAudioFileOptions}
           </Select>
         );
       }
@@ -244,6 +248,16 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     }
   ]
 
+  // Memoize the audio files options to prevent unnecessary re-renders
+  const audioFileOptions = useMemo(() => {
+    if (!audioFiles) return [];
+    return audioFiles.map((file) => (
+      <Option key={file.path} value={file.path}>
+        {file.name}
+      </Option>
+    ));
+  }, [audioFiles]);
+
   // Function to handle character mapping changes
   const handleMappingChange = useCallback((characterName, audioPath) => {
     setCharacterMappings(prev => ({
@@ -285,6 +299,8 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     });
   }, []);
 
+
+
   // Function to open the mapping modal
   const openMappingModal = useCallback(() => {
     // Initialize character mappings with current values
@@ -312,38 +328,36 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
           角色配音
         </Button>
       </div>
-      <Modal
-        title="角色配音"
-        open={isMappingModalVisible}
-        onOk={handleModalOk}
-        onCancel={handleModalCancel}
-        width={600}
-      >
-        <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-          {uniqueCharacterNames.map((characterName, index) => (
-            <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <div style={{ flex: 1, textAlign: 'left' }}>
-                <strong>{characterName}</strong>
+      {isMappingModalVisible && (
+        <Modal
+          title="角色配音"
+          open={isMappingModalVisible}
+          onOk={handleModalOk}
+          onCancel={handleModalCancel}
+          width={600}
+        >
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            {uniqueCharacterNames.map((characterName, index) => (
+              <div key={characterName} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <div style={{ flex: 1, textAlign: 'left' }}>
+                  <strong>{characterName}</strong>
+                </div>
+                <div style={{ flex: 2, marginLeft: '20px' }}>
+                  <Select 
+                    style={{ width: '100%' }} 
+                    placeholder="选择音频文件"
+                    value={characterMappings[characterName] || undefined}
+                    onChange={(value) => handleMappingChange(characterName, value)}
+                    allowClear
+                  >
+                    {audioFileOptions}
+                  </Select>
+                </div>
               </div>
-              <div style={{ flex: 2, marginLeft: '20px' }}>
-                <Select 
-                  style={{ width: '100%' }} 
-                  placeholder="选择音频文件"
-                  value={characterMappings[characterName] || undefined}
-                  onChange={(value) => handleMappingChange(characterName, value)}
-                  allowClear
-                >
-                  {audioFiles && audioFiles.map((file) => (
-                    <Option key={file.path} value={file.path}>
-                      {file.name}
-                    </Option>
-                  ))}
-                </Select>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Modal>
+            ))}
+          </div>
+        </Modal>
+      )}
     <Table
       style={{ padding: 10, backgroundColor: '#fff' }}
       dataSource={tableData}
@@ -357,7 +371,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
       //   showQuickJumper: true,
       //   showTotal: (total) => `共 ${total} 条`
       // }}
-      scroll={{ y: tableHeight }}
+      scroll={{ y: tableHeight, x: 1200 }}
       // scroll={{ y: tableHeight, x: 'max-content' }}
       locale={{
         emptyText: tableData && tableData.length > 0 ? 'JSON数据有效但不包含TTS条目' : '尚未提供JSON数据'
