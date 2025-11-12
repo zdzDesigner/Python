@@ -1,119 +1,80 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useRef } from 'react'
 import TextDataSettings from './components/TextDataSettings'
 import TTSList from './components/TTSList'
 import Sidebar from './components/Sidebar'
 import AudioPlayer from './components/AudioPlayer'
 import Footer from './components/Footer'
-import { buildFileTree } from './utils/fileTree'
 import { useNotification } from './utils/NotificationContext'
-import { synthesizeTTS, fetchAudioFiles as fetchAudioFilesAPI, deleteAudioFile } from './service/api/tts'
+import { useAudioLibraryState, useAudioLibraryDispatch } from './context/AudioLibraryContext'
+import { synthesizeTTS, deleteAudioFile } from './service/api/tts'
 import './App.css'
 
 const App = () => {
-  const [audioFiles, setAudioFiles] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [selectedFile, setSelectedFile] = useState(null)
-  const [isSynthesizing, setIsSynthesizing] = useState(false)
-  const [ttsJsonData, setTtsJsonData] = useState(null)
-  const [currentlyPlaying, setCurrentlyPlaying] = useState(null)
-  const pauseCallbackRef = React.useRef(null) // To store the pause function from AudioPlayer
-
-  const fileTree = useMemo(() => buildFileTree(audioFiles), [audioFiles])
-  const audioUrl = useMemo(() => (selectedFile ? `http://localhost:8081${selectedFile.url}` : null), [selectedFile])
-
+  const {
+    audioFiles,
+    loading,
+    fileTree,
+    selectedFile,
+    isSynthesizing,
+    currentlyPlaying
+  } = useAudioLibraryState()
+  const { dispatch, fetchAudioFiles } = useAudioLibraryDispatch()
   const { showError, showSuccess } = useNotification()
 
-  const fetchAudioFiles = useCallback(async () => {
-    setLoading(true)
-    try {
-      const data = await fetchAudioFilesAPI()
-      setAudioFiles(data)
-    } catch (err) {
-      showError('Error fetching audio files', err.message)
-      console.error('Error fetching audio files:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [showError])
+  const [ttsJsonData, setTtsJsonData] = useState(null)
+  const pauseCallbackRef = useRef(null)
 
-  useEffect(() => {
-    fetchAudioFiles()
-  }, [fetchAudioFiles])
+  const audioUrl = useMemo(() => (selectedFile ? `http://localhost:8081${selectedFile.url}` : null), [selectedFile])
 
   const handleFileSelect = useCallback((fileData) => {
-    setSelectedFile(fileData)
-    setCurrentlyPlaying(fileData.path) // Track currently playing file
-  }, [])
+    dispatch({ type: 'SELECT_FILE', payload: fileData })
+  }, [dispatch])
 
   const handlePlaybackComplete = useCallback(() => {
-    setCurrentlyPlaying(null) // Clear currently playing when playback completes
-  }, [])
+    dispatch({ type: 'SET_CURRENTLY_PLAYING', payload: null })
+  }, [dispatch])
 
-  // Function to toggle the currently playing audio (play/pause)
   const handleToggleCurrent = useCallback(() => {
     if (pauseCallbackRef.current) {
-      // For now, we'll just call the pause function
-      // To properly implement toggle, we need to know if audio is currently playing
-      // This requires more complex state management between components
       pauseCallbackRef.current()
-    } else {
-      // If no pause callback is available, just select the current file again
-      if (selectedFile) {
-        handleFileSelect(selectedFile)
-      }
+    } else if (selectedFile) {
+      handleFileSelect(selectedFile)
     }
   }, [selectedFile, handleFileSelect])
 
   const handleSynthesize = useCallback(
     async (text) => {
-      setIsSynthesizing(true)
+      dispatch({ type: 'SET_SYNTHESIZING', payload: true })
       try {
-        // Use the selected file's path as the speaker audio, or a default if none is selected.
         const speakerAudioPath = selectedFile?.path
-
         const result = await synthesizeTTS(text, speakerAudioPath, null)
-
-        // Immediately select the new file for playback
         if (result.newFile) {
           handleFileSelect(result.newFile)
         }
-
-        // Refresh the file list to show the new file in the sidebar
         await fetchAudioFiles()
-
         showSuccess('Audio synthesized successfully', 'The new audio file has been created.')
       } catch (err) {
         console.error('Error synthesizing audio:', err)
         showError('Error synthesizing audio', err.message)
       } finally {
-        setIsSynthesizing(false)
+        dispatch({ type: 'SET_SYNTHESIZING', payload: false })
       }
     },
-    [fetchAudioFiles, selectedFile, showError, showSuccess, handleFileSelect]
-  ) // Add selectedFile to the dependency array
+    [dispatch, fetchAudioFiles, selectedFile, showError, showSuccess, handleFileSelect]
+  )
 
   const handleDeleteFile = useCallback(
     async (delname) => {
-      console.log({ delname })
       try {
         await deleteAudioFile(delname)
-
-        // Remove the file from the local state instead of re-fetching
-        const new_audios = audioFiles.filter((file) => file.name !== delname)
-        setAudioFiles(new_audios)
-
-        // If the deleted file was currently selected, clear the selection
-        if (selectedFile && selectedFile.path === delname) {
-          setSelectedFile(null)
-        }
-
+        dispatch({ type: 'DELETE_FILE_SUCCESS', payload: delname })
         showSuccess('File deleted successfully', 'The file has been removed from the library.')
       } catch (err) {
         console.error('Error deleting file:', err)
         showError('Error deleting file', err.message)
       }
     },
-    [audioFiles, selectedFile, showError, showSuccess]
+    [dispatch, showError, showSuccess]
   )
 
   const handleJsonData = useCallback((jsonData) => {
@@ -142,7 +103,7 @@ const App = () => {
           onDeleteFile={handleDeleteFile}
           onSynthesize={handleSynthesize}
           isSynthesizing={isSynthesizing}
-          selectedFile={selectedFile} // Pass selectedFile down
+          selectedFile={selectedFile}
           currentlyPlaying={currentlyPlaying}
           onPauseCurrent={handleToggleCurrent}
         />
@@ -152,18 +113,16 @@ const App = () => {
           <div className="flex-1">
             <TTSList jsonData={ttsJsonData} audioFiles={audioFiles} onSynthesizeComplete={handleTTSListSynthesize} />
           </div>
-          {
-            <div style={{ height: 0 }}>
-              <AudioPlayer
-                selectedFile={selectedFile}
-                audioUrl={audioUrl}
-                onPlaybackComplete={handlePlaybackComplete}
-                onPauseRequested={(callback) => {
-                  pauseCallbackRef.current = callback
-                }}
-              />
-            </div>
-          }
+          <div style={{ height: 0 }}>
+            <AudioPlayer
+              selectedFile={selectedFile}
+              audioUrl={audioUrl}
+              onPlaybackComplete={handlePlaybackComplete}
+              onPauseRequested={(callback) => {
+                pauseCallbackRef.current = callback
+              }}
+            />
+          </div>
         </div>
       </div>
 
