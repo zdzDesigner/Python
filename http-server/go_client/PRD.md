@@ -295,7 +295,26 @@ speaker_audio_path参数设置为当前tr中的dubbing的值
 - 左侧训练(不用刷新列表)
 在@web/src/components/Sidebar.jsx 组件中TTSSynthesizer训练完成后，
 
+### MD5 音频文件名
+ 在调用 /api/tts 接口，go 服务使用当前收到的   {
+        "text": "需要转换为语音的文本",
+        "speaker_audio_path": "参考音频文件的路径",
+        "output_wav_path": "", // 由后端生成
+        "emotion_text": "情感描述（如：happy, sad, angry）",
+        "emotion_alpha": 0.7, // 情感强度
+        "interval_silence": 500 // 静默间隔（毫秒）
+      }
+  这几个参数通过md5 这几个参数用于生成后的音频名称
 
+
+
+
+### 添加角色配音(弹框)
+在 @/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TTSList.jsx 中的table上方添加一个"角色配音"按钮，点击这按钮打开一个弹框，弹框中的内容是一个列表，列表的每一行分为左右两块，左边显示jsonData数据的角色名称（需要去重），右边是一个select组建，select里面的内容使用当前TTSList的audioFiles参数，最终得到角色名称和音频地址的映射数据，点击确定
+ 后把映射的数据赋值到当前的table音频列中的select组建中
+
+### 批量训练
+在@/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TTSList.jsx 中的“角色配音”按钮右侧添加一个批量训练按钮，点击这个按钮会把当前所有table中的数据逐一调用synthesizeTTS接口用去训练，并且执行训练的当前数 据中的ExperimentOutlined和PlayCircleOutlined 和点击ExperimentOutlined时的效果要保持一致
 
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档

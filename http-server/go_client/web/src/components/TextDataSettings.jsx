@@ -7,6 +7,7 @@ import { useNotification } from '../utils/NotificationContext'
 const { TextArea } = Input
 
 const TextDataSettings = ({ onUploadSuccess, onJsonData }) => {
+  console.log('==============')
   const { showError, showSuccess } = useNotification()
   const [jsonModalVisible, setJsonModalVisible] = useState(false)
   const [jsonInput, setJsonInput] = useState('')

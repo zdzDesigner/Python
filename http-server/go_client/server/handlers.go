@@ -1,13 +1,12 @@
 package main
 
 import (
+	"crypto/md5"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,18 +20,46 @@ func ttsHandler(c *gin.Context) {
 
 	fmt.Printf("Received TTS request: %+v\n", ttsReq)
 
-	// --- New output path generation ---
+	// --- New output path generation using MD5 hash ---
 	outputDir := "output/"
 	if _, err := os.Stat(outputDir); os.IsNotExist(err) {
 		os.Mkdir(outputDir, 0755)
 	}
 
-	speakerBase := strings.TrimSuffix(filepath.Base(ttsReq.SpeakerAudioPath), filepath.Ext(ttsReq.SpeakerAudioPath))
-	rand.Seed(time.Now().UnixNano())
-	randomInt := rand.Intn(100000)
-	newFileName := fmt.Sprintf("%s_%d.wav", speakerBase, randomInt)
+	// Create a string combining all the request parameters for hashing
+	paramsString := fmt.Sprintf("%s|%s|%s|%f|%d", ttsReq.Text, ttsReq.SpeakerAudioPath, ttsReq.EmotionText, ttsReq.EmotionAlpha, ttsReq.IntervalSilence)
+	
+	// Generate MD5 hash of the parameters
+	hash := fmt.Sprintf("%x", md5.Sum([]byte(paramsString)))
+	
+	// Use the hash as the filename to avoid duplicates
+	newFileName := fmt.Sprintf("%s_%s.wav", strings.TrimSuffix(filepath.Base(ttsReq.SpeakerAudioPath), filepath.Ext(ttsReq.SpeakerAudioPath)), hash[:8])
 	ttsReq.OutputWavPath = filepath.Join(outputDir, newFileName)
 	// --- End of new output path generation ---
+
+	// Check if the file already exists to avoid duplicate processing
+	if _, err := os.Stat(ttsReq.OutputWavPath); err == nil {
+		// File already exists, return existing file info
+		fmt.Printf("File already exists: %s, returning existing file\n", ttsReq.OutputWavPath)
+		absPath, err := filepath.Abs(ttsReq.OutputWavPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to get absolute path: %v\n", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not construct file path for response"})
+			return
+		}
+
+		existingFile := FileItem{
+			Name: filepath.ToSlash(ttsReq.OutputWavPath),
+			Path: absPath,
+			URL:  "/api/audio-file/" + filepath.ToSlash(ttsReq.OutputWavPath),
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "success",
+			"newFile": existingFile,
+		})
+		return
+	}
 
 	externalApiURL := "http://127.0.0.1:8800/inference"
 
