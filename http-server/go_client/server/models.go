@@ -15,6 +15,7 @@ type TTSRequest struct {
 	EmotionText      string  `json:"emotion_text,omitempty"`
 	EmotionAlpha     float64 `json:"emotion_alpha,omitempty"`
 	IntervalSilence  int     `json:"interval_silence,omitempty"`
+	Role             string  `json:"role,omitempty"`
 }
 
 type DeleteFileRequest struct {
