@@ -26,6 +26,18 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
 
   const { showError, showSuccess } = useNotification();
 
+  // Add notification function
+  const showNotification = (type, message, description) => {
+    if (type === 'success') {
+      showSuccess(message, description);
+    } else if (type === 'error') {
+      showError(message, description);
+    } else if (type === 'warning') {
+      // Ant Design doesn't have a direct warning method, using showSuccess with a warning title
+      showSuccess(message, description);
+    }
+  };
+
   // Update tableData when jsonData changes
   useEffect(() => {
     const initialData = jsonData ? jsonData.map((item) => ({ 
@@ -78,7 +90,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   }, [])
 
   const handleTrain = async (record) => {
-    // Generate a unique key for the record
+    // Generate a unique key for the record (same as used in batch training)
     const recordKey = `${record.speaker}-${record.content}`;
     
     // Mark this record as currently training
@@ -108,7 +120,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         
         showSuccess('训练成功', '音频文件已生成');
       } else {
-        showSuccess('训练成功', '音频文件已生成');
+        showSuccess('训练成功', '音频文件已 generated');
       }
     } catch (error) {
       console.error('Error during training:', error);
@@ -321,11 +333,82 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     // </Card>
   }
 
+  // Function for batch training all records
+  const handleBatchTrain = async () => {
+    if (!tableData || tableData.length === 0) {
+      showNotification('warning', '警告', '没有数据可训练');
+      return;
+    }
+
+    // Mark all records as training
+    const allRecordKeys = tableData.map(item => `${item.speaker}-${item.content}`);
+    setTrainingRecords(prev => {
+      const newRecords = { ...prev };
+      allRecordKeys.forEach(key => {
+        newRecords[key] = true;
+      });
+      return newRecords;
+    });
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    // Train each record sequentially
+    for (let i = 0; i < tableData.length; i++) {
+      const record = tableData[i];
+      const recordKey = `${record.speaker}-${record.content}`;
+      
+      try {
+        console.log('Batch training with record:', record);
+        const result = await synthesizeTTS(null, null, record);
+
+        // If result contains an output path, save it to the trained records
+        if (result.newFile && result.newFile.path) {
+          setTrainedRecords(prev => ({
+            ...prev,
+            [recordKey]: result.newFile.name
+          }));
+          successCount++;
+        } else if (result.outpath) {
+          setTrainedRecords(prev => ({
+            ...prev,
+            [recordKey]: result.outpath
+          }));
+          successCount++;
+        } else {
+          successCount++;
+        }
+      } catch (error) {
+        console.error('Error during batch training:', error);
+        errorCount++;
+        showError('训练失败', `训练失败: ${record.speaker} - ${error.message}`);
+      } finally {
+        // Remove the training state for this record
+        setTrainingRecords(prev => {
+          const newRecords = { ...prev };
+          delete newRecords[recordKey];
+          return newRecords;
+        });
+      }
+      
+      // Show progress update occasionally
+      if ((i + 1) % 5 === 0 || i === tableData.length - 1) {
+        showSuccess('批量训练进度', `已处理: ${i + 1}/${tableData.length} 条记录 (${successCount} 成功, ${errorCount} 失败)`);
+      }
+    }
+    
+    // Show final summary
+    showSuccess('批量训练完成', `总处理: ${tableData.length} 条记录 (${successCount} 成功, ${errorCount} 失败)`);
+  };
+
   return (
     <>
       <div style={{ padding: 10, marginBottom: 10 }}>
         <Button type="primary" onClick={openMappingModal}>
           角色配音
+        </Button>
+        <Button type="primary" style={{ marginLeft: 10 }} onClick={handleBatchTrain}>
+          批量训练
         </Button>
       </div>
       {isMappingModalVisible && (
