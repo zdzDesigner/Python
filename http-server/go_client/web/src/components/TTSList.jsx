@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, memo } from 'react'
 import { Card, Table, Tag, Typography, Select, Button, Space } from 'antd'
 import { PlayCircleOutlined, ExperimentOutlined } from '@ant-design/icons'
 import { audio_text } from '@/assets/audio_text'
@@ -240,4 +240,4 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   )
 }
 
-export default TTSList
+export default memo(TTSList)

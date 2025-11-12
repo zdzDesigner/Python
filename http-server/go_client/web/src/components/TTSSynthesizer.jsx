@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, memo } from 'react'
 
 const TTSSynthesizer = ({ onSynthesize, isSynthesizing, selectedFile }) => {
   const [text, setText] = useState('你好，这是一个在网页上生成的语音。')
@@ -72,4 +72,4 @@ const TTSSynthesizer = ({ onSynthesize, isSynthesizing, selectedFile }) => {
   )
 }
 
-export default TTSSynthesizer
+export default memo(TTSSynthesizer)

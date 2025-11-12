@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, memo } from 'react'
 
 const WelcomeScreen = () => (
   <div className="flex items-center justify-center h-full text-center text-slate-500">
@@ -224,4 +224,4 @@ const AudioPlayer = ({ selectedFile, audioUrl, onPlaybackComplete, onPauseReques
   )
 }
 
-export default AudioPlayer
+export default memo(AudioPlayer)

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, memo } from 'react'
 import { UploadOutlined, EditOutlined } from '@ant-design/icons'
 import { Space, Button, Upload, Modal, Input, message } from 'antd'
 import { useNotification } from '../utils/NotificationContext'
@@ -100,4 +100,4 @@ const TextDataSettings = ({ onUploadSuccess, onJsonData }) => {
   )
 }
 
-export default TextDataSettings
+export default memo(TextDataSettings)

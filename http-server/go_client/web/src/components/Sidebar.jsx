@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { memo } from 'react'
 import FileTree from './FileTree'
 import TTSSynthesizer from './TTSSynthesizer' // Import the new component
 
@@ -33,4 +33,4 @@ const Sidebar = ({ audioFilesCount, loading, fileTree, onSelectFile, onDeleteFil
   )
 }
 
-export default Sidebar
+export default memo(Sidebar)

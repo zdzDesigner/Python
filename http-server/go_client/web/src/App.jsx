@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import TextDataSettings from './components/TextDataSettings'
 import TTSList from './components/TTSList'
 import Sidebar from './components/Sidebar'
@@ -12,13 +12,14 @@ import './App.css'
 const App = () => {
   const [audioFiles, setAudioFiles] = useState([])
   const [loading, setLoading] = useState(true)
-  const [fileTree, setFileTree] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
-  const [audioUrl, setAudioUrl] = useState(null)
   const [isSynthesizing, setIsSynthesizing] = useState(false)
   const [ttsJsonData, setTtsJsonData] = useState(null)
   const [currentlyPlaying, setCurrentlyPlaying] = useState(null)
   const pauseCallbackRef = React.useRef(null) // To store the pause function from AudioPlayer
+
+  const fileTree = useMemo(() => buildFileTree(audioFiles), [audioFiles])
+  const audioUrl = useMemo(() => (selectedFile ? `http://localhost:8081${selectedFile.url}` : null), [selectedFile])
 
   const { showError, showSuccess } = useNotification()
 
@@ -27,7 +28,6 @@ const App = () => {
     try {
       const data = await fetchAudioFilesAPI()
       setAudioFiles(data)
-      setFileTree(buildFileTree(data))
     } catch (err) {
       showError('Error fetching audio files', err.message)
       console.error('Error fetching audio files:', err)
@@ -40,18 +40,17 @@ const App = () => {
     fetchAudioFiles()
   }, [fetchAudioFiles])
 
-  const handleFileSelect = (fileData) => {
+  const handleFileSelect = useCallback((fileData) => {
     setSelectedFile(fileData)
-    setAudioUrl(`http://localhost:8081${fileData.url}`)
     setCurrentlyPlaying(fileData.path) // Track currently playing file
-  }
+  }, [])
 
-  const handlePlaybackComplete = () => {
+  const handlePlaybackComplete = useCallback(() => {
     setCurrentlyPlaying(null) // Clear currently playing when playback completes
-  }
+  }, [])
 
   // Function to toggle the currently playing audio (play/pause)
-  const handleToggleCurrent = () => {
+  const handleToggleCurrent = useCallback(() => {
     if (pauseCallbackRef.current) {
       // For now, we'll just call the pause function
       // To properly implement toggle, we need to know if audio is currently playing
@@ -63,7 +62,7 @@ const App = () => {
         handleFileSelect(selectedFile)
       }
     }
-  }
+  }, [selectedFile, handleFileSelect])
 
   const handleSynthesize = useCallback(
     async (text) => {
@@ -90,35 +89,36 @@ const App = () => {
         setIsSynthesizing(false)
       }
     },
-    [fetchAudioFiles, selectedFile, showError, showSuccess]
+    [fetchAudioFiles, selectedFile, showError, showSuccess, handleFileSelect]
   ) // Add selectedFile to the dependency array
 
-  const handleDeleteFile = async (delname) => {
-    console.log({ delname })
-    try {
-      await deleteAudioFile(delname)
+  const handleDeleteFile = useCallback(
+    async (delname) => {
+      console.log({ delname })
+      try {
+        await deleteAudioFile(delname)
 
-      // Remove the file from the local state instead of re-fetching
-      const new_audios = audioFiles.filter((file) => file.name !== delname)
-      setAudioFiles(new_audios)
-      setFileTree(buildFileTree(new_audios))
+        // Remove the file from the local state instead of re-fetching
+        const new_audios = audioFiles.filter((file) => file.name !== delname)
+        setAudioFiles(new_audios)
 
-      // If the deleted file was currently selected, clear the selection
-      if (selectedFile && selectedFile.path === delname) {
-        setSelectedFile(null)
-        setAudioUrl(null)
+        // If the deleted file was currently selected, clear the selection
+        if (selectedFile && selectedFile.path === delname) {
+          setSelectedFile(null)
+        }
+
+        showSuccess('File deleted successfully', 'The file has been removed from the library.')
+      } catch (err) {
+        console.error('Error deleting file:', err)
+        showError('Error deleting file', err.message)
       }
+    },
+    [audioFiles, selectedFile, showError, showSuccess]
+  )
 
-      showSuccess('File deleted successfully', 'The file has been removed from the library.')
-    } catch (err) {
-      console.error('Error deleting file:', err)
-      showError('Error deleting file', err.message)
-    }
-  }
-
-  const handleJsonData = (jsonData) => {
+  const handleJsonData = useCallback((jsonData) => {
     setTtsJsonData(jsonData)
-  }
+  }, [])
 
   const handleTTSListSynthesize = useCallback(
     async (synthesizedFile) => {
