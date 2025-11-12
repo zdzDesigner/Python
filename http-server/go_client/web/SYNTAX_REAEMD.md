@@ -47,6 +47,32 @@ const handleClick = useCallback(() => {
 ```
 
 ## 3. useCallback 的依赖管理
+- 确保函数使用最新的状态和函数引用
+- 避免陈旧闭包问题
+- 保持数据一致性
+
+useCallback 的关键内部实现可以理解为一个带有`缓存`和`依赖检查`的函数返回机制。
+  我们可以把它想象成 React 在你的组件背后维护了一个小储藏室。
+  当你这样写代码时：
+   const myFn = useCallback(inlineFn, dependencies);
+
+  在组件的每一次渲染中，React 都会执行以下步骤：
+
+   1. 找到储藏室：React 找到专门为这个 useCallback 开辟的存储空间。这个空间里放着两样东西：
+       * 上一次缓存的函数 (previousFn)
+       * 上一次的依赖数组 (previousDeps)
+
+   2. 进行比较：React 会拿这一次新传入的 `dependencies` 和储藏室里上一次的 `previousDeps` 进行逐项浅比较（使用
+      Object.is，基本等同于 ===）。
+
+   3. 做出决策：
+       * 如果依赖没有变：比较结果是 true（例如，[] 和 [] 比较，或者 [1, 'a'] 和 [1, 'a'] 比较）。React
+         会认为函数逻辑没有变化，不需要更新。它会忽略你这次新定义的 inlineFn，直接从储藏室里拿出 previousFn 并返回它。
+       * 如果依赖变了：比较结果是 false（例如，[1] 和 [2] 比较）。React
+         认为函数的依赖环境发生了变化，之前缓存的函数可能已经“过时”了。于是它会：
+           1. 将你这次新定义的 `inlineFn` 存入储藏室，作为新的 previousFn。
+           2. 将这次的 `dependencies` 也存入储藏室，作为新的 previousDeps。
+           3. 最后，返回这个全新的 `inlineFn`。
 
 ### 依赖数组的作用：
 ```javascript
@@ -60,9 +86,12 @@ const handleSynthesize = useCallback(
 );
 ```
 
-- 确保函数使用最新的状态和函数引用
-- 避免陈旧闭包问题
-- 保持数据一致性
+
+
+
+
+
+
 
 ## 4. React.memo 优化机制
 
