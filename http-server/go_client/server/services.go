@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/md5"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -153,4 +154,17 @@ func GetAudioPath() string {
 		audioPath = "/home/zdz/Documents/Try/TTS/audio/audiobook_manager/wav"
 	}
 	return audioPath
+}
+
+// GenerateTTSFilename creates a unique filename based on the TTS request parameters.
+func GenerateTTSFilename(request TTSRequest) string {
+	// Create a string combining all the request parameters for hashing
+	paramsString := fmt.Sprintf("%s|%s|%s|%f|%d", request.Role, request.Text, request.EmotionText, request.EmotionAlpha, request.IntervalSilence)
+
+	// Generate MD5 hash of the parameters
+	hash := fmt.Sprintf("%x", md5.Sum([]byte(paramsString)))
+
+	// Use the hash as the filename to avoid duplicates
+	// speakerBase := strings.TrimSuffix(filepath.Base(request.SpeakerAudioPath), filepath.Ext(request.SpeakerAudioPath))
+	return fmt.Sprintf("%s_%s.wav", "1", hash[:8])
 }

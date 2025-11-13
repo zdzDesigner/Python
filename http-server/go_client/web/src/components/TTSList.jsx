@@ -3,7 +3,7 @@ import { Card, Table, Tag, Typography, Select, Button, Space, Modal } from 'antd
 
 import { PlayCircleOutlined, ExperimentOutlined } from '@ant-design/icons'
 import { audio_text } from '@/assets/audio_text'
-import { synthesizeTTS } from '@/service/api/tts'
+import { synthesizeTTS, checkTTSExists } from '@/service/api/tts'
 import { useNotification } from '@/utils/NotificationContext'
 
 const { Text } = Typography
@@ -51,19 +51,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   // State for table data
   const [tableData, setTableData] = useState([])
 
-  const { showError, showSuccess } = useNotification()
-
-  // Add notification function
-  const showNotification = (type, message, description) => {
-    if (type === 'success') {
-      showSuccess(message, description)
-    } else if (type === 'error') {
-      showError(message, description)
-    } else if (type === 'warning') {
-      // Ant Design doesn't have a direct warning method, using showSuccess with a warning title
-      showSuccess(message, description)
-    }
-  }
+  const { showError, showSuccess, showWarning } = useNotification()
 
   // Update tableData when jsonData changes
   useEffect(() => {
@@ -130,7 +118,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         console.log('Training with record:', record)
 
         // Call synthesizeTTS with the record data
-        const result = await synthesizeTTS(null, null, record)
+        const result = await synthesizeTTS(record)
 
         // If result contains an output path, save it to the trained records
         if (result.newFile && result.newFile.path) {
@@ -168,26 +156,41 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   )
 
   const handlePlay = useCallback(
-    (record) => {
+    async (record) => {
       const recordKey = `${record.speaker}-${record.content}`
-      const outpath = trainedRecords[recordKey]
+      let outpath = trainedRecords[recordKey]
 
-      console.log({ record, outpath })
-      if (outpath) {
-        // Create a full URL for the audio file
-        const audioUrl = `http://localhost:8081/api/audio-file${outpath.startsWith('/') ? outpath : '/' + outpath}`
-
-        // Create an audio element and play it
+      const playAudio = (path) => {
+        const audioUrl = `http://localhost:8081/api/audio-file${path.startsWith('/') ? path : '/' + path}`
         const audio = new Audio(audioUrl)
         audio.play().catch((error) => {
           console.error('Error playing audio:', error)
           showError('播放失败', error.message)
         })
+      }
+
+      if (outpath) {
+        playAudio(outpath)
       } else {
-        showError('播放失败', '音频文件未生成，请先训练此条数据')
+        try {
+          const response = await checkTTSExists(record)
+          if (response.exists) {
+            outpath = response.outpath
+            setTrainedRecords((prev) => ({
+              ...prev,
+              [recordKey]: outpath
+            }))
+            playAudio(outpath)
+          } else {
+            showError('播放失败', '音频文件未生成，请先训练此条数据')
+          }
+        } catch (error) {
+          console.error('Error checking TTS existence:', error)
+          showError('播放失败', '检查音频文件时出错')
+        }
       }
     },
-    [showError, trainedRecords]
+    [showError, trainedRecords, checkTTSExists]
   )
 
   // Memoize table audio files options to prevent re-renders
@@ -350,7 +353,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   // Function for batch training all records
   const handleBatchTrain = async () => {
     if (!tableData || tableData.length === 0) {
-      showNotification('warning', '警告', '没有数据可训练')
+      showWarning('警告', '没有数据可训练')
       return
     }
 
@@ -374,7 +377,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
 
       try {
         console.log('Batch training with record:', record)
-        const result = await synthesizeTTS(null, null, record)
+        const result = await synthesizeTTS(record)
 
         // If result contains an output path, save it to the trained records
         if (result.newFile && result.newFile.path) {

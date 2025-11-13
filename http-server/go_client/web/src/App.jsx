@@ -10,14 +10,7 @@ import { synthesizeTTS, deleteAudioFile } from './service/api/tts'
 import './App.css'
 
 const App = () => {
-  const {
-    audioFiles,
-    loading,
-    fileTree,
-    selectedFile,
-    isSynthesizing,
-    currentlyPlaying
-  } = useAudioLibraryState()
+  const { audioFiles, loading, fileTree, selectedFile, isSynthesizing, currentlyPlaying } = useAudioLibraryState()
   const { dispatch, fetchAudioFiles } = useAudioLibraryDispatch()
   const { showError, showSuccess } = useNotification()
 
@@ -26,9 +19,12 @@ const App = () => {
 
   const audioUrl = useMemo(() => (selectedFile ? `http://localhost:8081${selectedFile.url}` : null), [selectedFile])
 
-  const handleFileSelect = useCallback((fileData) => {
-    dispatch({ type: 'SELECT_FILE', payload: fileData })
-  }, [dispatch])
+  const handleFileSelect = useCallback(
+    (fileData) => {
+      dispatch({ type: 'SELECT_FILE', payload: fileData })
+    },
+    [dispatch]
+  )
 
   const handlePlaybackComplete = useCallback(() => {
     dispatch({ type: 'SET_CURRENTLY_PLAYING', payload: null })
@@ -47,7 +43,7 @@ const App = () => {
       dispatch({ type: 'SET_SYNTHESIZING', payload: true })
       try {
         const speakerAudioPath = selectedFile?.path
-        const result = await synthesizeTTS(text, speakerAudioPath, null)
+        const result = await synthesizeTTS({ content: text, speaker: '', dubbing: speakerAudioPath })
         if (result.newFile) {
           handleFileSelect(result.newFile)
         }

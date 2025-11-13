@@ -12,30 +12,20 @@ const API_BASE_URL = 'http://localhost:8081'
  * @param {Object} ttsData - TTS data object with speaker, content, tone, intensity, delay (when called from TTSList.jsx)
  * @returns {Promise<Object>} - The API response containing the synthesized audio information
  */
-export const synthesizeTTS = async (text, speakerAudioPath = null, ttsData = null) => {
-  let requestBody;
-
-  if (ttsData) {
-    // Called from TTSList with full record data
-    requestBody = {
-      text: ttsData.content,
-      speaker_audio_path: ttsData.dubbing,
-      output_wav_path: '', // The backend will generate the path
-      emotion_text: ttsData.tone,
-      emotion_alpha: ttsData.intensity,
-      interval_silence: ttsData.delay
-    };
-  } else {
-    // Called from App.jsx with text and speakerAudioPath
-    requestBody = {
-      text: text,
-      speaker_audio_path: speakerAudioPath,
-      output_wav_path: '', // The backend will generate the path
-      emotion_text: 'default',
-      emotion_alpha: 0.7,
-      interval_silence: 500
-    };
+export const synthesizeTTS = async (record) => {
+  const payload = {
+    text: record.content,
+    role: record.speaker,
+    speaker_audio_path: record.dubbing,
+    emotion_text: record.emotion || null,
+    emotion_alpha: record.intensity || 0,
+    interval_silence: record.delay || 0
   }
+
+  // Filter out null or undefined values
+  const filteredPayload = Object.fromEntries(
+    Object.entries(payload).filter(([_, value]) => value !== null && value !== undefined)
+  )
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/tts`, {
@@ -43,18 +33,16 @@ export const synthesizeTTS = async (text, speakerAudioPath = null, ttsData = nul
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(filteredPayload)
     })
 
     if (!response.ok) {
-      const errorBody = await response.text()
-      throw new Error(`TTS API error! status: ${response.status}, body: ${errorBody}`)
+      throw new Error(`TTS API error! status: ${response.status}`)
     }
 
-    const result = await response.json()
-    return result
+    return await response.json()
   } catch (error) {
-    console.error('Error synthesizing audio:', error)
+    console.error('Error synthesizing TTS:', error)
     throw error
   }
 }
@@ -98,7 +86,45 @@ export const deleteAudioFile = async (filePath) => {
 
     return await response.json()
   } catch (error) {
-    console.error('Error deleting file:', error)
+    throw error
+  }
+}
+
+/**
+ * Check if a synthesized audio file already exists on the server
+ * @param {Object} record - The TTS data record
+ * @returns {Promise<Object>} - API response with `exists` and `outpath`
+ */
+export const checkTTSExists = async (record) => {
+  const payload = {
+    text: record.content,
+    role: record.speaker,
+    speaker_audio_path: record.dubbing,
+    emotion_text: record.emotion || null,
+    emotion_alpha: record.intensity || 0,
+    interval_silence: record.delay || 0
+  }
+
+  const filteredPayload = Object.fromEntries(
+    Object.entries(payload).filter(([_, value]) => value !== null && value !== undefined)
+  )
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tts/check`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(filteredPayload)
+    })
+
+    if (!response.ok) {
+      throw new Error(`TTS check API error! status: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error checking TTS existence:', error)
     throw error
   }
 }

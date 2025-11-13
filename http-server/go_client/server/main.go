@@ -25,6 +25,7 @@ func main() {
 		api.GET("/audio-files", audioFilesHandler)
 		api.GET("/audio-file/*path", audioFileHandler)
 		api.POST("/tts", ttsHandler)
+		api.POST("/tts/check", checkTTSExistsHandler)
 		api.DELETE("/delete-file", deleteAudioFileHandler)
 	}
 

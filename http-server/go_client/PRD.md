@@ -316,5 +316,16 @@ speaker_audio_path参数设置为当前tr中的dubbing的值
 ### 批量训练
 在@/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TTSList.jsx 中的“角色配音”按钮右侧添加一个批量训练按钮，点击这个按钮会把当前所有table中的数据逐一调用synthesizeTTS接口用去训练，并且执行训练的当前数 据中的ExperimentOutlined和PlayCircleOutlined 和点击ExperimentOutlined时的效果要保持一致
 
+
+
+
+
+
+
+### 点击播放逻辑(不存在outpath)
+在@/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TTSList.jsx  中TTSTable组件里如何点击 PlayCircleOutlined 按钮, 在执行 handlePlay 前如果没有 record中没有outpath ,则根据当前的record 参数请求go 服务接口，类似/home/zdz/Documents/Try/Python/course/http-server/go_client/server/handlers.go  synthesizeTTS接口中的md5(应该抽象出来), 通过参数的md5来获取本地outpath目录下是否有该文件，有侧返回outpath参数并赋值给web中的record，然后执行handlePlay函数
+
+
+
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档
