@@ -17,15 +17,13 @@ export const synthesizeTTS = async (record) => {
     text: record.content,
     role: record.speaker,
     speaker_audio_path: record.dubbing,
-    emotion_text: record.emotion || null,
+    emotion_text: record.tone || record.emotion || null,
     emotion_alpha: record.intensity || 0,
     interval_silence: record.delay || 0
   }
 
   // Filter out null or undefined values
-  const filteredPayload = Object.fromEntries(
-    Object.entries(payload).filter(([_, value]) => value !== null && value !== undefined)
-  )
+  const filteredPayload = Object.fromEntries(Object.entries(payload).filter(([_, value]) => value !== null && value !== undefined))
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/tts`, {
@@ -105,9 +103,7 @@ export const checkTTSExists = async (record) => {
     interval_silence: record.delay || 0
   }
 
-  const filteredPayload = Object.fromEntries(
-    Object.entries(payload).filter(([_, value]) => value !== null && value !== undefined)
-  )
+  const filteredPayload = Object.fromEntries(Object.entries(payload).filter(([_, value]) => value !== null && value !== undefined))
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/tts/check`, {
