@@ -324,8 +324,27 @@ speaker_audio_path参数设置为当前tr中的dubbing的值
 
 ### 点击播放逻辑(不存在outpath)
 在@/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TTSList.jsx  中TTSTable组件里如何点击 PlayCircleOutlined 按钮, 在执行 handlePlay 前如果没有 record中没有outpath ,则根据当前的record 参数请求go 服务接口，类似/home/zdz/Documents/Try/Python/course/http-server/go_client/server/handlers.go  synthesizeTTS接口中的md5(应该抽象出来), 通过参数的md5来获取本地outpath目录下是否有该文件，有侧返回outpath参数并赋值给web中的record，然后执行handlePlay函数
+```md
+1. 当前的 ttsHandler包含了文件名生成（MD5）、文件存在性检查和语音合成的所有逻辑。我们的目标是将其中的文件名生成和检查逻辑提取出来，创建一个新的、独立的"check" 接口。
+
+2. 现在，我需要为这个新函数添加 crypto/md5 和 path/filepath 的导入。同时，我将把 handlers.go中生成文件名的逻辑替换为对这个新函数的调用，并创建新的 checkTTSExistsHandler 处理器。
+
+3. 接下来，我将修改 handlers.go：
+   1. 使用新的 GenerateTTSFilename 函数。
+   2. 创建 checkTTSExistsHandler。
+   3. 从 ttsHandler 中移除旧的 MD5 逻辑。
+
+✦ 拿到 main.go 内容了，现在添加 checkTTSExistsHandler 的新路由。
+
+✦ 后端完工。已重构文件名生成、创建文件存在性检查处理器，并注册了新路由。现在转到前端：修改 tts.js 添加 checkTTSExists 函数，然后更新TTSList.jsx 的 handlePlay 以在未找到本地音频时调用该函数。先从 tts.js 开始。
+
+```
 
 
+
+
+### 可编辑table
+ @/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TTSList.jsx  TTSTable 组件点击 "角色", "文本内容", "情感","情感比重","延迟" 均可以编辑
 
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档
