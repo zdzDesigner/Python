@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react'
-import { Card, Table, Tag, Typography, Select, Button, Space, Modal } from 'antd'
+import { Card, Table, Tag, Typography, Select, Button, Space, Modal, Input, InputNumber } from 'antd'
 
 import { PlayCircleOutlined, ExperimentOutlined } from '@ant-design/icons'
 import { audio_text } from '@/assets/audio_text'
@@ -37,6 +37,148 @@ const MemoizedTableSelect = memo(({ recordKey, value, onChange, options }) => {
 })
 MemoizedTableSelect.displayName = 'MemoizedTableSelect'
 
+const EditableCell = memo(({ record, dataIndex, title, value, onUpdate, type = 'text', options = null, min = null, max = null, recordKey }) => {
+  const [editing, setEditing] = useState(false);
+  const [tempValue, setTempValue] = useState(value);
+
+  const recordKeyInternal = recordKey || `${record.speaker}-${record.content}`;
+
+  const handleChange = (newValue) => {
+    setTempValue(newValue);
+  };
+
+  const handleSave = () => {
+    // For InputNumber, the value is already a number or null
+    if (type === 'number' && tempValue !== null && tempValue !== '') {
+      if (min !== null && tempValue < min) return;
+      if (max !== null && tempValue > max) return;
+    }
+    
+    onUpdate(recordKeyInternal, dataIndex, tempValue);
+    setEditing(false);
+  };
+
+  const handleCancel = () => {
+    setTempValue(value); // Reset to original value
+    setEditing(false);
+  };
+
+  const handleCellClick = (e) => {
+    // Prevent editing when clicking on input elements directly
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') {
+      setEditing(true);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSave();
+      e.stopPropagation();
+    } else if (e.key === 'Escape') {
+      handleCancel();
+      e.stopPropagation();
+    }
+  };
+
+  // Render the static content by default, and the input when editing
+  if (!editing) {
+    // Default display for different data types
+    switch (dataIndex) {
+      case 'speaker':
+        return (
+          <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
+            <Text strong style={{ display: 'block' }}>{value || 'N/A'}</Text>
+          </div>
+        );
+      case 'content':
+        return (
+          <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
+            {value || 'N/A'}
+          </div>
+        );
+      case 'tone':
+        const toneColors = {
+          neutral: 'default',
+          happy: 'green',
+          sad: 'blue',
+          angry: 'red',
+          excited: 'volcano',
+          calm: 'geekblue'
+        };
+        const color = toneColors[value] || 'default';
+        return (
+          <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
+            <Tag color={color}>{value || 'N/A'}</Tag>
+          </div>
+        );
+      case 'intensity':
+        return (
+          <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
+            <Tag color="orange">{value || 0}</Tag>
+          </div>
+        );
+      case 'delay':
+        return (
+          <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
+            {`${value || 0}ms`}
+          </div>
+        );
+      default:
+        return (
+          <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
+            {value || 'N/A'}
+          </div>
+        );
+    }
+  }
+
+  switch (type) {
+    case 'select':
+      return (
+        <Select 
+          style={{ width: '100%' }} 
+          value={tempValue} 
+          onChange={handleChange} 
+          onPressEnter={handleSave}
+          onBlur={handleSave}
+          virtual
+          autoFocus
+        >
+          {options}
+        </Select>
+      );
+    case 'number':
+      return (
+        <InputNumber 
+          style={{ width: '100%' }} 
+          value={tempValue} 
+          onChange={handleChange}
+          min={min}
+          max={max}
+          precision={2}
+          onPressEnter={handleSave}
+          onBlur={handleSave}
+          onKeyDown={handleKeyDown}
+          autoFocus
+        />
+      );
+    case 'text':
+    default:
+      return (
+        <Input
+          value={tempValue}
+          onChange={(e) => handleChange(e.target.value)}
+          onPressEnter={handleSave}
+          onBlur={handleSave}
+          onKeyDown={handleKeyDown}
+          autoFocus
+        />
+      );
+  }
+})
+
+EditableCell.displayName = 'EditableCell'
+
 const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   // State to store the table height
   const [tableHeight, setTableHeight] = useState('calc(100vh - 200px)')
@@ -73,19 +215,9 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
 
   // console.log({jsonData})
 
-  const renderToneTag = (tone) => {
-    const toneColors = {
-      neutral: 'default',
-      happy: 'green',
-      sad: 'blue',
-      angry: 'red',
-      excited: 'volcano',
-      calm: 'geekblue'
-    }
 
-    const color = toneColors[tone] || 'default'
-    return <Tag color={color}>{tone || 'N/A'}</Tag>
-  }
+
+
 
   // Update table height when window is resized
   useEffect(() => {
@@ -215,6 +347,18 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     })
   }, [])
 
+  // Function to update table data for a specific record field
+  const updateTableData = useCallback((recordKey, field, newValue) => {
+    setTableData((prevData) => {
+      const newData = [...prevData]
+      const index = newData.findIndex((item) => `${item.speaker}-${item.content}` === recordKey)
+      if (index !== -1) {
+        newData[index] = { ...newData[index], [field]: newValue }
+      }
+      return newData
+    })
+  }, [])
+
   const columns = useMemo(
     () => [
       // {
@@ -230,7 +374,20 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         dataIndex: 'speaker',
         key: 'speaker',
         fixed: 'left',
-        render: (speaker) => <Text strong>{speaker || 'N/A'}</Text>
+        render: (text, record) => {
+          const recordKey = `${record.speaker}-${record.content}`;
+          return (
+            <EditableCell
+              record={record}
+              dataIndex="speaker"
+              title="角色"
+              value={text}
+              onUpdate={updateTableData}
+              type="text"
+              recordKey={recordKey}
+            />
+          );
+        }
       },
       {
         title: '配音',
@@ -247,28 +404,84 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         title: '文本内容',
         dataIndex: 'content',
         key: 'content',
-        render: (content) => content || 'N/A'
+        render: (text, record) => {
+          const recordKey = `${record.speaker}-${record.content}`;
+          return (
+            <EditableCell
+              record={record}
+              dataIndex="content"
+              title="文本内容"
+              value={text}
+              onUpdate={updateTableData}
+              type="text"
+              recordKey={recordKey}
+            />
+          );
+        }
       },
       {
         title: '情感',
         width: 160,
         dataIndex: 'tone',
         key: 'tone',
-        render: renderToneTag
+        render: (text, record) => {
+          const recordKey = `${record.speaker}-${record.content}`;
+          return (
+            <EditableCell
+              record={record}
+              dataIndex="tone"
+              title="情感"
+              value={text}
+              onUpdate={updateTableData}
+              type="text"
+              recordKey={recordKey}
+            />
+          );
+        }
       },
       {
         title: '情感比重',
         dataIndex: 'intensity',
         key: 'intensity',
         width: 80,
-        render: (intensity) => <Tag color="orange">{intensity || 0}</Tag>
+        render: (text, record) => {
+          const recordKey = `${record.speaker}-${record.content}`;
+          return (
+            <EditableCell
+              record={record}
+              dataIndex="intensity"
+              title="情感比重"
+              value={text}
+              onUpdate={updateTableData}
+              type="number"
+              min={0}
+              max={10}
+              recordKey={recordKey}
+            />
+          );
+        }
       },
       {
         title: '延迟',
         dataIndex: 'delay',
         key: 'delay',
         width: 100,
-        render: (delay) => `${delay || 0}ms`
+        render: (text, record) => {
+          const recordKey = `${record.speaker}-${record.content}`;
+          return (
+            <EditableCell
+              record={record}
+              dataIndex="delay"
+              title="延迟"
+              value={text}
+              onUpdate={updateTableData}
+              type="number"
+              min={0}
+              max={5000}
+              recordKey={recordKey}
+            />
+          );
+        }
       },
       {
         title: '操作',
@@ -288,7 +501,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         }
       }
     ],
-    [handlePlay, handleTrain, tableAudioFileOptions, trainingRecords, updateTableDataDubbing]
+    [handlePlay, handleTrain, tableAudioFileOptions, trainingRecords, updateTableDataDubbing, updateTableData]
   )
 
   // Memoize the audio files options to prevent unnecessary re-renders

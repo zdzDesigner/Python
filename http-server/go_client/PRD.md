@@ -344,7 +344,7 @@ speaker_audio_path参数设置为当前tr中的dubbing的值
 
 
 ### 可编辑table
- @/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TTSList.jsx  TTSTable 组件点击 "角色", "文本内容", "情感","情感比重","延迟" 均可以编辑
+ @/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TTSList.jsx  TTSTable 组件点击 "角色", "文本内容", "情感","情感比重","延迟" 均可以编辑, 其中"情感比重","延迟"限制为数字
 
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档
