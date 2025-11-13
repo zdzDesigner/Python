@@ -1,0 +1,96 @@
+@import 'tailwindcss';
+
+/*
+ * App.css
+ * This file contains custom styles that complement the Tailwind CSS utility classes.
+ */
+
+/* Apply a base font and background color to the body */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* background-color: #f9fafb;  */
+  background-color: #fff;
+}
+
+/* Ensure the root element takes up the full height */
+#app {
+  height: 100vh;
+}
+
+/* Custom scrollbar for a modern look */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9; /* Lighter track */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #a5b4fc; /* Softer thumb color */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #818cf8; /* Darker on hover */
+}
+
+/* Smooth scrolling for a better user experience */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom focus styles for better accessibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgb(var(--primary-rgb));
+  outline-offset: 2px;
+  border-radius: 4px;
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
+}
+
+/* Style for the audio player */
+audio {
+  filter: invert(0.8) sepia(0.5) saturate(5) hue-rotate(190deg);
+  border-radius: 9999px; /* Rounded player */
+  transition: all 0.3s ease;
+}
+
+audio:hover {
+  filter: invert(0.9) sepia(0.8) saturate(8) hue-rotate(190deg);
+}
+
+:root {
+  --background-start-rgb: 243, 244, 246;
+  --background-end-rgb: 229, 231, 235;
+  --foreground-rgb: 17, 24, 39;
+  --primary-rgb: 79, 70, 229;
+  --primary-hover-rgb: 67, 56, 202;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-start-rgb: 31, 41, 55;
+    --background-end-rgb: 17, 24, 39;
+    --foreground-rgb: 255, 255, 255;
+    --primary-rgb: 99, 102, 241;
+    --primary-hover-rgb: 129, 140, 248;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}

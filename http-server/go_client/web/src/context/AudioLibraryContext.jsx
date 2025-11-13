@@ -85,9 +85,7 @@ export const AudioLibraryProvider = ({ children }) => {
 
   return (
     <AudioLibraryStateContext.Provider value={state}>
-      <AudioLibraryDispatchContext.Provider value={{ dispatch, fetchAudioFiles }}>
-        {children}
-      </AudioLibraryDispatchContext.Provider>
+      <AudioLibraryDispatchContext.Provider value={{ dispatch, fetchAudioFiles }}>{children}</AudioLibraryDispatchContext.Provider>
     </AudioLibraryStateContext.Provider>
   )
 }
