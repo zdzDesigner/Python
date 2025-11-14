@@ -5,6 +5,7 @@ import { PlayCircleOutlined, ExperimentOutlined } from '@ant-design/icons'
 import { audio_text } from '@/assets/audio_text'
 import { synthesizeTTS, checkTTSExists } from '@/service/api/tts'
 import { useNotification } from '@/utils/NotificationContext'
+import BatchTrainingProgress from './BatchTrainingProgress'
 
 const { Text } = Typography
 const { Option } = Select
@@ -192,6 +193,11 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   const [characterMappings, setCharacterMappings] = useState({})
   // State for table data
   const [tableData, setTableData] = useState([])
+  // State for batch training progress
+  const [isBatchTraining, setIsBatchTraining] = useState(false)
+  const [batchProgress, setBatchProgress] = useState(0)
+  const [batchProgressText, setBatchProgressText] = useState('')
+  const [batchAbortController, setBatchAbortController] = useState(null)
 
   const { showError, showSuccess, showWarning } = useNotification()
 
@@ -570,6 +576,14 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
       return
     }
 
+    setIsBatchTraining(true)
+    setBatchProgress(0)
+    setBatchProgressText('准备开始批量训练...')
+    
+    // Create an AbortController for cancellation
+    const abortController = new AbortController()
+    setBatchAbortController(abortController)
+
     // Mark all records as training
     const allRecordKeys = tableData.map((item) => `${item.speaker}-${item.content}`)
     setTrainingRecords((prev) => {
@@ -585,10 +599,17 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
 
     // Train each record sequentially
     for (let i = 0; i < tableData.length; i++) {
+      // Check if cancellation was requested
+      if (abortController.signal.aborted) {
+        setBatchProgressText('训练已被取消')
+        break
+      }
+
       const record = tableData[i]
       const recordKey = `${record.speaker}-${record.content}`
 
       try {
+        setBatchProgressText(`正在训练: ${record.speaker} - ${record.content.substring(0, 20)}${record.content.length > 20 ? '...' : ''}`)
         console.log('Batch training with record:', record)
         const result = await synthesizeTTS(record)
 
@@ -610,6 +631,10 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         }
       } catch (error) {
         console.error('Error during batch training:', error)
+        if (abortController.signal.aborted) {
+          setBatchProgressText('训练已被取消')
+          break
+        }
         errorCount++
         showError('训练失败', `训练失败: ${record.speaker} - ${error.message}`)
       } finally {
@@ -619,16 +644,29 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
           delete newRecords[recordKey]
           return newRecords
         })
+        
+        // Update progress percentage
+        const progress = ((i + 1) / tableData.length) * 100
+        setBatchProgress(progress)
       }
 
-      // Show progress update occasionally
-      if ((i + 1) % 5 === 0 || i === tableData.length - 1) {
-        showSuccess('批量训练进度', `已处理: ${i + 1}/${tableData.length} 条记录 (${successCount} 成功, ${errorCount} 失败)`)
+      // Check again after processing to see if cancellation was requested
+      if (abortController.signal.aborted) {
+        setBatchProgressText('训练已被取消')
+        break
       }
     }
 
-    // Show final summary
-    showSuccess('批量训练完成', `总处理: ${tableData.length} 条记录 (${successCount} 成功, ${errorCount} 失败)`)
+    // Clean up
+    setIsBatchTraining(false)
+    setBatchProgress(0)
+    setBatchProgressText('')
+    setBatchAbortController(null)
+    
+    if (!abortController.signal.aborted) {
+      // Show final summary
+      showSuccess('批量训练完成', `总处理: ${tableData.length} 条记录 (${successCount} 成功, ${errorCount} 失败)`)
+    }
   }
 
   return (
@@ -637,12 +675,28 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         {
           // <Button type="primary" onClick={() => setIsMappingModalVisible(true)}>
         }
-        <Button type="primary" onClick={openMappingModal}>
+        <Button type="primary" onClick={openMappingModal} disabled={isBatchTraining}>
           角色配音
         </Button>
-        <Button type="primary" style={{ marginLeft: 10 }} onClick={handleBatchTrain}>
+        <Button 
+          type="primary" 
+          style={{ marginLeft: 10 }} 
+          onClick={handleBatchTrain} 
+          loading={isBatchTraining}
+          disabled={isBatchTraining}
+        >
           批量训练
         </Button>
+        <BatchTrainingProgress 
+          isVisible={isBatchTraining} 
+          progress={batchProgress} 
+          progressText={batchProgressText} 
+          onCancelTraining={() => {
+            if (batchAbortController) {
+              batchAbortController.abort()
+            }
+          }} 
+        />
       </div>
       {
         <Modal title="角色配音" open={isMappingModalVisible} onOk={handleModalOk} onCancel={handleModalCancel} width={600}>
