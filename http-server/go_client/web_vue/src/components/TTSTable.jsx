@@ -1,5 +1,4 @@
-
-import { h } from 'vue';
+import { h, defineComponent } from 'vue';
 import {
   Table as ATable,
   Tag as ATag,
@@ -11,7 +10,7 @@ import { PlayCircleOutlined, ExperimentOutlined } from '@ant-design/icons-vue';
 
 const ASelectOption = ASelect.Option;
 
-export default {
+export default defineComponent({
   props: {
     tableData: Array,
     columns: Array,
@@ -93,10 +92,10 @@ export default {
                 </ASpace>
               );
             }
-            return record[column.dataIndex];
+            return null;
           },
         }}
       />
     );
   },
-};
+});

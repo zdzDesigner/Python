@@ -1,6 +1,6 @@
-
-import FileTree from './FileTree.jsx';
-import TTSSynthesizer from './TTSSynthesizer.jsx';
+import { onMounted, ref, watch } from "vue"
+import FileTree from "./FileTree.jsx"
+import TTSSynthesizer from "./TTSSynthesizer.jsx"
 
 const LoadingSpinner = {
   template: `
@@ -9,7 +9,7 @@ const LoadingSpinner = {
       <span class="mt-4 text-lg">Loading Library...</span>
     </div>
   `,
-};
+}
 
 export default {
   props: {
@@ -20,8 +20,21 @@ export default {
     selectedFile: Object,
     currentlyPlaying: String,
   },
-  emits: ['selectFile', 'deleteFile', 'synthesize', 'pauseCurrent'],
+  emits: ["selectFile", "deleteFile", "synthesize", "pauseCurrent"],
   setup(props, { emit }) {
+    const filetree_node = ref(null)
+
+    console.log('xxxxx')
+    watch(
+      filetree_node,
+      () => {
+        if (filetree_node.value) {
+          console.log(filetree_node.value.data)
+        }
+      },
+      { immediate: true },
+    ) // immediate: true to run on initial render
+
     return () => (
       <aside class="w-[300px] bg-white/80 backdrop-blur-lg border-r border-slate-200 flex flex-col">
         <div class="flex-1 overflow-y-auto p-2">
@@ -29,20 +42,21 @@ export default {
             <LoadingSpinner />
           ) : (
             <FileTree
+              ref={filetree_node}
               file-tree={props.fileTree}
-              onSelectFile={(event) => emit('selectFile', event)}
-              onDeleteFile={(event) => emit('deleteFile', event)}
+              onSelectFile={(event) => emit("selectFile", event)}
+              onDeleteFile={(event) => emit("deleteFile", event)}
               currently-playing={props.currentlyPlaying}
-              onPauseCurrent={() => emit('pauseCurrent')}
+              onPauseCurrent={() => emit("pauseCurrent")}
             />
           )}
         </div>
         <TTSSynthesizer
-          onSynthesize={(event) => emit('synthesize', event)}
+          onSynthesize={(event) => emit("synthesize", event)}
           is-synthesizing={props.isSynthesizing}
           selected-file={props.selectedFile}
         />
       </aside>
-    );
+    )
   },
-};
+}
