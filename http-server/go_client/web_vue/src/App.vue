@@ -37,10 +37,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
-import TextDataSettings from './components/TextDataSettings.vue'
+import TextDataSettings from './components/TextDataSettings.jsx'
 import TTSList from './components/TTSList.vue'
-import Sidebar from './components/Sidebar.vue'
-import AudioPlayer from './components/AudioPlayer.vue'
+import Sidebar from './components/Sidebar.jsx'
+import AudioPlayer from './components/AudioPlayer.jsx'
 import Footer from './components/Footer.jsx'
 import { useNotification } from './utils/notifications'
 import { useAudioStore } from './stores/audio'
