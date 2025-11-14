@@ -528,7 +528,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     }))
   }, [])
 
-  // Function to handle modal confirmation
+  // 批量设置音色
   const handleModalOk = useCallback(() => {
     // Apply the mappings to the table data
     setTableData((prevData) => {
@@ -569,7 +569,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     // </Card>
   }
 
-  // Function for batch training all records
+  // 批量训练
   const handleBatchTrain = async () => {
     if (!tableData || tableData.length === 0) {
       showWarning('警告', '没有数据可训练')
@@ -584,7 +584,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     const abortController = new AbortController()
     setBatchAbortController(abortController)
 
-    // Mark all records as training
+    // 设置训练状态
     const allRecordKeys = tableData.map((item) => `${item.speaker}-${item.content}`)
     setTrainingRecords((prev) => {
       const newRecords = { ...prev }
@@ -611,7 +611,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
       try {
         setBatchProgressText(`正在训练: ${record.speaker} - ${record.content.substring(0, 20)}${record.content.length > 20 ? '...' : ''}`)
         console.log('Batch training with record:', record)
-        const result = await synthesizeTTS(record)
+        const result = await synthesizeTTS(record, { signal: abortController.signal })
 
         // If result contains an output path, save it to the trained records
         if (result.newFile && result.newFile.path) {
@@ -657,11 +657,16 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
       }
     }
 
-    // Clean up
+    // Clean up - ensure all training records are cleared
     setIsBatchTraining(false)
     setBatchProgress(0)
     setBatchProgressText('')
     setBatchAbortController(null)
+    
+    // Clear all training states to ensure UI consistency after cancellation
+    if (abortController.signal.aborted) {
+      setTrainingRecords({})
+    }
     
     if (!abortController.signal.aborted) {
       // Show final summary

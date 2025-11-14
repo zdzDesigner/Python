@@ -27,6 +27,8 @@ func main() {
 		api.POST("/tts", ttsHandler)
 		api.POST("/tts/check", checkTTSExistsHandler)
 		api.DELETE("/delete-file", deleteAudioFileHandler)
+		api.POST("/remove-special-symbols", removeSpecialSymbolsHandler)
+		api.POST("/sanitize-filenames", sanitizeFilenamesHandler)
 	}
 
 	// Health check route

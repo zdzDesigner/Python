@@ -98,7 +98,7 @@ export const checkTTSExists = async (record) => {
     text: record.content,
     role: record.speaker,
     speaker_audio_path: record.dubbing,
-    emotion_text: record.emotion || null,
+    emotion_text: record.tone || record.emotion || null,
     emotion_alpha: record.intensity || 0,
     interval_silence: record.delay || 0
   }

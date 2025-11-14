@@ -350,6 +350,10 @@ speaker_audio_path参数设置为当前tr中的dubbing的值
 ### 训练进度
 @web/src/components/TTSList.jsx 点击"批量训练" 后, "角色配音"禁用, "批量训练"loadding, "批量训练"的右侧出现当前训练的"进度条", 当关闭进度条时训练中段， "角色配音"和"批量训练"按钮恢复, 当训练完成后"进度条"关闭，"角色配音"和"批量训练"按钮恢复.
 
+### 整理文件名
+@server/services.go
+  的ReadDirectoryRecursive接口中如果文件名出现了RemoveSpecialSymbols接口出现的特殊字符就清除掉并更新文件名称
+
 
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档

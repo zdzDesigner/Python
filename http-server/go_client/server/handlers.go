@@ -21,7 +21,7 @@ func ttsHandler(c *gin.Context) {
 
 	outputDir := "output/"
 	if _, err := os.Stat(outputDir); os.IsNotExist(err) {
-		os.Mkdir(outputDir, 0755)
+		os.Mkdir(outputDir, 0o755)
 	}
 
 	// Use the centralized function to generate the filename
@@ -184,4 +184,49 @@ func deleteAudioFileHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "File deleted successfully"})
+}
+
+func removeSpecialSymbolsHandler(c *gin.Context) {
+	var req struct {
+		Text string `json:"text" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
+		return
+	}
+
+	// _, err := ReadDirectoryRecursivClearUp(req.Text)
+	// if err != nil {
+	// 	c.JSON(http.StatusNotExtended, gin.H{
+	// 		"original_text": req.Text,
+	// 	})
+	// 	return
+	// }
+
+	c.JSON(http.StatusOK, gin.H{
+		"original_text": req.Text,
+	})
+}
+
+func sanitizeFilenamesHandler(c *gin.Context) {
+	var req struct {
+		Directory string `json:"directory" binding:"required"`
+	}
+	
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
+		return
+	}
+
+	if err := SanitizeFilenames(req.Directory); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to sanitize filenames: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"message": "Filenames sanitized successfully",
+		"directory": req.Directory,
+	})
 }
