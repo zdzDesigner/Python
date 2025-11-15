@@ -15,7 +15,6 @@ import (
 func ttsHandler(ctx ginc.Contexter) {
 	var ttsReq TTSRequest
 	if err := ctx.ParseReqbody(&ttsReq); err != nil {
-		// ParseReqbody already handles the error response
 		return
 	}
 
@@ -60,7 +59,6 @@ func ttsHandler(ctx ginc.Contexter) {
 func checkTTSExistsHandler(ctx ginc.Contexter) {
 	var ttsReq TTSRequest
 	if err := ctx.ParseReqbody(&ttsReq); err != nil {
-		// ParseReqbody already handles the error response
 		return
 	}
 
@@ -140,7 +138,6 @@ func audioFileHandler(c *gin.Context) {
 func deleteAudioFileHandler(ctx ginc.Contexter) {
 	var req DeleteFileRequest
 	if err := ctx.ParseReqbody(&req); err != nil {
-		// ParseReqbody already handles the error response
 		return
 	}
 
@@ -175,7 +172,6 @@ func removeSpecialSymbolsHandler(ctx ginc.Contexter) {
 	}
 
 	if err := ctx.ParseReqbody(&req); err != nil {
-		// ParseReqbody already handles the error response
 		return
 	}
 
@@ -193,7 +189,6 @@ func sanitizeFilenamesHandler(ctx ginc.Contexter) {
 	}
 
 	if err := ctx.ParseReqbody(&req); err != nil {
-		// ParseReqbody already handles the error response
 		return
 	}
 
