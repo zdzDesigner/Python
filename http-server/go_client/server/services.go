@@ -31,7 +31,7 @@ func synthesizeSpeech(apiURL string, request TTSRequest) error {
 		}
 	}
 	if request.EmotionAlpha > 0 {
-		if err := writer.WriteField("emo_alpha", fmt.Sprintf("%.2f", request.EmotionAlpha)); err != nil {
+		if err := writer.WriteField("emo_alpha", fmt.Sprintf("%.2f", request.EmotionAlpha/10)); err != nil {
 			return fmt.Errorf("failed to add 'emo_alpha' field: %w", err)
 		}
 	}
@@ -179,13 +179,13 @@ func SanitizeFilenames(rootPath string) error {
 		// Extract base name and sanitize it
 		baseName := strings.TrimSuffix(filepath.Base(relPath), ext)
 		sanitizedBaseName := RemoveSpecialSymbols(baseName)
-		
+
 		// If the filename changed, rename the file
 		if baseName != sanitizedBaseName && sanitizedBaseName != "" {
 			// Check for conflicts and add numbers if needed
 			newPath := filepath.Join(filepath.Dir(path), sanitizedBaseName+ext)
 			counter := 1
-			
+
 			// Check if file already exists and try different names
 			for {
 				if _, err := os.Stat(newPath); os.IsNotExist(err) {
@@ -196,7 +196,7 @@ func SanitizeFilenames(rootPath string) error {
 					filenameWithoutExt := sanitizedBaseName
 					newPath = filepath.Join(filepath.Dir(path), fmt.Sprintf("%s_%d%s", filenameWithoutExt, counter, ext))
 					counter++
-					
+
 					// Safety check to avoid infinite loops
 					if counter > 1000 {
 						fmt.Printf("Too many conflicts for base name %s, skipping rename\n", sanitizedBaseName)
@@ -204,7 +204,7 @@ func SanitizeFilenames(rootPath string) error {
 					}
 				}
 			}
-			
+
 			// Only rename if the new name is different from the old one
 			if path != newPath {
 				err := os.Rename(path, newPath)
@@ -226,7 +226,6 @@ func SanitizeFilenames(rootPath string) error {
 	}
 	return nil
 }
-
 
 // GetAudioPath returns the audio path from environment variable AUDIO_PATH
 // with a fallback to the default path if the environment variable is not set

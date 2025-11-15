@@ -196,16 +196,11 @@ func removeSpecialSymbolsHandler(c *gin.Context) {
 		return
 	}
 
-	// _, err := ReadDirectoryRecursivClearUp(req.Text)
-	// if err != nil {
-	// 	c.JSON(http.StatusNotExtended, gin.H{
-	// 		"original_text": req.Text,
-	// 	})
-	// 	return
-	// }
+	processedText := RemoveSpecialSymbols(req.Text)
 
 	c.JSON(http.StatusOK, gin.H{
 		"original_text": req.Text,
+		"processed_text": processedText,
 	})
 }
 

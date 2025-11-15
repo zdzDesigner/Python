@@ -1,34 +1,43 @@
 # Project Summary
 
 ## Overall Goal
-Implement an optimized Go-based audio server for TTS (Text-to-Speech) requests with intelligent caching using MD5 hash-based filenames to avoid duplicate processing and improve performance.
+Implement and enhance a Go-based HTTP server for TTS (Text-to-Speech) functionality with advanced text processing capabilities, including special character removal and filename sanitization, while maintaining a React-based web frontend with editable table functionality.
 
 ## Key Knowledge
-- Go server runs on port 8081, exposing API routes for TTS, audio files, and file operations
-- Server forwards requests to external TTS API at `http://127.0.0.1:8800/inference`
-- TTS request parameters include: text, speaker_audio_path, emotion_text, emotion_alpha, interval_silence
-- React frontend communicates with the Go server via JSON API calls
-- Output files are stored in `output/` directory with MD5 hash-based filenames
-- MD5 hash is generated using all TTS parameters: `{text}|{speaker_audio_path}|{emotion_text}|{emotion_alpha}|{interval_silence}`
-- File naming format: `{speaker_base}_{hash8}.wav` (e.g., `audio_abcdef12.wav`)
-- Server checks for existing files before processing to avoid duplicate API calls
+- **Technology Stack**: Go server with Gin framework, React frontend with Ant Design components
+- **Project Structure**: Server code in `/server/` directory, React frontend in `/web/` directory
+- **API Endpoints**: 
+  - `/api/audio-files` - list audio files
+  - `/api/tts` - TTS synthesis
+  - `/api/remove-special-symbols` - text processing
+  - `/api/sanitize-filenames` - filename cleanup
+- **Key Functions**: 
+  - `RemoveSpecialSymbols` - removes special characters while preserving commas, periods, ellipses
+  - `ReadDirectoryRecursive` - gets file paths without modification
+  - `SanitizeFilenames` - modifies filenames to remove special characters
+- **Frontend Components**: TTSList component with editable table columns (speaker, content, tone, intensity, delay)
+- **Build Commands**: Server runs on port 8081, client development server
 
 ## Recent Actions
-- [COMPLETED] Modified `handlers.go` to implement MD5 hash-based filename generation
-- [COMPLETED] Added file existence check to avoid duplicate processing
-- [COMPLETED] Removed unused imports (rand, time) and relocated md5 to handlers.go
-- [COMPLETED] Successfully compiled and tested the updated Go server
-- [COMPLETED] Verified that server now uses parameter-based hashing for output filenames
-- [COMPLETED] Confirmed server returns existing file info when duplicate request is detected
+- [DONE] Implemented click-to-edit functionality in TTSList table with proper performance optimization
+- [DONE] Added editable functionality to 5 columns: "角色" (speaker), "文本内容" (content), "情感" (tone), "情感比重" (intensity), "延迟" (delay)
+- [DONE] Added numeric validation for intensity (0-10) and delay (0-5000) columns
+- [DONE] Fixed batch training cancellation to properly clear training states when stopped
+- [DONE] Added `RemoveSpecialSymbols` function that preserves Chinese/English punctuation
+- [DONE] Refactored `ReadDirectoryRecursive` into two separate functions: one for reading paths, one for sanitizing filenames
+- [DONE] Added API endpoint `/api/sanitize-filenames` for filename sanitization
+- [DONE] Improved file conflict handling with counter-based naming when sanitized names collide
 
 ## Current Plan
-- [DONE] Implement MD5 hash-based filename generation for TTS output files
-- [DONE] Add caching mechanism to avoid duplicate TTS API calls
-- [DONE] Test server compilation and functionality
-- [TODO] Start the optimized Go server for production use
-- [TODO] Monitor performance improvements with cached TTS requests
+- [DONE] Implement text processing API for removing special symbols
+- [DONE] Create filename sanitization functionality to clean up files with special characters
+- [DONE] Refactor directory reading logic into separate functions for better separation of concerns
+- [DONE] Add proper error handling and conflict resolution for file renaming
+- [TODO] Test all new API endpoints and frontend functionality
+- [TODO] Ensure proper integration between frontend and the new sanitization features
+- [TODO] Verify the new architecture maintains performance with large audio libraries
 
 ---
 
 ## Summary Metadata
-**Update time**: 2025-11-10T16:10:05.518Z 
+**Update time**: 2025-11-15T07:16:52.857Z 

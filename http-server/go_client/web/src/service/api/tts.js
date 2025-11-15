@@ -124,3 +124,55 @@ export const checkTTSExists = async (record) => {
     throw error
   }
 }
+
+/**
+ * Remove special symbols from text while preserving punctuation
+ * @param {string} text - The text to process
+ * @returns {Promise<Object>} - API response with original and processed text
+ */
+export const removeSpecialSymbols = async (text) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/remove-special-symbols`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ text })
+    })
+
+    if (!response.ok) {
+      throw new Error(`Remove special symbols API error! status: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error removing special symbols:', error)
+    throw error
+  }
+}
+
+/**
+ * Sanitize filenames in a directory by removing special characters
+ * @param {string} directory - The directory path to sanitize
+ * @returns {Promise<Object>} - API response with status message
+ */
+export const sanitizeFilenames = async (directory) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/sanitize-filenames`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ directory })
+    })
+
+    if (!response.ok) {
+      throw new Error(`Sanitize filenames API error! status: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error sanitizing filenames:', error)
+    throw error
+  }
+}
