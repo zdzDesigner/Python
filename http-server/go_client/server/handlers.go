@@ -7,13 +7,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	"go-audio-server/internal/ginc"
+
 	"github.com/gin-gonic/gin"
 )
 
-func ttsHandler(c *gin.Context) {
+func ttsHandler(ctx ginc.Contexter) {
 	var ttsReq TTSRequest
-	if err := c.ShouldBindJSON(&ttsReq); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
+	if err := ctx.ParseReqbody(&ttsReq); err != nil {
+		// ParseReqbody already handles the error response
 		return
 	}
 
@@ -28,41 +30,18 @@ func ttsHandler(c *gin.Context) {
 	newFileName := GenerateTTSFilename(ttsReq)
 	ttsReq.OutputWavPath = filepath.Join(outputDir, newFileName)
 
-	// Check if the file already exists to avoid duplicate processing(not check)
-	// if _, err := os.Stat(ttsReq.OutputWavPath); err == nil {
-	// 	fmt.Printf("File already exists: %s, returning existing file\n", ttsReq.OutputWavPath)
-	// 	absPath, err := filepath.Abs(ttsReq.OutputWavPath)
-	// 	if err != nil {
-	// 		fmt.Fprintf(os.Stderr, "Failed to get absolute path: %v\n", err)
-	// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not construct file path for response"})
-	// 		return
-	// 	}
-	//
-	// 	existingFile := FileItem{
-	// 		Name: filepath.ToSlash(ttsReq.OutputWavPath),
-	// 		Path: absPath,
-	// 		URL:  "/api/audio-file/" + filepath.ToSlash(ttsReq.OutputWavPath),
-	// 	}
-	//
-	// 	c.JSON(http.StatusOK, gin.H{
-	// 		"status":  "success",
-	// 		"newFile": existingFile,
-	// 	})
-	// 	return
-	// }
-
 	externalApiURL := "http://127.0.0.1:8800/inference"
 
 	if err := synthesizeSpeech(externalApiURL, ttsReq); err != nil {
 		fmt.Fprintf(os.Stderr, "TTS Synthesis Error: %v\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to synthesize speech: " + err.Error()})
+		ctx.FailErr(500, "Failed to synthesize speech: " + err.Error())
 		return
 	}
 
 	absPath, err := filepath.Abs(ttsReq.OutputWavPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to get absolute path: %v\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not construct file path for response"})
+		ctx.FailErr(500, "Could not construct file path for response")
 		return
 	}
 
@@ -72,16 +51,16 @@ func ttsHandler(c *gin.Context) {
 		URL:  "/api/audio-file/" + filepath.ToSlash(ttsReq.OutputWavPath),
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	ctx.Success(gin.H{
 		"status":  "success",
 		"newFile": newFile,
 	})
 }
 
-func checkTTSExistsHandler(c *gin.Context) {
+func checkTTSExistsHandler(ctx ginc.Contexter) {
 	var ttsReq TTSRequest
-	if err := c.ShouldBindJSON(&ttsReq); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
+	if err := ctx.ParseReqbody(&ttsReq); err != nil {
+		// ParseReqbody already handles the error response
 		return
 	}
 
@@ -92,20 +71,21 @@ func checkTTSExistsHandler(c *gin.Context) {
 
 	if _, err := os.Stat(filePath); err == nil {
 		// File exists
-		c.JSON(http.StatusOK, gin.H{
+		ctx.Success(gin.H{
 			"exists":  true,
 			"outpath": filepath.ToSlash(filePath),
 		})
 	} else {
 		// File does not exist
-		c.JSON(http.StatusOK, gin.H{
+		ctx.Success(gin.H{
 			"exists":  false,
 			"outpath": "",
 		})
 	}
 }
 
-func audioFilesHandler(c *gin.Context) {
+func audioFilesHandler(ctx ginc.Contexter) {
+	// c := ctx.GinCtx()
 	rootPaths := []string{
 		GetAudioPath(),
 		"output",
@@ -122,7 +102,7 @@ func audioFilesHandler(c *gin.Context) {
 		allFiles = append(allFiles, fileList...)
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	ctx.Success(gin.H{
 		"files": allFiles,
 		"count": len(allFiles),
 	})
@@ -157,71 +137,74 @@ func audioFileHandler(c *gin.Context) {
 	c.File(fullPath)
 }
 
-func deleteAudioFileHandler(c *gin.Context) {
+func deleteAudioFileHandler(ctx ginc.Contexter) {
 	var req DeleteFileRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
+	if err := ctx.ParseReqbody(&req); err != nil {
+		// ParseReqbody already handles the error response
 		return
 	}
 
 	// Security check: only allow deleting files from the 'output' directory
 	if !strings.HasPrefix(req.Path, "output/") {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Permission denied: can only delete files from the output directory"})
+		ctx.FailErr(403, "Permission denied: can only delete files from the output directory")
 		return
 	}
 
 	// Sanitize the path to prevent directory traversal
 	cleanPath := filepath.Clean(req.Path)
 	if strings.Contains(cleanPath, "..") {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file path"})
+		ctx.FailErr(400, "Invalid file path")
 		return
 	}
 
 	if err := os.Remove(cleanPath); err != nil {
 		fmt.Fprintf(os.Stderr, "Error deleting file %s: %v\n", cleanPath, err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete file"})
+		ctx.FailErr(500, "Failed to delete file")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "File deleted successfully"})
+	ctx.Success(gin.H{
+		"status":  "success",
+		"message": "File deleted successfully",
+	})
 }
 
-func removeSpecialSymbolsHandler(c *gin.Context) {
+func removeSpecialSymbolsHandler(ctx ginc.Contexter) {
 	var req struct {
 		Text string `json:"text" binding:"required"`
 	}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
+	if err := ctx.ParseReqbody(&req); err != nil {
+		// ParseReqbody already handles the error response
 		return
 	}
 
 	processedText := RemoveSpecialSymbols(req.Text)
 
-	c.JSON(http.StatusOK, gin.H{
-		"original_text": req.Text,
+	ctx.Success(gin.H{
+		"original_text":  req.Text,
 		"processed_text": processedText,
 	})
 }
 
-func sanitizeFilenamesHandler(c *gin.Context) {
+func sanitizeFilenamesHandler(ctx ginc.Contexter) {
 	var req struct {
 		Directory string `json:"directory" binding:"required"`
 	}
-	
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
+
+	if err := ctx.ParseReqbody(&req); err != nil {
+		// ParseReqbody already handles the error response
 		return
 	}
 
 	if err := SanitizeFilenames(req.Directory); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to sanitize filenames: " + err.Error()})
+		ctx.FailErr(500, "Failed to sanitize filenames: " + err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"status": "success",
-		"message": "Filenames sanitized successfully",
+	ctx.Success(gin.H{
+		"status":    "success",
+		"message":   "Filenames sanitized successfully",
 		"directory": req.Directory,
 	})
 }

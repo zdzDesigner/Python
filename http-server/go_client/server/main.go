@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"go-audio-server/internal/ginc"
 	"net/http"
 	"os"
 
@@ -22,13 +23,13 @@ func main() {
 	// Group API routes
 	api := router.Group("/api")
 	{
-		api.GET("/audio-files", audioFilesHandler)
+		api.GET("/audio-files", ginc.Handler(audioFilesHandler))
 		api.GET("/audio-file/*path", audioFileHandler)
-		api.POST("/tts", ttsHandler)
-		api.POST("/tts/check", checkTTSExistsHandler)
-		api.DELETE("/delete-file", deleteAudioFileHandler)
-		api.POST("/remove-special-symbols", removeSpecialSymbolsHandler)
-		api.POST("/sanitize-filenames", sanitizeFilenamesHandler)
+		api.POST("/tts", ginc.Handler(ttsHandler))
+		api.POST("/tts/check", ginc.Handler(checkTTSExistsHandler))
+		api.DELETE("/delete-file", ginc.Handler(deleteAudioFileHandler))
+		api.POST("/remove-special-symbols", ginc.Handler(removeSpecialSymbolsHandler))
+		api.POST("/sanitize-filenames", ginc.Handler(sanitizeFilenamesHandler))
 	}
 
 	// Health check route
