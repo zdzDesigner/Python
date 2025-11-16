@@ -215,7 +215,7 @@ export const ttsTplSave = async (jsonData) => {
  * @returns {Promise<Object>} - API response with TTS records list and total count
  */
 export const ttsTplList = async (filters = {}) => {
-  const { book_id, section_id, no, page = 1, page_size = 20 } = filters
+  const { book_id, section_id, no, page = 1, page_size = 1000 } = filters
 
   // Build query parameters
   const params = new URLSearchParams()
