@@ -10,7 +10,7 @@ const WelcomeScreen = () => (
   </div>
 )
 
-const Player = ({ selectedFile, audioUrl, onPlaybackComplete, onPauseRequested }) => {
+const Player = ({ selectedFile, audioUrl, onPlaybackComplete, onPauseRequested, end_truncate = 0 }) => {
   const audioRef = useRef(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const isPlayingRef = useRef(isPlaying) // Keep track of current isPlaying value
@@ -63,6 +63,19 @@ const Player = ({ selectedFile, audioUrl, onPlaybackComplete, onPauseRequested }
     const updateProgress = () => {
       if (audio.duration) {
         setProgress((audio.currentTime / audio.duration) * 100)
+        
+        // Check if we're approaching the end and should truncate playback
+        if (end_truncate > 0) {
+          const timeRemaining = (audio.duration - audio.currentTime) * 1000 // Convert to milliseconds
+          if (timeRemaining <= end_truncate && isPlaying) {
+            // Stop playback before reaching the end
+            audio.pause()
+            setIsPlaying(false)
+            isPlayingRef.current = false
+            // Trigger completion callback
+            handlePlaybackComplete()
+          }
+        }
       }
     }
 
@@ -90,7 +103,7 @@ const Player = ({ selectedFile, audioUrl, onPlaybackComplete, onPauseRequested }
       audio.removeEventListener('play', handlePlay)
       audio.removeEventListener('pause', handlePause)
     }
-  }, [])
+  }, [end_truncate])
 
   // When a new audioUrl is provided, reset state and potentially play
   useEffect(() => {
@@ -210,12 +223,12 @@ const Player = ({ selectedFile, audioUrl, onPlaybackComplete, onPauseRequested }
   )
 }
 
-const AudioPlayer = ({ selectedFile, audioUrl, onPlaybackComplete, onPauseRequested }) => {
+const AudioPlayer = ({ selectedFile, audioUrl, onPlaybackComplete, onPauseRequested, end_truncate = 0 }) => {
   return (
     <main className="flex-1 flex flex-col overflow-hidden bg-slate-100/50">
       <div className="flex-1 overflow-y-auto p-6">
         {selectedFile ? (
-          <Player selectedFile={selectedFile} audioUrl={audioUrl} onPlaybackComplete={onPlaybackComplete} onPauseRequested={onPauseRequested} />
+          <Player selectedFile={selectedFile} audioUrl={audioUrl} onPlaybackComplete={onPlaybackComplete} onPauseRequested={onPauseRequested} end_truncate={end_truncate} />
         ) : (
           <WelcomeScreen />
         )}

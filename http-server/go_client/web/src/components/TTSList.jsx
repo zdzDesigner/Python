@@ -308,22 +308,54 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     [showError, showSuccess]
   )
 
+  // Function to play audio with end truncation
+  const playAudio = useCallback((path, truncateMs = 0) => {
+    const audioUrl = `http://localhost:8081/api/audio-file${path.startsWith('/') ? path : '/' + path}`
+    const audio = new Audio(audioUrl)
+    
+    // Start playing the audio
+    const playPromise = audio.play()
+    
+    if (playPromise !== undefined) {
+      playPromise.catch(error => {
+        console.error('Error playing audio:', error)
+        showError('播放失败', error.message)
+      })
+      
+      if (truncateMs > 0) {
+        // Use timeupdate event to monitor playback time
+        const handleTimeUpdate = () => {
+          if (audio.duration) {
+            const timeRemaining = (audio.duration - audio.currentTime) * 1000 // in milliseconds
+            if (timeRemaining <= truncateMs) {
+              audio.pause()
+              // Optionally clean up the event listener
+              audio.removeEventListener('timeupdate', handleTimeUpdate)
+            }
+          }
+        }
+        
+        // Add timeupdate event listener to check timing
+        audio.addEventListener('timeupdate', handleTimeUpdate)
+        
+        // Clean up event listener when audio ends or is paused
+        const cleanup = () => {
+          audio.removeEventListener('timeupdate', handleTimeUpdate)
+        }
+        
+        audio.addEventListener('ended', cleanup)
+        audio.addEventListener('pause', cleanup)
+      }
+    }
+  }, [showError])
+
   const handlePlay = useCallback(
     async (record) => {
       const recordKey = record.id
       let outpath = trainedRecords[record.id]
 
-      const playAudio = (path) => {
-        const audioUrl = `http://localhost:8081/api/audio-file${path.startsWith('/') ? path : '/' + path}`
-        const audio = new Audio(audioUrl)
-        audio.play().catch((error) => {
-          console.error('Error playing audio:', error)
-          showError('播放失败', error.message)
-        })
-      }
-
       if (outpath) {
-        playAudio(outpath)
+        playAudio(outpath, record.truncate || 0)
       } else {
         try {
           const response = await checkTTSExists(record)
@@ -333,7 +365,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
               ...prev,
               [record.id]: outpath
             }))
-            playAudio(outpath)
+            playAudio(outpath, record.truncate || 0)
           } else {
             showError('播放失败', '音频文件未生成，请先训练此条数据')
           }
@@ -343,7 +375,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         }
       }
     },
-    [showError, trainedRecords, checkTTSExists]
+    [showError, trainedRecords, checkTTSExists, playAudio]
   )
 
   // Memoize table audio files options to prevent re-renders

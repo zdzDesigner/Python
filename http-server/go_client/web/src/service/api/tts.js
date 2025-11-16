@@ -31,7 +31,7 @@ export const mapTTSRecord = (record) => ({
  * @param {Object} ttsData - TTS data object with speaker, content, tone, intensity, delay (when called from TTSList.jsx)
  * @returns {Promise<Object>} - The API response containing the synthesized audio information
  */
-export const synthesizeTTS = async (record, { signal }) => {
+export const synthesizeTTS = async (record, { signal } = {}) => {
   const payload = {
     id: record.id,
     text: record.content,
