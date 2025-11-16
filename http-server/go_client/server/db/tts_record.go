@@ -10,11 +10,12 @@ type TTSRecord struct {
 	ID               int       `json:"id"`
 	UserID           int       `json:"user_id"`
 	SectionId        int       `json:"section_id"`
+	No               int       `json:"no"` // No (10*n+n)
 	Text             string    `json:"text"`
 	SpeakerAudioPath string    `json:"speaker_audio_path"`
 	OutputWavPath    string    `json:"output_wav_path"`
 	EmotionText      string    `json:"emotion_text,omitempty"`
-	EmotionAlpha     float64   `json:"emotion_alpha,omitempty"`
+	EmotionAlpha     int       `json:"emotion_alpha,omitempty"` // val/10
 	IntervalSilence  int       `json:"interval_silence,omitempty"`
 	Role             string    `json:"role,omitempty"`
 	Status           string    `json:"status"` // pending, success, error
@@ -29,6 +30,7 @@ func (t *TTSRecord) Count() int        { return sqlite.DB(t).Count() }
 func (t *TTSRecord) Del(val map[string]any) error {
 	return sqlite.DB(t).Del(val)
 }
+
 func (t *TTSRecord) Update(w map[string]any, keys []string) error {
 	return sqlite.DB(t).Where(w).Update(keys...)
 }

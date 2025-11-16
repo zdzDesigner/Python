@@ -34,7 +34,7 @@ func ttsHandler(ctx ginc.Contexter) {
 
 	if err := synthesizeSpeech(externalApiURL, ttsReq); err != nil {
 		fmt.Fprintf(os.Stderr, "TTS Synthesis Error: %v\n", err)
-		ctx.FailErr(500, "Failed to synthesize speech: " + err.Error())
+		ctx.FailErr(500, "Failed to synthesize speech: "+err.Error())
 		return
 	}
 
@@ -194,7 +194,7 @@ func sanitizeFilenamesHandler(ctx ginc.Contexter) {
 	}
 
 	if err := SanitizeFilenames(req.Directory); err != nil {
-		ctx.FailErr(500, "Failed to sanitize filenames: " + err.Error())
+		ctx.FailErr(500, "Failed to sanitize filenames: "+err.Error())
 		return
 	}
 
@@ -212,36 +212,26 @@ func ttsTplHandler(ctx ginc.Contexter) {
 	}
 
 	// Process each item in the JSON array
-	for _, item := range jsonData {
+	for i, item := range jsonData {
 		// Create a TTS record from the JSON data
 		ttsRecord := &db.TTSRecord{
 			UserID:           0, // Default user ID, can be set from context if available
+			No:               i * 10,
 			SectionId:        0, // Set default or get from JSON if available
 			Text:             getStringValue(item, "text", ""),
 			SpeakerAudioPath: getStringValue(item, "speaker_audio_path", ""),
 			OutputWavPath:    getStringValue(item, "output_wav_path", ""),
 			EmotionText:      getStringValue(item, "emotion_text", ""),
+			EmotionAlpha:     item["emotion_alpha"].(int),
+			IntervalSilence:  item["interval_silence"].(int),
 			Role:             getStringValue(item, "role", ""),
 			Status:           "pending", // Default status
-		}
-
-		// Handle numeric values with proper type assertion
-		if emotionAlpha, ok := item["emotion_alpha"]; ok {
-			if val, ok := emotionAlpha.(float64); ok {
-				ttsRecord.EmotionAlpha = val
-			}
-		}
-
-		if intervalSilence, ok := item["interval_silence"]; ok {
-			if val, ok := intervalSilence.(float64); ok { // JSON numbers are float64
-				ttsRecord.IntervalSilence = int(val)
-			}
 		}
 
 		// Add the record to the database
 		if err := ttsRecord.Add(); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to add TTS record to database: %v\n", err)
-			ctx.FailErr(500, "Failed to store TTS record: " + err.Error())
+			ctx.FailErr(500, "Failed to store TTS record: "+err.Error())
 			return
 		}
 	}
