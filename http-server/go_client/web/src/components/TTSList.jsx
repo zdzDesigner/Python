@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react'
-import { Card, Table, Tag, Typography, Select, Button, Space, Modal, Input, InputNumber } from 'antd'
+import { Card, Table, Tag, Typography, Select, Button, Space, Modal, Input, InputNumber, Popconfirm } from 'antd'
 
-import { PlayCircleOutlined, ExperimentOutlined } from '@ant-design/icons'
-import { synthesizeTTS, checkTTSExists, ttsTplList } from '@/service/api/tts'
+import { PlayCircleOutlined, ExperimentOutlined, DeleteOutlined } from '@ant-design/icons'
+import { synthesizeTTS, checkTTSExists, ttsTplList, ttsTplBulkDelete } from '@/service/api/tts'
 import { useNotification } from '@/utils/NotificationContext'
 import BatchTrainingProgress from './BatchTrainingProgress'
 
@@ -663,6 +663,55 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     }
   }
 
+  // 批量删除
+  const handleBulkDelete = async () => {
+    try {
+      // Try to extract book_id and section_id from the first record in tableData
+      let bookId = 0
+      let sectionId = 0
+
+      if (tableData && tableData.length > 0) {
+        const firstRecord = tableData[0]
+        bookId = firstRecord.book_id || firstRecord.BookId || 0
+        sectionId = firstRecord.section_id || firstRecord.SectionId || 0
+      }
+
+      if (bookId === undefined || sectionId === undefined) {
+        showWarning('警告', '无法确定要删除的数据范围，请确保数据包含 book_id 或 section_id')
+        return
+      }
+
+      const response = await ttsTplBulkDelete(bookId, sectionId)
+
+      showSuccess('批量删除成功', `已删除当前章节的所有数据`)
+
+      // Refresh the table data after deletion
+      if (!jsonData) {
+        const refreshResponse = await ttsTplList({ book_id: bookId, section_id: sectionId, page: 1, page_size: 100 })
+        if (refreshResponse.list && Array.isArray(refreshResponse.list)) {
+          const transformedData = refreshResponse.list.map((record) => ({
+            ...record, // Include all other fields from the record
+            speaker: record.role || record.speaker || '',
+            content: record.text || record.content || '',
+            tone: record.emotion_text || record.tone || '',
+            intensity: record.emotion_alpha || record.intensity || 0,
+            delay: record.interval_silence || record.delay || 0,
+            dubbing: record.speaker_audio_path || undefined
+          }))
+          setTableData(transformedData)
+        } else {
+          setTableData([])
+        }
+      } else {
+        // If jsonData is provided, set table to empty
+        setTableData([])
+      }
+    } catch (error) {
+      console.error('Error during bulk delete:', error)
+      showError('批量删除失败', error.message)
+    }
+  }
+
   return (
     <>
       <div style={{ padding: 10 }}>
@@ -675,6 +724,17 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         <Button type="primary" style={{ marginLeft: 10 }} onClick={handleBatchTrain} loading={isBatchTraining} disabled={isBatchTraining}>
           批量训练
         </Button>
+        <Popconfirm
+          title="确认删除"
+          description="您确定要删除当前章节的所有数据吗？此操作不可撤销。"
+          onConfirm={handleBulkDelete}
+          okText="确认"
+          cancelText="取消"
+        >
+          <Button type="primary" danger style={{ marginLeft: 10 }} disabled={isBatchTraining}>
+            批量删除
+          </Button>
+        </Popconfirm>
         <BatchTrainingProgress
           isVisible={isBatchTraining}
           progress={batchProgress}

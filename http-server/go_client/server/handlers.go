@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"go-audio-server/db"
@@ -299,6 +300,50 @@ func ttsTplList(ctx ginc.Contexter) {
 	ctx.Success(gin.H{
 		"list":  list,
 		"total": total,
+	})
+}
+
+// ttsTplBulkDelete deletes TTS records by book_id and section_id
+func ttsTplBulkDelete(ctx ginc.Contexter) {
+	book_id := ctx.Query("book_id")
+	section_id := ctx.Query("section_id")
+
+	// Validate parameters
+	if book_id == "" || section_id == "" {
+		ctx.FailErr(400, "book_id and section_id parameters are required")
+		return
+	}
+
+	// Convert string parameters to integers
+	bookId, err := strconv.Atoi(book_id)
+	if err != nil {
+		ctx.FailErr(400, "Invalid book_id parameter")
+		return
+	}
+
+	sectionId, err := strconv.Atoi(section_id)
+	if err != nil {
+		ctx.FailErr(400, "Invalid section_id parameter")
+		return
+	}
+
+	// Create a TTSRecord instance and delete records matching the criteria
+	record := &db.TTSRecord{}
+	whereConditions := map[string]any{
+		"book_id":    bookId,
+		"section_id": sectionId,
+	}
+
+	// Perform the deletion
+	deleteErr := record.Del(whereConditions)
+	if deleteErr != nil {
+		ctx.FailErr(500, "Failed to delete records: "+deleteErr.Error())
+		return
+	}
+
+	ctx.Success(gin.H{
+		"status":  "success",
+		"message": "Successfully deleted",
 	})
 }
 

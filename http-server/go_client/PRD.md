@@ -364,7 +364,11 @@ speaker_audio_path参数设置为当前tr中的dubbing的值
 
 
 ### 更新tts_records DB 数据
-ttsHandler 在训练完成后返回 OutputWavPath 数据, 更新@server/db/tts_record.go 当前id 的 OutputWavPath 数据
+@server/handlers.go ttsHandler 在训练完成后返回 OutputWavPath 数据, 更新@server/db/tts_record.go 当前id 的 OutputWavPath 数据
+
+### 删除数据
+在@/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TTSList.jsx
+  中的"批量训练"按钮所在行的最右侧,添加一个"批量删除"的按钮，功能是删除当前book_id 和 section_id 的所有数据
 
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档

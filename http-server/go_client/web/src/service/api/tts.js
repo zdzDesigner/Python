@@ -243,3 +243,33 @@ export const ttsTplList = async (filters = {}) => {
     throw error
   }
 }
+
+/**
+ * Bulk delete TTS template records by book_id and section_id
+ * @param {number} book_id - Book ID to filter records for deletion
+ * @param {number} section_id - Section ID to filter records for deletion
+ * @returns {Promise<Object>} - API response with deletion status
+ */
+export const ttsTplBulkDelete = async (book_id, section_id) => {
+  const params = new URLSearchParams()
+  params.append('book_id', book_id)
+  params.append('section_id', section_id)
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tts-tpl?${params.toString()}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`TTS template bulk delete API error! status: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error bulk deleting TTS template records:', error)
+    throw error
+  }
+}
