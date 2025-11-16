@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"go-audio-server/db"
+	"go-audio-server/db/sqlite"
 	"go-audio-server/internal/ginc"
 
 	"github.com/gin-gonic/gin"
@@ -223,7 +224,7 @@ func ttsTplHandler(ctx ginc.Contexter) {
 			SpeakerAudioPath: getStringValue(item, "speaker_audio_path", ""),
 			OutputWavPath:    getStringValue(item, "output_wav_path", ""),
 			UserID:           0,
-			BookId:           0, 
+			BookId:           0,
 			SectionId:        0,
 			No:               i * 10,
 			Status:           "pending", // Default status
@@ -241,6 +242,34 @@ func ttsTplHandler(ctx ginc.Contexter) {
 		"status":  "success",
 		"message": fmt.Sprintf("Stored %d TTS records", len(jsonData)),
 		"count":   len(jsonData),
+	})
+}
+
+// ttsTplList lists TTS records with optional filtering by book_id, section_id, and no
+func ttsTplList(ctx ginc.Contexter) {
+	book_id := ctx.Query("book_id")
+	section_id := ctx.Query("section_id")
+	no := ctx.Query("no")
+	page := ctx.Query("page")
+	size := ctx.Query("size")
+
+	// Create a TTSRecord instance to use the model methods
+	record := &db.TTSRecord{}
+	// Get records with pagination
+	list, err := record.GetFunc(func(s *sqlite.Sql) *sqlite.Sql {
+		return s.Where(map[string]any{"book_id": book_id, "section_id": section_id, "no": no}).Limit(sqlite.ToLimit(page, size)).Order("id desc")
+	})
+	if err != nil {
+		ctx.FailErr(40100, err.Error())
+		return
+	}
+
+	// Get total count for pagination info
+	total := record.Count()
+
+	ctx.Success(gin.H{
+		"list":  list,
+		"total": total,
 	})
 }
 
