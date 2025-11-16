@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { Card, Table, Tag, Typography, Select, Button, Space, Modal, Input, InputNumber, Popconfirm } from 'antd'
 
 import { PlayCircleOutlined, ExperimentOutlined, DeleteOutlined } from '@ant-design/icons'
-import { synthesizeTTS, checkTTSExists, ttsTplList, ttsTplBulkDelete } from '@/service/api/tts'
+import { synthesizeTTS, checkTTSExists, ttsTplList, ttsTplBulkDelete, ttsTplUpdate } from '@/service/api/tts'
 import { useNotification } from '@/utils/NotificationContext'
 import BatchTrainingProgress from './BatchTrainingProgress'
 
@@ -371,17 +371,68 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     })
   }, [])
 
-  // Function to update table data for a specific record field
-  const updateTableData = useCallback((recordKey, field, newValue) => {
+  // Function to update table data for a specific record field and sync with backend
+  const updateTableData = useCallback(async (recordKey, field, newValue) => {
     setTableData((prevData) => {
       const newData = [...prevData]
       const index = newData.findIndex((item) => `${item.speaker}-${item.content}` === recordKey)
       if (index !== -1) {
-        newData[index] = { ...newData[index], [field]: newValue }
+        const record = newData[index]
+        const updatedRecord = { ...record, [field]: newValue }
+        
+        // Update the record in the state
+        newData[index] = updatedRecord
+
+        // Define the fields to sync with backend
+        const fieldsToSync = ['content', 'tone', 'intensity', 'delay']
+        
+        // If the field is one of the ones that need backend sync, call the API
+        if (fieldsToSync.includes(field) && record.id) {
+          try {
+            // Map field names to match backend expectations
+            const updatePayload = {}
+            switch (field) {
+              case 'content':
+                updatePayload.text = newValue
+                break
+              case 'tone':
+                updatePayload.emotion_text = newValue
+                break
+              case 'intensity':
+                updatePayload.emotion_alpha = Number(newValue)
+                break
+              case 'delay':
+                updatePayload.interval_silence = Number(newValue)
+                break
+              default:
+                updatePayload[field] = newValue
+            }
+
+            // Call the backend API to update the record
+            ttsTplUpdate(record.id, updatePayload).catch(error => {
+              console.error('Failed to update record on backend:', error)
+              showWarning('更新失败', `无法同步更新到服务器: ${error.message}`)
+              // Revert the change in UI if update failed
+              setTableData(prev => {
+                const revertedData = [...prev]
+                const revertIndex = revertedData.findIndex(item => 
+                  `${item.speaker}-${item.content}` === recordKey)
+                if (revertIndex !== -1) {
+                  revertedData[revertIndex] = record // Revert to original record
+                }
+                return revertedData
+              })
+            })
+          } catch (error) {
+            console.error('Error preparing update request:', error)
+          }
+        }
+        
+        return newData
       }
-      return newData
+      return prevData
     })
-  }, [])
+  }, [showWarning])
 
   const columns = useMemo(
     () => [

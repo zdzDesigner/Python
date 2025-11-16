@@ -347,6 +347,55 @@ func ttsTplBulkDelete(ctx ginc.Contexter) {
 	})
 }
 
+// ttsTplUpdate updates a single TTS record by ID
+func ttsTplUpdate(ctx ginc.Contexter) {
+	idStr := ctx.ParamRoute("id")
+
+	// Convert ID string to integer
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		ctx.FailErr(400, "Invalid ID parameter")
+		return
+	}
+
+	// Parse the update data from request body
+	var record db.TTSRecord
+	if err := ctx.ParseReqbody(&record); err != nil {
+		return
+	}
+	fmt.Println(record)
+
+	updateKeys := make([]string, 16)
+	if record.Role != "" {
+		updateKeys = append(updateKeys, "role")
+	}
+	if record.Text != "" {
+		updateKeys = append(updateKeys, "text")
+	}
+	if record.EmotionText != "" {
+		updateKeys = append(updateKeys, "emotion_text")
+	}
+	if record.EmotionAlpha != 0 {
+		updateKeys = append(updateKeys, "emotion_alpha")
+	}
+	if record.IntervalSilence != 0 {
+		updateKeys = append(updateKeys, "interval_silence")
+	}
+
+	// Call update by ID to update the record
+	updateErr := record.UpdateByID(id, updateKeys...)
+	if updateErr != nil {
+		ctx.FailErr(500, "Failed to update record: "+updateErr.Error())
+		return
+	}
+
+	ctx.Success(gin.H{
+		"status":  "success",
+		"message": "Record updated successfully",
+		"id":      id,
+	})
+}
+
 // Helper function to safely extract string values from interface{}
 func getStringValue(m map[string]interface{}, key string, defaultValue string) string {
 	if val, ok := m[key]; ok {

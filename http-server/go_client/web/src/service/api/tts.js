@@ -12,7 +12,7 @@ const API_BASE_URL = 'http://localhost:8081'
  * @param {Object} ttsData - TTS data object with speaker, content, tone, intensity, delay (when called from TTSList.jsx)
  * @returns {Promise<Object>} - The API response containing the synthesized audio information
  */
-export const synthesizeTTS = async (record) => {
+export const synthesizeTTS = async (record, { signal }) => {
   const payload = {
     id: record.id,
     text: record.content,
@@ -32,7 +32,8 @@ export const synthesizeTTS = async (record) => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(filteredPayload)
+      body: JSON.stringify(filteredPayload),
+      signal
     })
 
     if (!response.ok) {
@@ -270,6 +271,33 @@ export const ttsTplBulkDelete = async (book_id, section_id) => {
     return await response.json()
   } catch (error) {
     console.error('Error bulk deleting TTS template records:', error)
+    throw error
+  }
+}
+
+/**
+ * Update a single TTS template record by ID
+ * @param {number} id - Record ID to update
+ * @param {Object} updates - Object containing fields to update
+ * @returns {Promise<Object>} - API response with update status
+ */
+export const ttsTplUpdate = async (id, updates) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tts-tpl/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updates)
+    })
+
+    if (!response.ok) {
+      throw new Error(`TTS template update API error! status: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error updating TTS template record:', error)
     throw error
   }
 }
