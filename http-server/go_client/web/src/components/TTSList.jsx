@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { Card, Table, Tag, Typography, Select, Button, Space, Modal, Input, InputNumber, Popconfirm } from 'antd'
 
 import { PlayCircleOutlined, ExperimentOutlined, DeleteOutlined } from '@ant-design/icons'
-import { synthesizeTTS, checkTTSExists, ttsTplList, ttsTplBulkDelete, ttsTplUpdate } from '@/service/api/tts'
+import { MAP_TTS, mapTTSRecord, synthesizeTTS, checkTTSExists, ttsTplList, ttsTplBulkDelete, ttsTplUpdate } from '@/service/api/tts'
 import { useNotification } from '@/utils/NotificationContext'
 import BatchTrainingProgress from './BatchTrainingProgress'
 
@@ -16,7 +16,7 @@ const TTSTable = memo(({ columns, tableData, tableHeight }) => {
       dataSource={tableData}
       columns={columns}
       size="small"
-      rowKey={(record, index) => `${record.speaker}-${record.content}-${index}`}
+      key={(record, index) => record.id}
       pagination={false}
       virtual={true}
       scroll={{ y: tableHeight, x: 1200 }}
@@ -37,11 +37,12 @@ const MemoizedTableSelect = memo(({ recordKey, value, onChange, options }) => {
 })
 MemoizedTableSelect.displayName = 'MemoizedTableSelect'
 
-const EditableCell = memo(({ record, dataIndex, title, value, onUpdate, type = 'text', options = null, min = null, max = null, recordKey }) => {
+const EditableCell = memo(({ record, dataIndex, value, onUpdate, type = 'text', options = null, min = null, max = null, recordKey }) => {
   const [editing, setEditing] = useState(false)
   const [tempValue, setTempValue] = useState(value)
 
-  const recordKeyInternal = recordKey || `${record.speaker}-${record.content}`
+  const recordKeyInternal = record.id
+  // console.log({ recordKeyInternal, record })
 
   const handleChange = (newValue) => {
     setTempValue(newValue)
@@ -54,7 +55,8 @@ const EditableCell = memo(({ record, dataIndex, title, value, onUpdate, type = '
       if (max !== null && tempValue > max) return
     }
 
-    onUpdate(recordKeyInternal, dataIndex, tempValue)
+    // console.log({ recordKeyInternal, dataIndex, tempValue, value })
+    if (tempValue != value) onUpdate(recordKeyInternal, dataIndex, tempValue)
     setEditing(false)
   }
 
@@ -120,6 +122,7 @@ const EditableCell = memo(({ record, dataIndex, title, value, onUpdate, type = '
           </div>
         )
       case 'delay':
+      case 'truncate':
         return (
           <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
             {`${value || 0}ms`}
@@ -201,16 +204,9 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         // Fetch TTS records from the API
         const response = await ttsTplList({ book_id: 0, section_id: 0, page: 1, page_size: 100 }) // Get first 100 records
         if (response.list && Array.isArray(response.list)) {
+          console.log(response.list)
           // Transform API response to match expected format
-          const transformedData = response.list.map((record) => ({
-            ...record, // Include all other fields from the record
-            speaker: record.role || record.speaker || '',
-            content: record.text || record.content || '',
-            tone: record.emotion_text || record.tone || '',
-            intensity: record.emotion_alpha || record.intensity || 0,
-            delay: record.interval_silence || record.delay || 0,
-            dubbing: record.speaker_audio_path || undefined
-          }))
+          const transformedData = response.list.map(mapTTSRecord)
           setTableData(transformedData)
         } else {
           setTableData([])
@@ -224,11 +220,12 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
 
     if (jsonData) {
       // Use provided JSON data
-      const initialData = jsonData.map((item) => ({
-        ...item,
-        dubbing: item.dubbing
-      }))
-      setTableData(initialData)
+      // const initialData = jsonData.map((item) => ({
+      //   ...item,
+      //   dubbing: item.dubbing
+      // }))
+      setTableData(jsonData.map(mapTTSRecord))
+      // fetchTTSRecords()
     } else {
       fetchTTSRecords()
     }
@@ -265,10 +262,10 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   const handleTrain = useCallback(
     async (record) => {
       // Generate a unique key for the record (same as used in batch training)
-      const recordKey = `${record.speaker}-${record.content}`
+      const recordKey = record.id
 
       // Mark this record as currently training
-      setTrainingRecords((prev) => ({ ...prev, [recordKey]: true }))
+      setTrainingRecords((prev) => ({ ...prev, [record.id]: true }))
 
       try {
         console.log('Training with record:', record)
@@ -281,7 +278,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
           // Save the output path for this record
           setTrainedRecords((prev) => ({
             ...prev,
-            [recordKey]: result.newFile.name
+            [record.id]: result.newFile.name
           }))
 
           showSuccess('训练成功', '音频文件已生成')
@@ -289,7 +286,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
           // If result has outpath directly
           setTrainedRecords((prev) => ({
             ...prev,
-            [recordKey]: result.outpath
+            [record.id]: result.outpath
           }))
 
           showSuccess('训练成功', '音频文件已生成')
@@ -303,7 +300,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         // Remove the training state for this record
         setTrainingRecords((prev) => {
           const newRecords = { ...prev }
-          delete newRecords[recordKey]
+          delete newRecords[record.id]
           return newRecords
         })
       }
@@ -313,8 +310,8 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
 
   const handlePlay = useCallback(
     async (record) => {
-      const recordKey = `${record.speaker}-${record.content}`
-      let outpath = trainedRecords[recordKey]
+      const recordKey = record.id
+      let outpath = trainedRecords[record.id]
 
       const playAudio = (path) => {
         const audioUrl = `http://localhost:8081/api/audio-file${path.startsWith('/') ? path : '/' + path}`
@@ -334,7 +331,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
             outpath = response.outpath
             setTrainedRecords((prev) => ({
               ...prev,
-              [recordKey]: outpath
+              [record.id]: outpath
             }))
             playAudio(outpath)
           } else {
@@ -363,7 +360,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   const updateTableDataDubbing = useCallback((recordKey, newDubbingValue) => {
     setTableData((prevData) => {
       const newData = [...prevData]
-      const index = newData.findIndex((item) => `${item.id}` === recordKey)
+      const index = newData.findIndex((item) => item.id === recordKey)
       if (index !== -1) {
         newData[index] = { ...newData[index], dubbing: newDubbingValue }
       }
@@ -372,67 +369,66 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   }, [])
 
   // Function to update table data for a specific record field and sync with backend
-  const updateTableData = useCallback(async (recordKey, field, newValue) => {
-    setTableData((prevData) => {
-      const newData = [...prevData]
-      const index = newData.findIndex((item) => `${item.speaker}-${item.content}` === recordKey)
-      if (index !== -1) {
-        const record = newData[index]
-        const updatedRecord = { ...record, [field]: newValue }
-        
-        // Update the record in the state
-        newData[index] = updatedRecord
+  const updateTableData = useCallback(
+    async (recordKey, field, newValue) => {
+      setTableData((prevData) => {
+        const newData = [...prevData]
+        const index = newData.findIndex((item) => item.id === recordKey)
+        if (index !== -1) {
+          const record = newData[index]
+          const updatedRecord = { ...record, [field]: newValue }
 
-        // Define the fields to sync with backend
-        const fieldsToSync = ['content', 'tone', 'intensity', 'delay']
-        
-        // If the field is one of the ones that need backend sync, call the API
-        if (fieldsToSync.includes(field) && record.id) {
-          try {
-            // Map field names to match backend expectations
-            const updatePayload = {}
-            switch (field) {
-              case 'content':
-                updatePayload.text = newValue
-                break
-              case 'tone':
-                updatePayload.emotion_text = newValue
-                break
-              case 'intensity':
-                updatePayload.emotion_alpha = Number(newValue)
-                break
-              case 'delay':
-                updatePayload.interval_silence = Number(newValue)
-                break
-              default:
-                updatePayload[field] = newValue
-            }
+          // Update the record in the state
+          newData[index] = updatedRecord
 
-            // Call the backend API to update the record
-            ttsTplUpdate(record.id, updatePayload).catch(error => {
-              console.error('Failed to update record on backend:', error)
-              showWarning('更新失败', `无法同步更新到服务器: ${error.message}`)
-              // Revert the change in UI if update failed
-              setTableData(prev => {
-                const revertedData = [...prev]
-                const revertIndex = revertedData.findIndex(item => 
-                  `${item.speaker}-${item.content}` === recordKey)
-                if (revertIndex !== -1) {
-                  revertedData[revertIndex] = record // Revert to original record
-                }
-                return revertedData
+          // Define the fields to sync with backend
+          const fieldsToSync = ['content', 'tone', 'intensity', 'delay', 'truncate']
+
+          // If the field is one of the ones that need backend sync, call the API
+          if (fieldsToSync.includes(field) && record.id) {
+            try {
+              // Map field names to match backend expectations
+              const updatePayload = {}
+              switch (field) {
+                case 'content':
+                case 'tone':
+                  updatePayload[MAP_TTS[field]] = newValue
+                  break
+                case 'intensity':
+                case 'delay':
+                case 'truncate':
+                  updatePayload[MAP_TTS[field]] = Number(newValue)
+                  break
+                default:
+                  updatePayload[field] = newValue
+              }
+
+              // Call the backend API to update the record
+              ttsTplUpdate(record.id, updatePayload).catch((error) => {
+                console.error('Failed to update record on backend:', error)
+                showWarning('更新失败', `无法同步更新到服务器: ${error.message}`)
+                // Revert the change in UI if update failed
+                setTableData((prev) => {
+                  const revertedData = [...prev]
+                  const revertIndex = revertedData.findIndex((item) => item.id === recordKey)
+                  if (revertIndex !== -1) {
+                    revertedData[revertIndex] = record // Revert to original record
+                  }
+                  return revertedData
+                })
               })
-            })
-          } catch (error) {
-            console.error('Error preparing update request:', error)
+            } catch (error) {
+              console.error('Error preparing update request:', error)
+            }
           }
+
+          return newData
         }
-        
-        return newData
-      }
-      return prevData
-    })
-  }, [showWarning])
+        return prevData
+      })
+    },
+    [showWarning]
+  )
 
   const columns = useMemo(
     () => [
@@ -450,8 +446,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         key: 'speaker',
         fixed: 'left',
         render: (text, record) => {
-          const recordKey = `${record.speaker}-${record.content}`
-          return <EditableCell record={record} dataIndex="speaker" title="角色" value={text} onUpdate={updateTableData} type="text" recordKey={recordKey} />
+          return <EditableCell record={record} dataIndex="speaker" title="角色" value={text} onUpdate={updateTableData} type="text" recordKey={record.id} />
         }
       },
       {
@@ -461,9 +456,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         key: 'dubbing',
         fixed: 'left',
         render: (text, record) => {
-          // console.log({ text, record })
-          const recordKey = `${record.id}`
-          return <MemoizedTableSelect recordKey={recordKey} value={text} onChange={updateTableDataDubbing} options={tableAudioFileOptions} />
+          return <MemoizedTableSelect recordKey={record.id} value={text} onChange={updateTableDataDubbing} options={tableAudioFileOptions} />
         }
       },
       {
@@ -471,8 +464,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         dataIndex: 'content',
         key: 'content',
         render: (text, record) => {
-          const recordKey = `${record.speaker}-${record.content}`
-          return <EditableCell record={record} dataIndex="content" title="文本内容" value={text} onUpdate={updateTableData} type="text" recordKey={recordKey} />
+          return <EditableCell record={record} dataIndex="content" title="文本内容" value={text} onUpdate={updateTableData} type="text" recordKey={record.id} />
         }
       },
       {
@@ -481,8 +473,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         dataIndex: 'tone',
         key: 'tone',
         render: (text, record) => {
-          const recordKey = `${record.speaker}-${record.content}`
-          return <EditableCell record={record} dataIndex="tone" title="情感" value={text} onUpdate={updateTableData} type="text" recordKey={recordKey} />
+          return <EditableCell record={record} dataIndex="tone" title="情感" value={text} onUpdate={updateTableData} type="text" recordKey={record.id} />
         }
       },
       {
@@ -490,19 +481,18 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         dataIndex: 'intensity',
         key: 'intensity',
         width: 80,
-        render: (text, record) => {
-          const recordKey = `${record.speaker}-${record.content}`
+        render: (val, record) => {
           return (
             <EditableCell
               record={record}
               dataIndex="intensity"
               title="情感比重"
-              value={text}
+              value={val}
               onUpdate={updateTableData}
               type="number"
               min={0}
               max={10}
-              recordKey={recordKey}
+              recordKey={record.id}
             />
           )
         }
@@ -512,19 +502,39 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         dataIndex: 'delay',
         key: 'delay',
         width: 100,
-        render: (text, record) => {
-          const recordKey = `${record.speaker}-${record.content}`
+        render: (val, record) => {
           return (
             <EditableCell
               record={record}
               dataIndex="delay"
               title="延迟"
-              value={text}
+              value={val}
               onUpdate={updateTableData}
               type="number"
               min={0}
               max={5000}
-              recordKey={recordKey}
+              recordKey={record.id}
+            />
+          )
+        }
+      },
+      {
+        title: '末尾截取',
+        dataIndex: 'truncate',
+        key: 'truncate',
+        width: 100,
+        render: (val, record) => {
+          return (
+            <EditableCell
+              record={record}
+              dataIndex="truncate"
+              title="截取"
+              value={val}
+              onUpdate={updateTableData}
+              type="number"
+              min={0}
+              max={5000}
+              recordKey={record.id}
             />
           )
         }
@@ -535,8 +545,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         width: 100,
         fixed: 'right',
         render: (text, record) => {
-          const recordKey = `${record.speaker}-${record.content}`
-          const isTraining = trainingRecords[recordKey]
+          const isTraining = trainingRecords[record.id]
 
           return (
             <Space size="middle">
@@ -646,7 +655,6 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
       }
 
       const record = tableData[i]
-      const recordKey = `${record.speaker}-${record.content}`
 
       try {
         setBatchProgressText(`正在训练: ${record.speaker} - ${record.content.substring(0, 20)}${record.content.length > 20 ? '...' : ''}`)
@@ -657,13 +665,13 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         if (result.newFile && result.newFile.path) {
           setTrainedRecords((prev) => ({
             ...prev,
-            [recordKey]: result.newFile.name
+            [record.id]: result.newFile.name
           }))
           successCount++
         } else if (result.outpath) {
           setTrainedRecords((prev) => ({
             ...prev,
-            [recordKey]: result.outpath
+            [record.id]: result.outpath
           }))
           successCount++
         } else {
@@ -681,7 +689,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         // Remove the training state for this record
         setTrainingRecords((prev) => {
           const newRecords = { ...prev }
-          delete newRecords[recordKey]
+          delete newRecords[record.id]
           return newRecords
         })
 

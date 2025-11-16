@@ -4,17 +4,18 @@
 -- Create TTS Records table
 CREATE TABLE IF NOT EXISTS tts_records (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    no INTEGER NOT NULL, -- No (10*n+n)
+    user_id INTEGER DEFAULT 0,
     book_id INTEGER NOT NULL,
     section_id INTEGER NOT NULL,
-    user_id INTEGER DEFAULT 0,
+    no INTEGER NOT NULL, -- No (10*n+n)
+    role TEXT DEFAULT '',
     text TEXT NOT NULL,
     speaker_audio_path TEXT NOT NULL,
     output_wav_path TEXT NOT NULL,
     emotion_text TEXT DEFAULT '',
     emotion_alpha INTEGER DEFAULT 0, -- val/10
     interval_silence INTEGER DEFAULT 0,
-    role TEXT DEFAULT '',
+    audio_end_truncate INTEGER DEFAULT 0,
     status TEXT DEFAULT 'pending', -- pending, success, error
     error_msg TEXT DEFAULT '',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

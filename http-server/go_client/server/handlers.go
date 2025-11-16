@@ -381,6 +381,9 @@ func ttsTplUpdate(ctx ginc.Contexter) {
 	if record.IntervalSilence != 0 {
 		updateKeys = append(updateKeys, "interval_silence")
 	}
+	if record.AudioEndTruncate != 0 {
+		updateKeys = append(updateKeys, "audio_end_truncate")
+	}
 
 	// Call update by ID to update the record
 	updateErr := record.UpdateByID(id, updateKeys...)

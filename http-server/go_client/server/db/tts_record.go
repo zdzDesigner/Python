@@ -13,14 +13,15 @@ type TTSRecord struct {
 	BookId           int       `json:"book_id"`
 	SectionId        int       `json:"section_id"`
 	No               int       `json:"no"` // No (10*n+n)
+	Role             string    `json:"role"`
 	Text             string    `json:"text"`
 	SpeakerAudioPath string    `json:"speaker_audio_path"`
 	OutputWavPath    string    `json:"output_wav_path"`
 	EmotionText      string    `json:"emotion_text"`
 	EmotionAlpha     int       `json:"emotion_alpha"` // val/10
 	IntervalSilence  int       `json:"interval_silence"`
-	Role             string    `json:"role"`
-	Status           string    `json:"status"` // pending, success, error
+	AudioEndTruncate int       `json:"audio_end_truncate"` // ms 尾截取
+	Status           string    `json:"status"`             // pending, success, error
 	ErrorMsg         string    `json:"error_msg"`
 	CreatedAt        time.Time `json:"created_at" sql:"auto"`
 	UpdatedAt        time.Time `json:"updated_at" sql:"auto"`

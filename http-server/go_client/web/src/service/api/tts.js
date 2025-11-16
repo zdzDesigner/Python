@@ -5,6 +5,25 @@
 
 const API_BASE_URL = 'http://localhost:8081'
 
+export const MAP_TTS = {
+  content: 'text',
+  tone: 'emotion_text',
+  intensity: 'emotion_alpha',
+  delay: 'interval_silence',
+  truncate: 'audio_end_truncate'
+}
+
+export const mapTTSRecord = (record) => ({
+  id: record.id,
+  speaker: record.role || record.speaker || '',
+  dubbing: record.speaker_audio_path || undefined,
+  content: record.text || record.content || '',
+  tone: record.emotion_text || record.tone || '',
+  intensity: record.emotion_alpha || record.intensity || 0,
+  delay: record.interval_silence || record.delay || 0,
+  truncate: record.audio_end_truncate || 0
+})
+
 /**
  * Synthesize audio from text
  * @param {string} text - The text to synthesize (when called from App.jsx)
@@ -20,7 +39,8 @@ export const synthesizeTTS = async (record, { signal }) => {
     speaker_audio_path: record.dubbing,
     emotion_text: record.tone || record.emotion || null,
     emotion_alpha: record.intensity || 0,
-    interval_silence: record.delay || 0
+    interval_silence: record.delay || 0,
+    audio_end_truncate: record.truncate || 0
   }
 
   // Filter out null or undefined values
