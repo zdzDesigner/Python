@@ -9,17 +9,18 @@ import (
 type TTSRecord struct {
 	ID               int       `json:"id"`
 	UserID           int       `json:"user_id"`
+	BookId           int       `json:"book_id"`
 	SectionId        int       `json:"section_id"`
 	No               int       `json:"no"` // No (10*n+n)
 	Text             string    `json:"text"`
 	SpeakerAudioPath string    `json:"speaker_audio_path"`
 	OutputWavPath    string    `json:"output_wav_path"`
-	EmotionText      string    `json:"emotion_text,omitempty"`
-	EmotionAlpha     int       `json:"emotion_alpha,omitempty"` // val/10
-	IntervalSilence  int       `json:"interval_silence,omitempty"`
-	Role             string    `json:"role,omitempty"`
+	EmotionText      string    `json:"emotion_text"`
+	EmotionAlpha     int       `json:"emotion_alpha"` // val/10
+	IntervalSilence  int       `json:"interval_silence"`
+	Role             string    `json:"role"`
 	Status           string    `json:"status"` // pending, success, error
-	ErrorMsg         string    `json:"error_msg,omitempty"`
+	ErrorMsg         string    `json:"error_msg"`
 	CreatedAt        time.Time `json:"created_at" sql:"auto"`
 	UpdatedAt        time.Time `json:"updated_at" sql:"auto"`
 }

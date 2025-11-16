@@ -215,16 +215,17 @@ func ttsTplHandler(ctx ginc.Contexter) {
 	for i, item := range jsonData {
 		// Create a TTS record from the JSON data
 		ttsRecord := &db.TTSRecord{
-			UserID:           0, // Default user ID, can be set from context if available
-			No:               i * 10,
-			SectionId:        0, // Set default or get from JSON if available
-			Text:             getStringValue(item, "text", ""),
+			Role:             getStringValue(item, "speaker", ""),
+			Text:             getStringValue(item, "content", ""),
+			EmotionText:      getStringValue(item, "tone", ""),
+			EmotionAlpha:     int(item["intensity"].(float64)),
+			IntervalSilence:  int(item["delay"].(float64)),
 			SpeakerAudioPath: getStringValue(item, "speaker_audio_path", ""),
 			OutputWavPath:    getStringValue(item, "output_wav_path", ""),
-			EmotionText:      getStringValue(item, "emotion_text", ""),
-			EmotionAlpha:     item["emotion_alpha"].(int),
-			IntervalSilence:  item["interval_silence"].(int),
-			Role:             getStringValue(item, "role", ""),
+			UserID:           0,
+			BookId:           0, 
+			SectionId:        0,
+			No:               i * 10,
 			Status:           "pending", // Default status
 		}
 
