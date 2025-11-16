@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"time"
 
 	"go-audio-server/db/sqlite"
@@ -36,8 +37,8 @@ func (t *TTSRecord) Update(w map[string]any, keys []string) error {
 	return sqlite.DB(t).Where(w).Update(keys...)
 }
 
-func (t *TTSRecord) GetFunc(fn func(*sqlite.Sql) *sqlite.Sql, keys ...string) ([]*TTSRecord, error) {
-	return sqlite.GetField[TTSRecord](func(dbm sqlite.DBSql) *sqlite.Sql { return fn(dbm(t)) }, keys...)
+func (t *TTSRecord) GetFunc(fn func(*sqlite.Sql) *sqlite.Sql) ([]*TTSRecord, error) {
+	return sqlite.GetField[TTSRecord](func(dbm sqlite.DBSql) *sqlite.Sql { return fn(dbm(t)) })
 }
 
 func (t *TTSRecord) Get(w any, limit []string) ([]*TTSRecord, error) {
@@ -74,4 +75,10 @@ func (t *TTSRecord) GetByOutputPath(outputPath string) ([]*TTSRecord, error) {
 	return sqlite.GetField[TTSRecord](func(dbm sqlite.DBSql) *sqlite.Sql {
 		return dbm(t).Where(map[string]any{"output_wav_path": outputPath}).Limit([]string{"0", "1"}).Order("id desc")
 	})
+}
+
+// UpdateByID updates a TTS record by its ID
+func (t *TTSRecord) UpdateByID(id int, keys ...string) error {
+	fmt.Println("id:", id, keys, *t)
+	return sqlite.DB(t).Where(map[string]any{"id": id}).Update(keys...)
 }

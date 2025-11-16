@@ -362,5 +362,9 @@ speaker_audio_path参数设置为当前tr中的dubbing的值
 在 @server/handlers.go  中添加一个 ttsTplHandler 接口，通过@server/db/tts_record.go model  把 @web/src/components/TextDataSettings.jsx handleJsonSubmit 解析后的数据添加到 tts_records 表中
 在 @web/src/service/api/tts.js 中添加 ttsTplSave 接口，在 @web/src/components/TextDataSettings.jsx  handleJsonSubmit 中调用
 
+
+### 更新tts_records DB 数据
+ttsHandler 在训练完成后返回 OutputWavPath 数据, 更新@server/db/tts_record.go 当前id 的 OutputWavPath 数据
+
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档

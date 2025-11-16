@@ -14,6 +14,7 @@ const API_BASE_URL = 'http://localhost:8081'
  */
 export const synthesizeTTS = async (record) => {
   const payload = {
+    id: record.id,
     text: record.content,
     role: record.speaker,
     speaker_audio_path: record.dubbing,
@@ -37,8 +38,10 @@ export const synthesizeTTS = async (record) => {
     if (!response.ok) {
       throw new Error(`TTS API error! status: ${response.status}`)
     }
+    const { code, ...more } = await response.json()
+    if (code != 0) return Promise.reject('Error synthesizing TTS')
 
-    return await response.json()
+    return more
   } catch (error) {
     console.error('Error synthesizing TTS:', error)
     throw error
@@ -95,6 +98,7 @@ export const deleteAudioFile = async (filePath) => {
  */
 export const checkTTSExists = async (record) => {
   const payload = {
+    id: record.id,
     text: record.content,
     role: record.speaker,
     speaker_audio_path: record.dubbing,
@@ -211,15 +215,15 @@ export const ttsTplSave = async (jsonData) => {
  * @returns {Promise<Object>} - API response with TTS records list and total count
  */
 export const ttsTplList = async (filters = {}) => {
-  const { book_id, section_id, no, page = 1, page_size = 20 } = filters;
-  
+  const { book_id, section_id, no, page = 1, page_size = 20 } = filters
+
   // Build query parameters
-  const params = new URLSearchParams();
-  if (book_id !== undefined && book_id !== null) params.append('book_id', book_id);
-  if (section_id !== undefined && section_id !== null) params.append('section_id', section_id);
-  if (no !== undefined && no !== null) params.append('no', no);
-  params.append('page', page);
-  params.append('size', page_size);
+  const params = new URLSearchParams()
+  if (book_id !== undefined && book_id !== null) params.append('book_id', book_id)
+  if (section_id !== undefined && section_id !== null) params.append('section_id', section_id)
+  if (no !== undefined && no !== null) params.append('no', no)
+  params.append('page', page)
+  params.append('size', page_size)
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/tts-tpl?${params.toString()}`, {

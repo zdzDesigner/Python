@@ -30,7 +30,7 @@ TTSTable.displayName = 'TTSTable'
 
 const MemoizedTableSelect = memo(({ recordKey, value, onChange, options }) => {
   return (
-    <Select style={{ width: '100%' }} value={value} onChange={(newValue) => onChange(recordKey, newValue)} virtual>
+    <Select style={{ width: '100%' }} showSearch placeholder="请选择" value={value} onChange={(v) => onChange(recordKey, v)} virtual>
       {options}
     </Select>
   )
@@ -203,13 +203,13 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         if (response.list && Array.isArray(response.list)) {
           // Transform API response to match expected format
           const transformedData = response.list.map((record) => ({
+            ...record, // Include all other fields from the record
             speaker: record.role || record.speaker || '',
             content: record.text || record.content || '',
             tone: record.emotion_text || record.tone || '',
             intensity: record.emotion_alpha || record.intensity || 0,
             delay: record.interval_silence || record.delay || 0,
-            dubbing: record.speaker_audio_path || '请选择',
-            ...record // Include all other fields from the record
+            dubbing: record.speaker_audio_path || undefined
           }))
           setTableData(transformedData)
         } else {
@@ -226,11 +226,10 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
       // Use provided JSON data
       const initialData = jsonData.map((item) => ({
         ...item,
-        dubbing: item.dubbing || '请选择'
+        dubbing: item.dubbing
       }))
       setTableData(initialData)
     } else {
-      // Fetch data from the API
       fetchTTSRecords()
     }
   }, [jsonData])
@@ -364,7 +363,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   const updateTableDataDubbing = useCallback((recordKey, newDubbingValue) => {
     setTableData((prevData) => {
       const newData = [...prevData]
-      const index = newData.findIndex((item) => `${item.speaker}-${item.content}` === recordKey)
+      const index = newData.findIndex((item) => `${item.id}` === recordKey)
       if (index !== -1) {
         newData[index] = { ...newData[index], dubbing: newDubbingValue }
       }
@@ -411,7 +410,8 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         key: 'dubbing',
         fixed: 'left',
         render: (text, record) => {
-          const recordKey = `${record.speaker}-${record.content}`
+          // console.log({ text, record })
+          const recordKey = `${record.id}`
           return <MemoizedTableSelect recordKey={recordKey} value={text} onChange={updateTableDataDubbing} options={tableAudioFileOptions} />
         }
       },
@@ -544,7 +544,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     const initialMappings = {}
     if (tableData) {
       tableData.forEach((item) => {
-        if (item.dubbing && item.dubbing !== '请选择') {
+        if (item.dubbing && item.dubbing !== '') {
           initialMappings[item.speaker] = item.dubbing
         }
       })
@@ -696,6 +696,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
                 </div>
                 <div style={{ flex: 2, marginLeft: '20px' }}>
                   <Select
+                    showSearch
                     style={{ width: '100%' }}
                     placeholder="选择音频文件"
                     value={characterMappings[characterName] || undefined}

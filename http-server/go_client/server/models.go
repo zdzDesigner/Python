@@ -9,8 +9,9 @@ type FileItem struct {
 
 // TTSRequest holds parameters for a text-to-speech synthesis request.
 type TTSRequest struct {
+	ID               int     `json:"id"`
 	Text             string  `json:"text" binding:"required"`
-	SpeakerAudioPath string  `json:"speaker_audio_path" binding:"required"`
+	SpeakerAudioPath string  `json:"speaker_audio_path"`
 	OutputWavPath    string  `json:"output_wav_path"`
 	EmotionText      string  `json:"emotion_text,omitempty"`
 	EmotionAlpha     float64 `json:"emotion_alpha,omitempty"`

@@ -14,6 +14,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var OUTPUT_DIR = "output/"
+
 func ttsHandler(ctx ginc.Contexter) {
 	var ttsReq TTSRequest
 	if err := ctx.ParseReqbody(&ttsReq); err != nil {
@@ -22,27 +24,24 @@ func ttsHandler(ctx ginc.Contexter) {
 
 	fmt.Printf("Received TTS request: %+v\n", ttsReq)
 
-	outputDir := "output/"
-	if _, err := os.Stat(outputDir); os.IsNotExist(err) {
-		os.Mkdir(outputDir, 0o755)
+	if _, err := os.Stat(OUTPUT_DIR); os.IsNotExist(err) {
+		os.Mkdir(OUTPUT_DIR, 0o755)
 	}
 
 	// Use the centralized function to generate the filename
 	newFileName := GenerateTTSFilename(ttsReq)
-	ttsReq.OutputWavPath = filepath.Join(outputDir, newFileName)
+	ttsReq.OutputWavPath = filepath.Join(OUTPUT_DIR, newFileName)
 
 	externalApiURL := "http://127.0.0.1:8800/inference"
 
 	if err := synthesizeSpeech(externalApiURL, ttsReq); err != nil {
-		fmt.Fprintf(os.Stderr, "TTS Synthesis Error: %v\n", err)
 		ctx.FailErr(500, "Failed to synthesize speech: "+err.Error())
 		return
 	}
 
 	absPath, err := filepath.Abs(ttsReq.OutputWavPath)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get absolute path: %v\n", err)
-		ctx.FailErr(500, "Could not construct file path for response")
+		ctx.FailErr(500, "Could not construct file path for response: "+err.Error())
 		return
 	}
 
@@ -52,9 +51,17 @@ func ttsHandler(ctx ginc.Contexter) {
 		URL:  "/api/audio-file/" + filepath.ToSlash(ttsReq.OutputWavPath),
 	}
 
+	// Update the TTS record in the database with the output path and success status
+	if err := (&db.TTSRecord{OutputWavPath: newFileName}).UpdateByID(ttsReq.ID, "output_wav_path"); err != nil {
+		ctx.FailErr(400100, err.Error())
+		return
+
+	}
+
 	ctx.Success(gin.H{
-		"status":  "success",
-		"newFile": newFile,
+		"status":        "success",
+		"newFile":       newFile,
+		"outputWavPath": ttsReq.OutputWavPath, // Return the output path
 	})
 }
 
@@ -64,10 +71,22 @@ func checkTTSExistsHandler(ctx ginc.Contexter) {
 		return
 	}
 
-	outputDir := "output/"
-	fileName := GenerateTTSFilename(ttsReq)
-	filePath := filepath.Join(outputDir, fileName)
-	fmt.Println(filePath)
+	fileName := ""
+	fmt.Println("ttsReq.ID:", ttsReq.ID)
+	if ttsReq.ID != 0 {
+		// list, err := (&db.TTSRecord{}).GetFunc(func(s *sqlite.Sql) *sqlite.Sql { return s.Where(map[string]any{"id": ttsReq.ID}) })
+		if list, err := (&db.TTSRecord{}).Get(map[string]any{"id": ttsReq.ID}, nil); err != nil {
+			ctx.FailErr(500100, err.Error())
+			return
+		} else {
+			fileName = list[0].OutputWavPath
+		}
+	} else {
+		fileName = GenerateTTSFilename(ttsReq)
+	}
+
+	filePath := filepath.Join(OUTPUT_DIR, fileName)
+	// fmt.Println(filePath)
 
 	if _, err := os.Stat(filePath); err == nil {
 		// File exists
@@ -247,8 +266,8 @@ func ttsTplHandler(ctx ginc.Contexter) {
 
 // ttsTplList lists TTS records with optional filtering by book_id, section_id, and no
 func ttsTplList(ctx ginc.Contexter) {
+	book_id := ctx.Query("book_id")
 	section_id := ctx.Query("section_id")
-	book_id := ctx.Query("section_id")
 	no := ctx.Query("no")
 	page := ctx.Query("page")
 	size := ctx.Query("size")

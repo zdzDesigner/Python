@@ -2,13 +2,12 @@ import React, { useState, memo } from 'react'
 import { UploadOutlined, EditOutlined } from '@ant-design/icons'
 import { Space, Button, Upload, Modal, Input, message } from 'antd'
 import { useNotification } from '../utils/NotificationContext'
-import { ttsTplSave } from '../service/api/tts'
+import { ttsTplSave, ttsTplList } from '../service/api/tts'
 
 // const { TextArea } = Typography
 const { TextArea } = Input
 
 const TextDataSettings = ({ onUploadSuccess, onJsonData }) => {
-  console.log('==============')
   const { showError, showSuccess } = useNotification()
   const [jsonModalVisible, setJsonModalVisible] = useState(false)
   const [jsonInput, setJsonInput] = useState('')
@@ -20,16 +19,17 @@ const TextDataSettings = ({ onUploadSuccess, onJsonData }) => {
       const parsedJson = JSON.parse(jsonInput)
       const formatted = JSON.stringify(parsedJson, null, 2)
       setFormattedJson(formatted)
-      
+
       // Show loading state
       setLoading(true)
-      
+
       // Save the TTS template data to the database
       const result = await ttsTplSave(parsedJson)
       showSuccess('JSON Saved Successfully', `Stored ${result.count || parsedJson.length} TTS records`)
-      
+
       if (onJsonData) {
-        onJsonData(parsedJson) // Pass the JSON input to parent component
+        const { list } = await ttsTplList()
+        onJsonData(list) // Pass the JSON input to parent component
       }
       setJsonModalVisible(false) // Close the modal after successful submission
     } catch (error) {
@@ -96,12 +96,7 @@ const TextDataSettings = ({ onUploadSuccess, onJsonData }) => {
             />
           }
           <div className="flex justify-end py-4">
-            <Button 
-              type="primary" 
-              onClick={handleJsonSubmit} 
-              disabled={!jsonInput.trim() || loading}
-              loading={loading}
-            >
+            <Button type="primary" onClick={handleJsonSubmit} disabled={!jsonInput.trim() || loading} loading={loading}>
               确定
             </Button>
           </div>
