@@ -242,6 +242,7 @@ func GenerateTTSFilename(request TTSRequest) string {
 	// Create a string combining all the request parameters for hashing
 	paramsString := fmt.Sprintf("%s|%s|%s|%f|%d", request.Role, request.Text, request.EmotionText, request.EmotionAlpha, request.IntervalSilence)
 
+	fmt.Println("paramsString:", paramsString)
 	// Generate MD5 hash of the parameters
 	hash := fmt.Sprintf("%x", md5.Sum([]byte(paramsString)))
 

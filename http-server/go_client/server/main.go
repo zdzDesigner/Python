@@ -36,6 +36,7 @@ func main() {
 		api.POST("/tts", ginc.Handler(ttsHandler))
 		api.POST("/tts/check", ginc.Handler(checkTTSExistsHandler))
 		api.POST("/tts-tpl", ginc.Handler(ttsTplHandler))
+		api.GET("/tts-tpl", ginc.Handler(ttsTplList))
 		api.DELETE("/delete-file", ginc.Handler(deleteAudioFileHandler))
 		api.POST("/remove-special-symbols", ginc.Handler(removeSpecialSymbolsHandler))
 		api.POST("/sanitize-filenames", ginc.Handler(sanitizeFilenamesHandler))

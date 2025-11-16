@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { Card, Table, Tag, Typography, Select, Button, Space, Modal, Input, InputNumber } from 'antd'
 
 import { PlayCircleOutlined, ExperimentOutlined } from '@ant-design/icons'
-import { audio_text } from '@/assets/audio_text'
-import { synthesizeTTS, checkTTSExists } from '@/service/api/tts'
+import { synthesizeTTS, checkTTSExists, ttsTplList } from '@/service/api/tts'
 import { useNotification } from '@/utils/NotificationContext'
 import BatchTrainingProgress from './BatchTrainingProgress'
 
@@ -39,47 +38,47 @@ const MemoizedTableSelect = memo(({ recordKey, value, onChange, options }) => {
 MemoizedTableSelect.displayName = 'MemoizedTableSelect'
 
 const EditableCell = memo(({ record, dataIndex, title, value, onUpdate, type = 'text', options = null, min = null, max = null, recordKey }) => {
-  const [editing, setEditing] = useState(false);
-  const [tempValue, setTempValue] = useState(value);
+  const [editing, setEditing] = useState(false)
+  const [tempValue, setTempValue] = useState(value)
 
-  const recordKeyInternal = recordKey || `${record.speaker}-${record.content}`;
+  const recordKeyInternal = recordKey || `${record.speaker}-${record.content}`
 
   const handleChange = (newValue) => {
-    setTempValue(newValue);
-  };
+    setTempValue(newValue)
+  }
 
   const handleSave = () => {
     // For InputNumber, the value is already a number or null
     if (type === 'number' && tempValue !== null && tempValue !== '') {
-      if (min !== null && tempValue < min) return;
-      if (max !== null && tempValue > max) return;
+      if (min !== null && tempValue < min) return
+      if (max !== null && tempValue > max) return
     }
-    
-    onUpdate(recordKeyInternal, dataIndex, tempValue);
-    setEditing(false);
-  };
+
+    onUpdate(recordKeyInternal, dataIndex, tempValue)
+    setEditing(false)
+  }
 
   const handleCancel = () => {
-    setTempValue(value); // Reset to original value
-    setEditing(false);
-  };
+    setTempValue(value) // Reset to original value
+    setEditing(false)
+  }
 
   const handleCellClick = (e) => {
     // Prevent editing when clicking on input elements directly
     if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') {
-      setEditing(true);
+      setEditing(true)
     }
-  };
+  }
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
-      handleSave();
-      e.stopPropagation();
+      handleSave()
+      e.stopPropagation()
     } else if (e.key === 'Escape') {
-      handleCancel();
-      e.stopPropagation();
+      handleCancel()
+      e.stopPropagation()
     }
-  };
+  }
 
   // Render the static content by default, and the input when editing
   if (!editing) {
@@ -88,15 +87,17 @@ const EditableCell = memo(({ record, dataIndex, title, value, onUpdate, type = '
       case 'speaker':
         return (
           <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
-            <Text strong style={{ display: 'block' }}>{value || 'N/A'}</Text>
+            <Text strong style={{ display: 'block' }}>
+              {value || 'N/A'}
+            </Text>
           </div>
-        );
+        )
       case 'content':
         return (
           <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
             {value || 'N/A'}
           </div>
-        );
+        )
       case 'tone':
         const toneColors = {
           neutral: 'default',
@@ -105,54 +106,46 @@ const EditableCell = memo(({ record, dataIndex, title, value, onUpdate, type = '
           angry: 'red',
           excited: 'volcano',
           calm: 'geekblue'
-        };
-        const color = toneColors[value] || 'default';
+        }
+        const color = toneColors[value] || 'default'
         return (
           <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
             <Tag color={color}>{value || 'N/A'}</Tag>
           </div>
-        );
+        )
       case 'intensity':
         return (
           <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
             <Tag color="orange">{value || 0}</Tag>
           </div>
-        );
+        )
       case 'delay':
         return (
           <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
             {`${value || 0}ms`}
           </div>
-        );
+        )
       default:
         return (
           <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
             {value || 'N/A'}
           </div>
-        );
+        )
     }
   }
 
   switch (type) {
     case 'select':
       return (
-        <Select 
-          style={{ width: '100%' }} 
-          value={tempValue} 
-          onChange={handleChange} 
-          onPressEnter={handleSave}
-          onBlur={handleSave}
-          virtual
-          autoFocus
-        >
+        <Select style={{ width: '100%' }} value={tempValue} onChange={handleChange} onPressEnter={handleSave} onBlur={handleSave} virtual autoFocus>
           {options}
         </Select>
-      );
+      )
     case 'number':
       return (
-        <InputNumber 
-          style={{ width: '100%' }} 
-          value={tempValue} 
+        <InputNumber
+          style={{ width: '100%' }}
+          value={tempValue}
           onChange={handleChange}
           min={min}
           max={max}
@@ -162,7 +155,7 @@ const EditableCell = memo(({ record, dataIndex, title, value, onUpdate, type = '
           onKeyDown={handleKeyDown}
           autoFocus
         />
-      );
+      )
     case 'text':
     default:
       return (
@@ -174,7 +167,7 @@ const EditableCell = memo(({ record, dataIndex, title, value, onUpdate, type = '
           onKeyDown={handleKeyDown}
           autoFocus
         />
-      );
+      )
   }
 })
 
@@ -201,15 +194,45 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
 
   const { showError, showSuccess, showWarning } = useNotification()
 
-  // Update tableData when jsonData changes
+  // Update tableData when jsonData changes, and fetch TTS records from API when jsonData is null/undefined
   useEffect(() => {
-    const initialData = jsonData
-      ? jsonData.map((item) => ({
-          ...item,
-          dubbing: item.dubbing || '请选择'
-        }))
-      : audio_text.map((item) => ({ ...item, dubbing: '请选择' }))
-    setTableData(initialData)
+    const fetchTTSRecords = async () => {
+      try {
+        // Fetch TTS records from the API
+        const response = await ttsTplList({ book_id: 0, section_id: 0, page: 1, page_size: 100 }) // Get first 100 records
+        if (response.list && Array.isArray(response.list)) {
+          // Transform API response to match expected format
+          const transformedData = response.list.map((record) => ({
+            speaker: record.role || record.speaker || '',
+            content: record.text || record.content || '',
+            tone: record.emotion_text || record.tone || '',
+            intensity: record.emotion_alpha || record.intensity || 0,
+            delay: record.interval_silence || record.delay || 0,
+            dubbing: record.speaker_audio_path || '请选择',
+            ...record // Include all other fields from the record
+          }))
+          setTableData(transformedData)
+        } else {
+          setTableData([])
+        }
+      } catch (error) {
+        console.error('Error fetching TTS records:', error)
+        // If there's an error, set empty data
+        setTableData([])
+      }
+    }
+
+    if (jsonData) {
+      // Use provided JSON data
+      const initialData = jsonData.map((item) => ({
+        ...item,
+        dubbing: item.dubbing || '请选择'
+      }))
+      setTableData(initialData)
+    } else {
+      // Fetch data from the API
+      fetchTTSRecords()
+    }
   }, [jsonData])
 
   // Extract unique character names using useMemo to prevent unnecessary recalculations
@@ -220,10 +243,6 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   }, [tableData])
 
   // console.log({jsonData})
-
-
-
-
 
   // Update table height when window is resized
   useEffect(() => {
@@ -381,18 +400,8 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         key: 'speaker',
         fixed: 'left',
         render: (text, record) => {
-          const recordKey = `${record.speaker}-${record.content}`;
-          return (
-            <EditableCell
-              record={record}
-              dataIndex="speaker"
-              title="角色"
-              value={text}
-              onUpdate={updateTableData}
-              type="text"
-              recordKey={recordKey}
-            />
-          );
+          const recordKey = `${record.speaker}-${record.content}`
+          return <EditableCell record={record} dataIndex="speaker" title="角色" value={text} onUpdate={updateTableData} type="text" recordKey={recordKey} />
         }
       },
       {
@@ -411,18 +420,8 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         dataIndex: 'content',
         key: 'content',
         render: (text, record) => {
-          const recordKey = `${record.speaker}-${record.content}`;
-          return (
-            <EditableCell
-              record={record}
-              dataIndex="content"
-              title="文本内容"
-              value={text}
-              onUpdate={updateTableData}
-              type="text"
-              recordKey={recordKey}
-            />
-          );
+          const recordKey = `${record.speaker}-${record.content}`
+          return <EditableCell record={record} dataIndex="content" title="文本内容" value={text} onUpdate={updateTableData} type="text" recordKey={recordKey} />
         }
       },
       {
@@ -431,18 +430,8 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         dataIndex: 'tone',
         key: 'tone',
         render: (text, record) => {
-          const recordKey = `${record.speaker}-${record.content}`;
-          return (
-            <EditableCell
-              record={record}
-              dataIndex="tone"
-              title="情感"
-              value={text}
-              onUpdate={updateTableData}
-              type="text"
-              recordKey={recordKey}
-            />
-          );
+          const recordKey = `${record.speaker}-${record.content}`
+          return <EditableCell record={record} dataIndex="tone" title="情感" value={text} onUpdate={updateTableData} type="text" recordKey={recordKey} />
         }
       },
       {
@@ -451,7 +440,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         key: 'intensity',
         width: 80,
         render: (text, record) => {
-          const recordKey = `${record.speaker}-${record.content}`;
+          const recordKey = `${record.speaker}-${record.content}`
           return (
             <EditableCell
               record={record}
@@ -464,7 +453,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
               max={10}
               recordKey={recordKey}
             />
-          );
+          )
         }
       },
       {
@@ -473,7 +462,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         key: 'delay',
         width: 100,
         render: (text, record) => {
-          const recordKey = `${record.speaker}-${record.content}`;
+          const recordKey = `${record.speaker}-${record.content}`
           return (
             <EditableCell
               record={record}
@@ -486,7 +475,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
               max={5000}
               recordKey={recordKey}
             />
-          );
+          )
         }
       },
       {
@@ -579,7 +568,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     setIsBatchTraining(true)
     setBatchProgress(0)
     setBatchProgressText('准备开始批量训练...')
-    
+
     // Create an AbortController for cancellation
     const abortController = new AbortController()
     setBatchAbortController(abortController)
@@ -644,7 +633,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
           delete newRecords[recordKey]
           return newRecords
         })
-        
+
         // Update progress percentage
         const progress = ((i + 1) / tableData.length) * 100
         setBatchProgress(progress)
@@ -662,12 +651,12 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     setBatchProgress(0)
     setBatchProgressText('')
     setBatchAbortController(null)
-    
+
     // Clear all training states to ensure UI consistency after cancellation
     if (abortController.signal.aborted) {
       setTrainingRecords({})
     }
-    
+
     if (!abortController.signal.aborted) {
       // Show final summary
       showSuccess('批量训练完成', `总处理: ${tableData.length} 条记录 (${successCount} 成功, ${errorCount} 失败)`)
@@ -683,24 +672,18 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         <Button type="primary" onClick={openMappingModal} disabled={isBatchTraining}>
           角色配音
         </Button>
-        <Button 
-          type="primary" 
-          style={{ marginLeft: 10 }} 
-          onClick={handleBatchTrain} 
-          loading={isBatchTraining}
-          disabled={isBatchTraining}
-        >
+        <Button type="primary" style={{ marginLeft: 10 }} onClick={handleBatchTrain} loading={isBatchTraining} disabled={isBatchTraining}>
           批量训练
         </Button>
-        <BatchTrainingProgress 
-          isVisible={isBatchTraining} 
-          progress={batchProgress} 
-          progressText={batchProgressText} 
+        <BatchTrainingProgress
+          isVisible={isBatchTraining}
+          progress={batchProgress}
+          progressText={batchProgressText}
           onCancelTraining={() => {
             if (batchAbortController) {
               batchAbortController.abort()
             }
-          }} 
+          }}
         />
       </div>
       {

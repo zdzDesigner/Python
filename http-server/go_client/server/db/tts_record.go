@@ -36,8 +36,8 @@ func (t *TTSRecord) Update(w map[string]any, keys []string) error {
 	return sqlite.DB(t).Where(w).Update(keys...)
 }
 
-func (b *TTSRecord) GetFunc(fn func(*sqlite.Sql) *sqlite.Sql, keys ...string) ([]*TTSRecord, error) {
-	return sqlite.GetField[TTSRecord](func(dbm sqlite.DBSql) *sqlite.Sql { return fn(dbm(b)) }, keys...)
+func (t *TTSRecord) GetFunc(fn func(*sqlite.Sql) *sqlite.Sql, keys ...string) ([]*TTSRecord, error) {
+	return sqlite.GetField[TTSRecord](func(dbm sqlite.DBSql) *sqlite.Sql { return fn(dbm(t)) }, keys...)
 }
 
 func (t *TTSRecord) Get(w any, limit []string) ([]*TTSRecord, error) {

@@ -247,17 +247,27 @@ func ttsTplHandler(ctx ginc.Contexter) {
 
 // ttsTplList lists TTS records with optional filtering by book_id, section_id, and no
 func ttsTplList(ctx ginc.Contexter) {
-	book_id := ctx.Query("book_id")
 	section_id := ctx.Query("section_id")
+	book_id := ctx.Query("section_id")
 	no := ctx.Query("no")
 	page := ctx.Query("page")
 	size := ctx.Query("size")
 
+	querys := make(map[string]any, 3)
+	if book_id != "" {
+		querys["book_id"] = book_id
+	}
+	if section_id != "" {
+		querys["section_id"] = section_id
+	}
+	if no != "" {
+		querys["no"] = no
+	}
 	// Create a TTSRecord instance to use the model methods
 	record := &db.TTSRecord{}
 	// Get records with pagination
 	list, err := record.GetFunc(func(s *sqlite.Sql) *sqlite.Sql {
-		return s.Where(map[string]any{"book_id": book_id, "section_id": section_id, "no": no}).Limit(sqlite.ToLimit(page, size)).Order("id desc")
+		return s.Where(querys).Limit(sqlite.ToLimit(page, size)).Order("no asc")
 	})
 	if err != nil {
 		ctx.FailErr(40100, err.Error())

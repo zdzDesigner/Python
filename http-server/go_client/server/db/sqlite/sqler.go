@@ -601,12 +601,13 @@ func TableColumn(tname string) ([]Column, error) {
 	SQL := fmt.Sprintf("PRAGMA table_info(%s)", tname)
 	err := Query(SQL, func(rows *sql.Rows) error {
 		var cid, notnull, pk int
-		var name, dtype, dflt_value string
-		
+		var name, dtype string
+		var dflt_value *string
+
 		if err := rows.Scan(&cid, &name, &dtype, &notnull, &dflt_value, &pk); err != nil {
 			return err
 		}
-		
+
 		col := Column{
 			Field:   name,
 			Type:    dtype,
@@ -646,8 +647,8 @@ func TableIndexs(tname string) ([]IndexField, error) {
 }
 
 // tables 获取所有表
-func tables() ([]string, error) { 
-	return quick("SELECT name FROM sqlite_master WHERE type='table'") 
+func tables() ([]string, error) {
+	return quick("SELECT name FROM sqlite_master WHERE type='table'")
 }
 
 // count 获取表记录数
@@ -656,7 +657,7 @@ func count(tname string) ([]string, error) {
 }
 
 // Lastid 获取最后插入 ID
-func Lastid() ([]string, error) { 
+func Lastid() ([]string, error) {
 	var lastId int64
 	err := db.QueryRow("SELECT last_insert_rowid()").Scan(&lastId)
 	if err != nil {
@@ -770,3 +771,4 @@ func DB(p ...any) *Sql {
 	}
 	return &Sql{DB: db}
 }
+

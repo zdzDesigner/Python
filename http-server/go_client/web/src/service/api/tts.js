@@ -202,3 +202,40 @@ export const ttsTplSave = async (jsonData) => {
     throw error
   }
 }
+
+/**
+ * Fetch TTS template records from the database with optional filters
+ * @param {Object} filters - Optional filters for book_id, section_id, no
+ * @param {number} page - Page number for pagination (default 1)
+ * @param {number} pageSize - Page size for pagination (default 20, max 100)
+ * @returns {Promise<Object>} - API response with TTS records list and total count
+ */
+export const ttsTplList = async (filters = {}) => {
+  const { book_id, section_id, no, page = 1, page_size = 20 } = filters;
+  
+  // Build query parameters
+  const params = new URLSearchParams();
+  if (book_id !== undefined && book_id !== null) params.append('book_id', book_id);
+  if (section_id !== undefined && section_id !== null) params.append('section_id', section_id);
+  if (no !== undefined && no !== null) params.append('no', no);
+  params.append('page', page);
+  params.append('size', page_size);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tts-tpl?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`TTS template list API error! status: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching TTS template list:', error)
+    throw error
+  }
+}
