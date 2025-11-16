@@ -373,7 +373,8 @@ speaker_audio_path参数设置为当前tr中的dubbing的值
 
 
 ### 添加尾截取
-在@web/src/components/TTSList.jsx table 中的延迟后添加尾截取字段
+在@web/src/components/TTSList.jsx table 中的延迟后添加尾截取字段 truncate (audio_end_truncate)
+在@web/src/components/AudioPlayer.jsx 中添加一个 end_truncate 参数, 可以设置播放到末尾多少毫秒前停止, 默认为0
 
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档
