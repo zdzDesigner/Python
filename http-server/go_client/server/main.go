@@ -2,14 +2,22 @@ package main
 
 import (
 	"fmt"
-	"go-audio-server/internal/ginc"
 	"net/http"
 	"os"
+
+	"go-audio-server/db/sqlite"
+	"go-audio-server/internal/ginc"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+	// Initialize SQLite database
+	dbConfig := map[string]string{
+		"DBPath": "assets/audio_server.db",
+	}
+	sqlite.Boot(dbConfig)
+
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New() // Create a new router without default middleware
 
@@ -27,6 +35,7 @@ func main() {
 		api.GET("/audio-file/*path", audioFileHandler)
 		api.POST("/tts", ginc.Handler(ttsHandler))
 		api.POST("/tts/check", ginc.Handler(checkTTSExistsHandler))
+		api.POST("/tts-tpl", ginc.Handler(ttsTplHandler))
 		api.DELETE("/delete-file", ginc.Handler(deleteAudioFileHandler))
 		api.POST("/remove-special-symbols", ginc.Handler(removeSpecialSymbolsHandler))
 		api.POST("/sanitize-filenames", ginc.Handler(sanitizeFilenamesHandler))

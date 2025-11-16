@@ -355,5 +355,12 @@ speaker_audio_path参数设置为当前tr中的dubbing的值
   的ReadDirectoryRecursive接口中如果文件名出现了RemoveSpecialSymbols接口出现的特殊字符就清除掉并更新文件名称
 
 
+### 创建tts_records model
+参考 @server/db/user.go  创建一个tts_records model 接口
+
+### 完成tts_records数据存存
+在 @server/handlers.go  中添加一个 ttsTplHandler 接口，通过@server/db/tts_record.go model  把 @web/src/components/TextDataSettings.jsx handleJsonSubmit 解析后的数据添加到 tts_records 表中
+在 @web/src/service/api/tts.js 中添加 ttsTplSave 接口，在 @web/src/components/TextDataSettings.jsx  handleJsonSubmit 中调用
+
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档

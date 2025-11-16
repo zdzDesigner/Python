@@ -176,3 +176,29 @@ export const sanitizeFilenames = async (directory) => {
     throw error
   }
 }
+
+/**
+ * Save TTS template data to the database
+ * @param {Array} jsonData - Array of TTS record objects
+ * @returns {Promise<Object>} - API response with status message
+ */
+export const ttsTplSave = async (jsonData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tts-tpl`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(jsonData)
+    })
+
+    if (!response.ok) {
+      throw new Error(`TTS template save API error! status: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error saving TTS template data:', error)
+    throw error
+  }
+}

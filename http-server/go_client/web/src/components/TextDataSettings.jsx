@@ -2,6 +2,7 @@ import React, { useState, memo } from 'react'
 import { UploadOutlined, EditOutlined } from '@ant-design/icons'
 import { Space, Button, Upload, Modal, Input, message } from 'antd'
 import { useNotification } from '../utils/NotificationContext'
+import { ttsTplSave } from '../service/api/tts'
 
 // const { TextArea } = Typography
 const { TextArea } = Input
@@ -12,21 +13,31 @@ const TextDataSettings = ({ onUploadSuccess, onJsonData }) => {
   const [jsonModalVisible, setJsonModalVisible] = useState(false)
   const [jsonInput, setJsonInput] = useState('')
   const [formattedJson, setFormattedJson] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleJsonSubmit = () => {
+  const handleJsonSubmit = async () => {
     try {
       const parsedJson = JSON.parse(jsonInput)
       const formatted = JSON.stringify(parsedJson, null, 2)
       setFormattedJson(formatted)
-      showSuccess('JSON Parsed Successfully', 'The JSON has been validated and formatted.')
+      
+      // Show loading state
+      setLoading(true)
+      
+      // Save the TTS template data to the database
+      const result = await ttsTplSave(parsedJson)
+      showSuccess('JSON Saved Successfully', `Stored ${result.count || parsedJson.length} TTS records`)
+      
       if (onJsonData) {
         onJsonData(parsedJson) // Pass the JSON input to parent component
       }
       setJsonModalVisible(false) // Close the modal after successful submission
     } catch (error) {
-      showError('Invalid JSON', 'Please enter valid JSON data.')
+      console.error('Error saving TTS template:', error)
+      showError('Save Failed', error.message || 'Please enter valid JSON data.')
       setFormattedJson(error.message)
-      return
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -85,7 +96,12 @@ const TextDataSettings = ({ onUploadSuccess, onJsonData }) => {
             />
           }
           <div className="flex justify-end py-4">
-            <Button type="primary" onClick={handleJsonSubmit} disabled={!jsonInput.trim()}>
+            <Button 
+              type="primary" 
+              onClick={handleJsonSubmit} 
+              disabled={!jsonInput.trim() || loading}
+              loading={loading}
+            >
               确定
             </Button>
           </div>

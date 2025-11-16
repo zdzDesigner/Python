@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -49,6 +50,11 @@ func Boot(config map[string]string) {
 	}
 
 	Tables, _ = tables()
+	
+	// Execute the SQL migration file
+	if err := ExecuteMigrationFile(); err != nil {
+		log.Printf("Warning: Failed to execute migration file: %v", err)
+	}
 }
 
 func open(dbPath string) (*sql.DB, error) {
@@ -65,6 +71,46 @@ func open(dbPath string) (*sql.DB, error) {
 	}
 
 	return conn, nil
+}
+
+// ExecuteMigrationFile reads and executes the SQL migration file
+func ExecuteMigrationFile() error {
+	sqlFilePath := "build/SQL/sqlite.sql"
+	
+	// Check if the file exists, if not try alternative locations
+	if _, err := os.Stat(sqlFilePath); os.IsNotExist(err) {
+		// Try looking in the server directory
+		sqlFilePath = "./build/SQL/sqlite.sql"
+		if _, err := os.Stat(sqlFilePath); os.IsNotExist(err) {
+			return fmt.Errorf("migration file not found: %s", sqlFilePath)
+		}
+	}
+	
+	sqlBytes, err := os.ReadFile(sqlFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read migration file: %v", err)
+	}
+	
+	sqlContent := string(sqlBytes)
+	
+	// Split the SQL content by semicolons and execute each statement
+	// Handle the PRAGMA statements and other multiple statements
+	statements := strings.Split(sqlContent, ";")
+	
+	for _, statement := range statements {
+		statement = strings.TrimSpace(statement)
+		if statement == "" {
+			continue
+		}
+		
+		if _, err := db.Exec(statement); err != nil {
+			// Log the error but don't fail completely if it's a duplicate table error
+			// Some databases will return an error if table already exists
+			log.Printf("SQL statement execution error (continuing): %s - %v", statement, err)
+		}
+	}
+	
+	return nil
 }
 
 func mustexec(SQL string) (err error) {

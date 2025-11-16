@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"go-audio-server/db"
 	"go-audio-server/internal/ginc"
 
 	"github.com/gin-gonic/gin"
@@ -202,4 +203,62 @@ func sanitizeFilenamesHandler(ctx ginc.Contexter) {
 		"message":   "Filenames sanitized successfully",
 		"directory": req.Directory,
 	})
+}
+
+func ttsTplHandler(ctx ginc.Contexter) {
+	var jsonData []map[string]interface{}
+	if err := ctx.ParseReqbody(&jsonData); err != nil {
+		return
+	}
+
+	// Process each item in the JSON array
+	for _, item := range jsonData {
+		// Create a TTS record from the JSON data
+		ttsRecord := &db.TTSRecord{
+			UserID:           0, // Default user ID, can be set from context if available
+			SectionId:        0, // Set default or get from JSON if available
+			Text:             getStringValue(item, "text", ""),
+			SpeakerAudioPath: getStringValue(item, "speaker_audio_path", ""),
+			OutputWavPath:    getStringValue(item, "output_wav_path", ""),
+			EmotionText:      getStringValue(item, "emotion_text", ""),
+			Role:             getStringValue(item, "role", ""),
+			Status:           "pending", // Default status
+		}
+
+		// Handle numeric values with proper type assertion
+		if emotionAlpha, ok := item["emotion_alpha"]; ok {
+			if val, ok := emotionAlpha.(float64); ok {
+				ttsRecord.EmotionAlpha = val
+			}
+		}
+
+		if intervalSilence, ok := item["interval_silence"]; ok {
+			if val, ok := intervalSilence.(float64); ok { // JSON numbers are float64
+				ttsRecord.IntervalSilence = int(val)
+			}
+		}
+
+		// Add the record to the database
+		if err := ttsRecord.Add(); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to add TTS record to database: %v\n", err)
+			ctx.FailErr(500, "Failed to store TTS record: " + err.Error())
+			return
+		}
+	}
+
+	ctx.Success(gin.H{
+		"status":  "success",
+		"message": fmt.Sprintf("Stored %d TTS records", len(jsonData)),
+		"count":   len(jsonData),
+	})
+}
+
+// Helper function to safely extract string values from interface{}
+func getStringValue(m map[string]interface{}, key string, defaultValue string) string {
+	if val, ok := m[key]; ok {
+		if str, ok := val.(string); ok {
+			return str
+		}
+	}
+	return defaultValue
 }
