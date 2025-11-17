@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { Card, Table, Tag, Typography, Select, Button, Space, Modal, Input, InputNumber, Popconfirm } from 'antd'
 
-import { PlayCircleOutlined, ExperimentOutlined, DeleteOutlined } from '@ant-design/icons'
-import { MAP_TTS, mapTTSRecord, synthesizeTTS, checkTTSExists, ttsTplList, ttsTplBulkDelete, ttsTplUpdate } from '@/service/api/tts'
+import { PlayCircleOutlined, ExperimentOutlined, DeleteOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons'
+import { MAP_TTS, mapTTSRecord, mapStatus, synthesizeTTS, checkTTSExists, ttsTplList, ttsTplBulkDelete, ttsTplUpdate } from '@/service/api/tts'
 import { useNotification } from '@/utils/NotificationContext'
 import BatchTrainingProgress from './BatchTrainingProgress'
 
@@ -74,7 +74,13 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, type = 'text', 
   const handleCellClick = (e) => {
     // Prevent editing when clicking on input elements directly
     if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') {
-      setEditing(true)
+      // Don't set to editing state if the record is locked
+      if (!record.locked) {
+        setEditing(true)
+      } else {
+        // Show notification if record is locked
+        // This would need access to notification context, so we'll just not allow editing
+      }
     }
   }
 
@@ -88,13 +94,25 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, type = 'text', 
     }
   }
 
+  // Check if the record is locked
+  const isLocked = record.locked || false
+
   // Render the static content by default, and the input when editing
   if (!editing) {
     // Default display for different data types
     switch (dataIndex) {
       case 'speaker':
         return (
-          <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
+          <div
+            onClick={isLocked ? undefined : handleCellClick}
+            style={{
+              cursor: isLocked ? 'default' : 'pointer',
+              padding: '4px 8px',
+              border: '1px solid transparent',
+              borderRadius: '2px',
+              opacity: isLocked ? 0.6 : 1
+            }}
+          >
             <Text strong style={{ display: 'block' }}>
               {value || 'N/A'}
             </Text>
@@ -102,7 +120,16 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, type = 'text', 
         )
       case 'content':
         return (
-          <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
+          <div
+            onClick={isLocked ? undefined : handleCellClick}
+            style={{
+              cursor: isLocked ? 'default' : 'pointer',
+              padding: '4px 8px',
+              border: '1px solid transparent',
+              borderRadius: '2px',
+              opacity: isLocked ? 0.6 : 1
+            }}
+          >
             {value || 'N/A'}
           </div>
         )
@@ -117,26 +144,170 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, type = 'text', 
         }
         const color = toneColors[value] || 'default'
         return (
-          <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
+          <div
+            onClick={isLocked ? undefined : handleCellClick}
+            style={{
+              cursor: isLocked ? 'default' : 'pointer',
+              padding: '4px 8px',
+              border: '1px solid transparent',
+              borderRadius: '2px',
+              opacity: isLocked ? 0.6 : 1
+            }}
+          >
             <Tag color={color}>{value || 'N/A'}</Tag>
           </div>
         )
       case 'intensity':
         return (
-          <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
+          <div
+            onClick={isLocked ? undefined : handleCellClick}
+            style={{
+              cursor: isLocked ? 'default' : 'pointer',
+              padding: '4px 8px',
+              border: '1px solid transparent',
+              borderRadius: '2px',
+              opacity: isLocked ? 0.6 : 1
+            }}
+          >
             <Tag color="orange">{value || 0}</Tag>
           </div>
         )
       case 'delay':
       case 'truncate':
         return (
-          <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
+          <div
+            onClick={isLocked ? undefined : handleCellClick}
+            style={{
+              cursor: isLocked ? 'default' : 'pointer',
+              padding: '4px 8px',
+              border: '1px solid transparent',
+              borderRadius: '2px',
+              opacity: isLocked ? 0.6 : 1
+            }}
+          >
             {`${value || 0}ms`}
           </div>
         )
       default:
         return (
-          <div onClick={handleCellClick} style={{ cursor: 'pointer', padding: '4px 8px', border: '1px solid transparent', borderRadius: '2px' }}>
+          <div
+            onClick={isLocked ? undefined : handleCellClick}
+            style={{
+              cursor: isLocked ? 'default' : 'pointer',
+              padding: '4px 8px',
+              border: '1px solid transparent',
+              borderRadius: '2px',
+              opacity: isLocked ? 0.6 : 1
+            }}
+          >
+            {value || 'N/A'}
+          </div>
+        )
+    }
+  }
+
+  // Only render the input if not locked
+  if (isLocked) {
+    // If record is locked but we're in editing state, cancel editing
+    if (editing) {
+      setEditing(false)
+    }
+
+    // Return the display view
+    switch (dataIndex) {
+      case 'speaker':
+        return (
+          <div
+            style={{
+              cursor: 'default',
+              padding: '4px 8px',
+              border: '1px solid transparent',
+              borderRadius: '2px',
+              opacity: 0.6
+            }}
+          >
+            <Text strong style={{ display: 'block' }}>
+              {value || 'N/A'}
+            </Text>
+          </div>
+        )
+      case 'content':
+        return (
+          <div
+            style={{
+              cursor: 'default',
+              padding: '4px 8px',
+              border: '1px solid transparent',
+              borderRadius: '2px',
+              opacity: 0.6
+            }}
+          >
+            {value || 'N/A'}
+          </div>
+        )
+      case 'tone':
+        const toneColors = {
+          neutral: 'default',
+          happy: 'green',
+          sad: 'blue',
+          angry: 'red',
+          excited: 'volcano',
+          calm: 'geekblue'
+        }
+        const color = toneColors[value] || 'default'
+        return (
+          <div
+            style={{
+              cursor: 'default',
+              padding: '4px 8px',
+              border: '1px solid transparent',
+              borderRadius: '2px',
+              opacity: 0.6
+            }}
+          >
+            <Tag color={color}>{value || 'N/A'}</Tag>
+          </div>
+        )
+      case 'intensity':
+        return (
+          <div
+            style={{
+              cursor: 'default',
+              padding: '4px 8px',
+              border: '1px solid transparent',
+              borderRadius: '2px',
+              opacity: 0.6
+            }}
+          >
+            <Tag color="orange">{value || 0}</Tag>
+          </div>
+        )
+      case 'delay':
+      case 'truncate':
+        return (
+          <div
+            style={{
+              cursor: 'default',
+              padding: '4px 8px',
+              border: '1px solid transparent',
+              borderRadius: '2px',
+              opacity: 0.6
+            }}
+          >
+            {`${value || 0}ms`}
+          </div>
+        )
+      default:
+        return (
+          <div
+            style={{
+              cursor: 'default',
+              padding: '4px 8px',
+              border: '1px solid transparent',
+              borderRadius: '2px',
+              opacity: 0.6
+            }}
+          >
             {value || 'N/A'}
           </div>
         )
@@ -180,15 +351,13 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, type = 'text', 
   }
 })
 
-EditableCell.displayName = 'EditableCell'
-
-EditableCell.displayName = 'EditableCell'
-
 const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   // State to store the table height
   const [tableHeight, setTableHeight] = useState('calc(100vh - 200px)')
   // State to track currently training records
   const [trainingRecords, setTrainingRecords] = useState({})
+  const [playingRecords, setPlayingRecords] = useState({})
+
   // State to track the output paths for trained records
   const [trainedRecords, setTrainedRecords] = useState({})
   // State for character mapping modal
@@ -306,7 +475,9 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
 
   // Function to play audio with end truncation
   const playAudio = useCallback(
-    (path, truncateMs = 0) => {
+    (path, record) => {
+      const truncateMs = record.truncate || 0
+      setPlayingRecords((prev) => ({ ...prev, [record.id]: true }))
       const audioUrl = `http://localhost:8081/api/audio-file${path.startsWith('/') ? path : '/' + path}`
       const audio = new Audio(audioUrl)
 
@@ -317,32 +488,37 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         playPromise.catch((error) => {
           console.error('Error playing audio:', error)
           showError('播放失败', error.message)
+          setTrainingRecords((prev) => {
+            const newRecords = { ...prev }
+            delete newRecords[record.id]
+            return newRecords
+          })
         })
 
-        if (truncateMs > 0) {
-          // Use timeupdate event to monitor playback time
-          const handleTimeUpdate = () => {
-            if (audio.duration) {
-              const timeRemaining = (audio.duration - audio.currentTime) * 1000 // in milliseconds
-              if (timeRemaining <= truncateMs) {
-                audio.pause()
-                // Optionally clean up the event listener
-                audio.removeEventListener('timeupdate', handleTimeUpdate)
-              }
+        // Use timeupdate event to monitor playback time
+        const handleTimeUpdate = () => {
+          if (audio.duration && truncateMs > 0) {
+            const timeRemaining = (audio.duration - audio.currentTime) * 1000 // in milliseconds
+            if (timeRemaining <= truncateMs) {
+              audio.pause()
+              cleanup()
             }
           }
-
-          // Add timeupdate event listener to check timing
-          audio.addEventListener('timeupdate', handleTimeUpdate)
-
-          // Clean up event listener when audio ends or is paused
-          const cleanup = () => {
-            audio.removeEventListener('timeupdate', handleTimeUpdate)
-          }
-
-          audio.addEventListener('ended', cleanup)
-          audio.addEventListener('pause', cleanup)
         }
+        audio.addEventListener('timeupdate', handleTimeUpdate)
+
+        // Clean up event listener when audio ends or is paused
+        const cleanup = () => {
+          setPlayingRecords((prev) => {
+            const newRecords = { ...prev }
+            delete newRecords[record.id]
+            return newRecords
+          })
+          audio.removeEventListener('timeupdate', handleTimeUpdate)
+        }
+        // Add timeupdate event listener to check timing
+        audio.addEventListener('ended', cleanup)
+        audio.addEventListener('pause', cleanup)
       }
     },
     [showError]
@@ -350,11 +526,10 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
 
   const handlePlay = useCallback(
     async (record) => {
-      const recordKey = record.id
       let outpath = trainedRecords[record.id]
 
       if (outpath) {
-        playAudio(outpath, record.truncate || 0)
+        playAudio(outpath, record)
       } else {
         try {
           const response = await checkTTSExists(record)
@@ -364,7 +539,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
               ...prev,
               [record.id]: outpath
             }))
-            playAudio(outpath, record.truncate || 0)
+            playAudio(outpath, record)
           } else {
             showError('播放失败', '音频文件未生成，请先训练此条数据')
           }
@@ -399,6 +574,42 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     })
   }, [])
 
+  // Function to toggle lock state for a specific record
+  const toggleLock = useCallback(
+    async (recordId) => {
+      setTableData((prevData) => {
+        const newData = [...prevData]
+        const index = newData.findIndex((item) => item.id === recordId)
+        if (index !== -1) {
+          const record = newData[index]
+          const updatedRecord = { ...record, locked: !record.locked }
+
+          // Update the record in the state
+          newData[index] = updatedRecord
+
+          // Update the backend as well
+          ttsTplUpdate(record.id, { status: mapStatus(updatedRecord.locked) }).catch((error) => {
+            console.error('Failed to update record lock state on backend:', error)
+            showWarning('更新失败', `无法同步更新到服务器: ${error.message}`)
+            // Revert the change in UI if update failed
+            setTableData((prev) => {
+              const revertedData = [...prev]
+              const revertIndex = revertedData.findIndex((item) => item.id === recordId)
+              if (revertIndex !== -1) {
+                revertedData[revertIndex] = record // Revert to original record
+              }
+              return revertedData
+            })
+          })
+
+          return newData
+        }
+        return prevData
+      })
+    },
+    [showWarning]
+  )
+
   // Function to update table data for a specific record field and sync with backend
   const updateTableData = useCallback(
     async (recordKey, field, newValue) => {
@@ -407,6 +618,12 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         const index = newData.findIndex((item) => item.id === recordKey)
         if (index !== -1) {
           const record = newData[index]
+          // Skip update if record is locked and field is editable
+          if (record.locked && ['content', 'tone', 'intensity', 'delay', 'truncate', 'speaker'].includes(field)) {
+            showWarning('记录已锁定', '无法编辑已锁定的记录')
+            return prevData
+          }
+
           const updatedRecord = { ...record, [field]: newValue }
 
           // Update the record in the state
@@ -573,24 +790,44 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
       {
         title: '操作',
         key: 'action',
-        width: 100,
+        width: 200,
         fixed: 'right',
         render: (text, record) => {
           const isTraining = trainingRecords[record.id]
+          const isPlaying = playingRecords[record.id]
           const isexist = record.output_wav_path != ''
-          console.log({ isexist }, record)
+          const isLocked = record.locked || false
+          // console.log({ isexist }, record)
 
           return (
             <Space size="middle">
-              <Button icon={<ExperimentOutlined />} onClick={() => handleTrain(record)} title="训练此条数据" loading={isTraining} disabled={isTraining} />
-              {isexist}
-              <Button icon={<PlayCircleOutlined />} onClick={() => handlePlay(record)} disabled={isTraining || !isexist} title="播放训练后的音频" />
+              <Button
+                icon={<ExperimentOutlined />}
+                onClick={() => handleTrain(record)}
+                title="训练此条数据"
+                loading={isTraining}
+                disabled={isTraining || isLocked}
+              />
+              <Button
+                icon={<PlayCircleOutlined />}
+                onClick={() => handlePlay(record)}
+                disabled={isTraining || !isexist}
+                loading={isPlaying}
+                title="播放训练后的音频"
+              />
+              <Button
+                icon={isLocked ? <LockOutlined /> : <UnlockOutlined />}
+                onClick={() => toggleLock(record.id)}
+                title={isLocked ? '解锁此条数据' : '锁定此条数据'}
+                type={isLocked ? 'default' : 'default'}
+                style={{ color: isLocked ? '#52c41a' : '#ff4d4f' }}
+              ></Button>
             </Space>
           )
         }
       }
     ],
-    [handlePlay, handleTrain, tableAudioFileOptions, trainingRecords, updateTableDataDubbing, updateTableData]
+    [handlePlay, handleTrain, tableAudioFileOptions, trainingRecords, playingRecords, updateTableDataDubbing, updateTableData]
   )
 
   // Memoize the audio files options to prevent unnecessary re-renders

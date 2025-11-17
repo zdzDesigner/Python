@@ -369,6 +369,9 @@ func ttsTplUpdate(ctx ginc.Contexter) {
 	if record.Role != "" {
 		updateKeys = append(updateKeys, "role")
 	}
+	if record.Status != "" {
+		updateKeys = append(updateKeys, "status")
+	}
 	if record.Text != "" {
 		updateKeys = append(updateKeys, "text")
 	}

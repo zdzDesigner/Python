@@ -22,8 +22,12 @@ export const mapTTSRecord = (record) => ({
   intensity: record.emotion_alpha || record.intensity || 0,
   delay: record.interval_silence || record.delay || 0,
   truncate: record.audio_end_truncate || 0,
-  output_wav_path: record.output_wav_path
+  output_wav_path: record.output_wav_path,
+  locked: record.status == 'locked' ? true : false
 })
+export const mapStatus = (islock) => {
+  return islock ? 'locked' : 'padding'
+}
 
 /**
  * Synthesize audio from text

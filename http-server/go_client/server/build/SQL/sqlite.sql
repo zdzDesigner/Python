@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS tts_records (
     emotion_alpha INTEGER DEFAULT 0, -- val/10
     interval_silence INTEGER DEFAULT 0,
     audio_end_truncate INTEGER DEFAULT 0,
-    status TEXT DEFAULT 'pending', -- pending, success, error
+    status TEXT DEFAULT 'pending', -- pending, success, error, locked
     error_msg TEXT DEFAULT '',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
