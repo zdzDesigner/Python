@@ -351,9 +351,7 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, type = 'text', 
   }
 })
 
-EditableCell.displayName = 'EditableCell'
 
-EditableCell.displayName = 'EditableCell'
 
 const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   // State to store the table height
