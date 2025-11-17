@@ -21,7 +21,8 @@ export const mapTTSRecord = (record) => ({
   tone: record.emotion_text || record.tone || '',
   intensity: record.emotion_alpha || record.intensity || 0,
   delay: record.interval_silence || record.delay || 0,
-  truncate: record.audio_end_truncate || 0
+  truncate: record.audio_end_truncate || 0,
+  output_wav_path: record.output_wav_path
 })
 
 /**

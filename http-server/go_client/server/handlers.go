@@ -62,7 +62,7 @@ func ttsHandler(ctx ginc.Contexter) {
 	ctx.Success(gin.H{
 		"status":        "success",
 		"newFile":       newFile,
-		"outputWavPath": ttsReq.OutputWavPath, // Return the output path
+		"outputWavPath": newFileName, // Return the output path
 	})
 }
 

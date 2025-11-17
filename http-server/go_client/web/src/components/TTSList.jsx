@@ -44,6 +44,12 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, type = 'text', 
   const recordKeyInternal = record.id
   // console.log({ recordKeyInternal, record })
 
+  // Sync tempValue with value prop when value changes
+  useEffect(() => {
+    // setTempValue(value)
+    setEditing(false)
+  }, [value])
+
   const handleChange = (newValue) => {
     setTempValue(newValue)
   }
@@ -176,6 +182,8 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, type = 'text', 
 
 EditableCell.displayName = 'EditableCell'
 
+EditableCell.displayName = 'EditableCell'
+
 const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   // State to store the table height
   const [tableHeight, setTableHeight] = useState('calc(100vh - 200px)')
@@ -261,9 +269,6 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
 
   const handleTrain = useCallback(
     async (record) => {
-      // Generate a unique key for the record (same as used in batch training)
-      const recordKey = record.id
-
       // Mark this record as currently training
       setTrainingRecords((prev) => ({ ...prev, [record.id]: true }))
 
@@ -280,18 +285,9 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
             ...prev,
             [record.id]: result.newFile.name
           }))
+          record.output_wav_path = result.outputWavPath
 
           showSuccess('训练成功', '音频文件已生成')
-        } else if (result.outpath) {
-          // If result has outpath directly
-          setTrainedRecords((prev) => ({
-            ...prev,
-            [record.id]: result.outpath
-          }))
-
-          showSuccess('训练成功', '音频文件已生成')
-        } else {
-          showSuccess('训练成功', '音频文件已 generated')
         }
       } catch (error) {
         console.error('Error during training:', error)
@@ -581,11 +577,14 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         fixed: 'right',
         render: (text, record) => {
           const isTraining = trainingRecords[record.id]
+          const isexist = record.output_wav_path != ''
+          console.log({ isexist }, record)
 
           return (
             <Space size="middle">
               <Button icon={<ExperimentOutlined />} onClick={() => handleTrain(record)} title="训练此条数据" loading={isTraining} disabled={isTraining} />
-              <Button icon={<PlayCircleOutlined />} onClick={() => handlePlay(record)} disabled={isTraining} title="播放训练后的音频" />
+              {isexist}
+              <Button icon={<PlayCircleOutlined />} onClick={() => handlePlay(record)} disabled={isTraining || !isexist} title="播放训练后的音频" />
             </Space>
           )
         }

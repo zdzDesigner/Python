@@ -378,5 +378,11 @@ speaker_audio_path参数设置为当前tr中的dubbing的值
 
 把 @web/src/components/TTSList.jsx 中的playAudio 抽象出去也添加一个end_truncate 参数, 可以设置播放到末尾多少毫秒前停止, 默认为0
 
+
+@web/src/components/TTSList.jsx  table 虚拟滚动时 EditableCell 组建input会带上之前编辑的数据
+@web/src/components/TTSList.jsx  table 的操作中添加一个"锁定"操作，点击"锁定"后当前行不可编辑，只能点击播放
+
+
+
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档
