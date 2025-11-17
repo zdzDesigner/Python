@@ -87,9 +87,9 @@ func checkTTSExistsHandler(ctx ginc.Contexter) {
 	}
 
 	filePath := filepath.Join(OUTPUT_DIR, fileName)
-	// fmt.Println(filePath)
+	fmt.Println(filePath, fileName)
 
-	if _, err := os.Stat(filePath); err == nil {
+	if finfo, err := os.Stat(filePath); !finfo.IsDir() && err == nil {
 		// File exists
 		ctx.Success(gin.H{
 			"exists":  true,
