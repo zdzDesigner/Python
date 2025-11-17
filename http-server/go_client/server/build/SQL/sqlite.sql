@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS tts_records (
 );
 
 -- Create indexes for TTS Records table
-CREATE UNIQUE INDEX IF NOT EXISTS book_id_section_id_no ON tts_records(book_id,section_id,no);
+CREATE UNIQUE INDEX IF NOT EXISTS uni_idx_tts_records_book_id_section_id_no ON tts_records(book_id,section_id,no);
 CREATE INDEX IF NOT EXISTS idx_tts_records_no ON tts_records(no);
 CREATE INDEX IF NOT EXISTS idx_tts_records_user_id ON tts_records(user_id);
 CREATE INDEX IF NOT EXISTS idx_tts_records_section_id ON tts_records(section_id);
