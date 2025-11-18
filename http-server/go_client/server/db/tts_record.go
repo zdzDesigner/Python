@@ -27,6 +27,8 @@ type TTSRecord struct {
 	UpdatedAt        time.Time `json:"updated_at" sql:"auto"`
 }
 
+func TTSRecordISLocked(status string) bool { return status == "locked" }
+
 func (t *TTSRecord) TableName() string { return "tts_records" }
 func (t *TTSRecord) Add() error        { return sqlite.DB(t).Add("created_at", "updated_at") }
 func (t *TTSRecord) Count() int        { return sqlite.DB(t).Count() }

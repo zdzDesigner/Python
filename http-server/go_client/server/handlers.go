@@ -23,6 +23,17 @@ func ttsHandler(ctx ginc.Contexter) {
 		return
 	}
 
+	if list, err := (&db.TTSRecord{}).Get(map[string]any{"id": ttsReq.ID}, nil); err == nil {
+		record := list[0]
+		if db.TTSRecordISLocked(record.Status) {
+			ctx.Success(gin.H{
+				"status":  "success",
+				"outpath": record.OutputWavPath,
+			})
+			return
+		}
+	}
+
 	fmt.Printf("Received TTS request: %+v\n", ttsReq)
 
 	if _, err := os.Stat(OUTPUT_DIR); os.IsNotExist(err) {
@@ -40,17 +51,17 @@ func ttsHandler(ctx ginc.Contexter) {
 		return
 	}
 
-	absPath, err := filepath.Abs(ttsReq.OutputWavPath)
-	if err != nil {
-		ctx.FailErr(500, "Could not construct file path for response: "+err.Error())
-		return
-	}
+	// absPath, err := filepath.Abs(ttsReq.OutputWavPath)
+	// if err != nil {
+	// 	ctx.FailErr(500, "Could not construct file path for response: "+err.Error())
+	// 	return
+	// }
 
-	newFile := FileItem{
-		Name: filepath.ToSlash(ttsReq.OutputWavPath),
-		Path: absPath,
-		URL:  "/api/audio-file/" + filepath.ToSlash(ttsReq.OutputWavPath),
-	}
+	// newFile := FileItem{
+	// 	Name: filepath.ToSlash(ttsReq.OutputWavPath),
+	// 	Path: absPath,
+	// 	URL:  "/api/audio-file/" + filepath.ToSlash(ttsReq.OutputWavPath),
+	// }
 
 	// Update the TTS record in the database with the output path and success status
 	if err := (&db.TTSRecord{OutputWavPath: newFileName}).UpdateByID(ttsReq.ID, "output_wav_path"); err != nil {
@@ -60,9 +71,9 @@ func ttsHandler(ctx ginc.Contexter) {
 	}
 
 	ctx.Success(gin.H{
-		"status":        "success",
-		"newFile":       newFile,
-		"outputWavPath": newFileName, // Return the output path
+		"status":  "success",
+		"outpath": newFileName, // Return the output path
+		// "newFile":       newFile,
 	})
 }
 
@@ -93,7 +104,8 @@ func checkTTSExistsHandler(ctx ginc.Contexter) {
 		// File exists
 		ctx.Success(gin.H{
 			"exists":  true,
-			"outpath": filepath.ToSlash(filePath),
+			"outpath": fileName,
+			// "outpath": filepath.ToSlash(filePath),
 		})
 	} else {
 		// File does not exist

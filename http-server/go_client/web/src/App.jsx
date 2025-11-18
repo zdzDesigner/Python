@@ -91,19 +91,20 @@ const App = () => {
   return (
     <div className="flex flex-col h-screen bg-slate-50 text-slate-800 cursor-default">
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar
-          audioFilesCount={audioFiles.length}
-          loading={loading}
-          fileTree={fileTree}
-          onSelectFile={handleFileSelect}
-          onDeleteFile={handleDeleteFile}
-          onSynthesize={handleSynthesize}
-          isSynthesizing={isSynthesizing}
-          selectedFile={selectedFile}
-          currentlyPlaying={currentlyPlaying}
-          onPauseCurrent={handleToggleCurrent}
-        />
-
+        {
+          // <Sidebar
+          //   audioFilesCount={audioFiles.length}
+          //   loading={loading}
+          //   fileTree={fileTree}
+          //   onSelectFile={handleFileSelect}
+          //   onDeleteFile={handleDeleteFile}
+          //   onSynthesize={handleSynthesize}
+          //   isSynthesizing={isSynthesizing}
+          //   selectedFile={selectedFile}
+          //   currentlyPlaying={currentlyPlaying}
+          //   onPauseCurrent={handleToggleCurrent}
+          // />
+        }
         <div className="flex-1 flex flex-col">
           <TextDataSettings onUploadSuccess={fetchAudioFiles} onJsonData={handleJsonData} />
           <div className="flex-1">

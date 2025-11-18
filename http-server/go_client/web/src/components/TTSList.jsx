@@ -12,13 +12,13 @@ const { Option } = Select
 const TTSTable = memo(({ columns, tableData, tableHeight }) => {
   return (
     <Table
-      style={{ padding: 10, backgroundColor: '#fff', width: 'calc(100vw - 300px)' }}
+      // style={{ padding: 10, backgroundColor: '#fff', width: 'calc(100vw - 300px)' }}
       dataSource={tableData}
       columns={columns}
       size="small"
       key={(record, index) => record.id}
       pagination={false}
-      virtual={true}
+      // virtual={true}
       scroll={{ y: tableHeight, x: 1200 }}
       locale={{
         emptyText: tableData && tableData.length > 0 ? 'JSON数据有效但不包含TTS条目' : '尚未提供JSON数据'
@@ -46,7 +46,7 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, type = 'text', 
 
   // Sync tempValue with value prop when value changes
   useEffect(() => {
-    // setTempValue(value)
+    setTempValue(value)
     setEditing(false)
   }, [value])
 
@@ -448,13 +448,13 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         const result = await synthesizeTTS(record)
 
         // If result contains an output path, save it to the trained records
-        if (result.newFile && result.newFile.path) {
+        if (result.outpath) {
           // Save the output path for this record
           setTrainedRecords((prev) => ({
             ...prev,
-            [record.id]: result.newFile.name
+            [record.id]: result.outpath
           }))
-          record.output_wav_path = result.outputWavPath
+          record.output_wav_path = result.outpath
 
           showSuccess('训练成功', '音频文件已生成')
         }
@@ -478,7 +478,8 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     (path, record) => {
       const truncateMs = record.truncate || 0
       setPlayingRecords((prev) => ({ ...prev, [record.id]: true }))
-      const audioUrl = `http://localhost:8081/api/audio-file${path.startsWith('/') ? path : '/' + path}`
+      const audioUrl = `http://localhost:8081/api/audio-file/output${path.startsWith('/') ? path : '/' + path}`
+      console.log({audioUrl})
       const audio = new Audio(audioUrl)
 
       // Start playing the audio
@@ -931,13 +932,14 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         const result = await synthesizeTTS(record, { signal: abortController.signal })
 
         // If result contains an output path, save it to the trained records
-        if (result.newFile && result.newFile.path) {
-          setTrainedRecords((prev) => ({
-            ...prev,
-            [record.id]: result.newFile.name
-          }))
-          successCount++
-        } else if (result.outpath) {
+        // if (result.newFile && result.newFile.path) {
+        //   setTrainedRecords((prev) => ({
+        //     ...prev,
+        //     [record.id]: result.newFile.name
+        //   }))
+        //   successCount++
+        // } else
+        if (result.outpath) {
           setTrainedRecords((prev) => ({
             ...prev,
             [record.id]: result.outpath

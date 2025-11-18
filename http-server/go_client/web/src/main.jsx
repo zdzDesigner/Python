@@ -6,9 +6,9 @@ import { NotificationProvider } from './utils/NotificationContext.jsx'
 import { AudioLibraryProvider } from './context/AudioLibraryContext.jsx'
 
 createRoot(document.getElementById('root')).render(
-    <NotificationProvider>
-      <AudioLibraryProvider>
-        <App />
-      </AudioLibraryProvider>
-    </NotificationProvider>
+  <NotificationProvider>
+    <AudioLibraryProvider>
+      <App />
+    </AudioLibraryProvider>
+  </NotificationProvider>
 )
