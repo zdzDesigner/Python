@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { Card, Table, Tag, Typography, Select, Button, Space, Modal, Input, InputNumber, Popconfirm } from 'antd'
 
 import { PlayCircleOutlined, ExperimentOutlined, DeleteOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons'
-import { MAP_TTS, mapTTSRecord, synthesizeTTS, checkTTSExists, ttsTplList, ttsTplBulkDelete, ttsTplUpdate } from '@/service/api/tts'
+import { MAP_TTS, mapTTSRecord, mapStatus, synthesizeTTS, checkTTSExists, ttsTplList, ttsTplBulkDelete, ttsTplUpdate } from '@/service/api/tts'
 import { useNotification } from '@/utils/NotificationContext'
 import BatchTrainingProgress from './BatchTrainingProgress'
 
@@ -588,7 +588,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
           newData[index] = updatedRecord
 
           // Update the backend as well
-          ttsTplUpdate(record.id, { locked: updatedRecord.locked }).catch((error) => {
+          ttsTplUpdate(record.id, { status: mapStatus(updatedRecord.locked) }).catch((error) => {
             console.error('Failed to update record lock state on backend:', error)
             showWarning('更新失败', `无法同步更新到服务器: ${error.message}`)
             // Revert the change in UI if update failed
@@ -797,19 +797,10 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
           const isPlaying = playingRecords[record.id]
           const isexist = record.output_wav_path != ''
           const isLocked = record.locked || false
-          console.log({ isexist }, record)
+          // console.log({ isexist }, record)
 
           return (
             <Space size="middle">
-              <Button
-                icon={isLocked ? <LockOutlined /> : <UnlockOutlined />}
-                onClick={() => toggleLock(record.id)}
-                title={isLocked ? '解锁此条数据' : '锁定此条数据'}
-                type={isLocked ? 'default' : 'default'}
-                style={{ color: isLocked ? '#52c41a' : '#ff4d4f' }}
-              >
-                {isLocked ? '已锁' : '锁定'}
-              </Button>
               <Button
                 icon={<ExperimentOutlined />}
                 onClick={() => handleTrain(record)}
@@ -824,6 +815,13 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
                 loading={isPlaying}
                 title="播放训练后的音频"
               />
+              <Button
+                icon={isLocked ? <LockOutlined /> : <UnlockOutlined />}
+                onClick={() => toggleLock(record.id)}
+                title={isLocked ? '解锁此条数据' : '锁定此条数据'}
+                type={isLocked ? 'default' : 'default'}
+                style={{ color: isLocked ? '#52c41a' : '#ff4d4f' }}
+              ></Button>
             </Space>
           )
         }
