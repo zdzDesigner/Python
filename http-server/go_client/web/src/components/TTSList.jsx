@@ -351,13 +351,13 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, type = 'text', 
   }
 })
 
-
-
 const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   // State to store the table height
   const [tableHeight, setTableHeight] = useState('calc(100vh - 200px)')
   // State to track currently training records
   const [trainingRecords, setTrainingRecords] = useState({})
+  const [playingRecords, setPlayingRecords] = useState({})
+
   // State to track the output paths for trained records
   const [trainedRecords, setTrainedRecords] = useState({})
   // State for character mapping modal
@@ -475,7 +475,9 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
 
   // Function to play audio with end truncation
   const playAudio = useCallback(
-    (path, truncateMs = 0) => {
+    (path, record) => {
+      const truncateMs = record.truncate || 0
+      setPlayingRecords((prev) => ({ ...prev, [record.id]: true }))
       const audioUrl = `http://localhost:8081/api/audio-file${path.startsWith('/') ? path : '/' + path}`
       const audio = new Audio(audioUrl)
 
@@ -486,32 +488,37 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         playPromise.catch((error) => {
           console.error('Error playing audio:', error)
           showError('播放失败', error.message)
+          setTrainingRecords((prev) => {
+            const newRecords = { ...prev }
+            delete newRecords[record.id]
+            return newRecords
+          })
         })
 
-        if (truncateMs > 0) {
-          // Use timeupdate event to monitor playback time
-          const handleTimeUpdate = () => {
-            if (audio.duration) {
-              const timeRemaining = (audio.duration - audio.currentTime) * 1000 // in milliseconds
-              if (timeRemaining <= truncateMs) {
-                audio.pause()
-                // Optionally clean up the event listener
-                audio.removeEventListener('timeupdate', handleTimeUpdate)
-              }
+        // Use timeupdate event to monitor playback time
+        const handleTimeUpdate = () => {
+          if (audio.duration && truncateMs > 0) {
+            const timeRemaining = (audio.duration - audio.currentTime) * 1000 // in milliseconds
+            if (timeRemaining <= truncateMs) {
+              audio.pause()
+              cleanup()
             }
           }
-
-          // Add timeupdate event listener to check timing
-          audio.addEventListener('timeupdate', handleTimeUpdate)
-
-          // Clean up event listener when audio ends or is paused
-          const cleanup = () => {
-            audio.removeEventListener('timeupdate', handleTimeUpdate)
-          }
-
-          audio.addEventListener('ended', cleanup)
-          audio.addEventListener('pause', cleanup)
         }
+        audio.addEventListener('timeupdate', handleTimeUpdate)
+
+        // Clean up event listener when audio ends or is paused
+        const cleanup = () => {
+          setPlayingRecords((prev) => {
+            const newRecords = { ...prev }
+            delete newRecords[record.id]
+            return newRecords
+          })
+          audio.removeEventListener('timeupdate', handleTimeUpdate)
+        }
+        // Add timeupdate event listener to check timing
+        audio.addEventListener('ended', cleanup)
+        audio.addEventListener('pause', cleanup)
       }
     },
     [showError]
@@ -519,11 +526,10 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
 
   const handlePlay = useCallback(
     async (record) => {
-      const recordKey = record.id
       let outpath = trainedRecords[record.id]
 
       if (outpath) {
-        playAudio(outpath, record.truncate || 0)
+        playAudio(outpath, record)
       } else {
         try {
           const response = await checkTTSExists(record)
@@ -533,7 +539,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
               ...prev,
               [record.id]: outpath
             }))
-            playAudio(outpath, record.truncate || 0)
+            playAudio(outpath, record)
           } else {
             showError('播放失败', '音频文件未生成，请先训练此条数据')
           }
@@ -788,6 +794,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         fixed: 'right',
         render: (text, record) => {
           const isTraining = trainingRecords[record.id]
+          const isPlaying = playingRecords[record.id]
           const isexist = record.output_wav_path != ''
           const isLocked = record.locked || false
           console.log({ isexist }, record)
@@ -810,13 +817,19 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
                 loading={isTraining}
                 disabled={isTraining || isLocked}
               />
-              <Button icon={<PlayCircleOutlined />} onClick={() => handlePlay(record)} disabled={isTraining || !isexist} title="播放训练后的音频" />
+              <Button
+                icon={<PlayCircleOutlined />}
+                onClick={() => handlePlay(record)}
+                disabled={isTraining || !isexist}
+                loading={isPlaying}
+                title="播放训练后的音频"
+              />
             </Space>
           )
         }
       }
     ],
-    [handlePlay, handleTrain, tableAudioFileOptions, trainingRecords, updateTableDataDubbing, updateTableData]
+    [handlePlay, handleTrain, tableAudioFileOptions, trainingRecords, playingRecords, updateTableDataDubbing, updateTableData]
   )
 
   // Memoize the audio files options to prevent unnecessary re-renders
