@@ -479,7 +479,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
       const truncateMs = record.truncate || 0
       setPlayingRecords((prev) => ({ ...prev, [record.id]: true }))
       const audioUrl = `http://localhost:8081/api/audio-file/output${path.startsWith('/') ? path : '/' + path}`
-      console.log({audioUrl})
+      console.log({ audioUrl })
       const audio = new Audio(audioUrl)
 
       // Start playing the audio
@@ -931,19 +931,12 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         console.log('Batch training with record:', record)
         const result = await synthesizeTTS(record, { signal: abortController.signal })
 
-        // If result contains an output path, save it to the trained records
-        // if (result.newFile && result.newFile.path) {
-        //   setTrainedRecords((prev) => ({
-        //     ...prev,
-        //     [record.id]: result.newFile.name
-        //   }))
-        //   successCount++
-        // } else
         if (result.outpath) {
           setTrainedRecords((prev) => ({
             ...prev,
             [record.id]: result.outpath
           }))
+          record.output_wav_path = result.outpath
           successCount++
         } else {
           successCount++
