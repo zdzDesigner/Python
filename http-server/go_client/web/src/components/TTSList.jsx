@@ -476,11 +476,17 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   // Function to play audio with end truncation
   const playAudio = useCallback(
     (path, record) => {
+      console.log('xxxxx')
+      if (!!playingRecords[record.id + 'audio']) {
+        playingRecords[record.id + 'audio'].pause()
+        cleanup()
+      }
+
       const truncateMs = record.truncate || 0
-      setPlayingRecords((prev) => ({ ...prev, [record.id]: true }))
       const audioUrl = `http://localhost:8081/api/audio-file/output${path.startsWith('/') ? path : '/' + path}`
       console.log({ audioUrl })
       const audio = new Audio(audioUrl)
+      setPlayingRecords((prev) => ({ ...prev, [record.id]: true, [record.id + 'audio']: audio }))
 
       // Start playing the audio
       const playPromise = audio.play()
@@ -489,11 +495,13 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         playPromise.catch((error) => {
           console.error('Error playing audio:', error)
           showError('播放失败', error.message)
-          setTrainingRecords((prev) => {
-            const newRecords = { ...prev }
-            delete newRecords[record.id]
-            return newRecords
-          })
+          // setTrainingRecords((prev) => {
+          //   const newRecords = { ...prev }
+          //   delete newRecords[record.id]
+          //   delete newRecords[record.id + audio]
+          //   return newRecords
+          // })
+          cleanup()
         })
 
         // Use timeupdate event to monitor playback time
@@ -513,6 +521,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
           setPlayingRecords((prev) => {
             const newRecords = { ...prev }
             delete newRecords[record.id]
+            delete newRecords[record.id + audio]
             return newRecords
           })
           audio.removeEventListener('timeupdate', handleTimeUpdate)
