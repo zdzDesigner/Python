@@ -12,6 +12,7 @@ import (
 )
 
 func main() {
+	checkAvailableEncoders()
 	// Initialize SQLite database
 	dbConfig := map[string]string{
 		"DBPath": "assets/audio_server.db",

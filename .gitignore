@@ -11,3 +11,6 @@ wheels/
 .python-version
 node_modules
 output
+
+ffmpeg_output
+
