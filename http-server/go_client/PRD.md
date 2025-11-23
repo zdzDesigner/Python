@@ -383,7 +383,15 @@ speaker_audio_path参数设置为当前tr中的dubbing的值
 @web/src/components/TTSList.jsx  table 的操作中添加一个"锁定"操作，点击"锁定"后当前行不可编辑，只能点击播放
 
 > @web/src/components/TTSList.jsx  把"批量删除"按钮布局更改为右对齐
+> @web/src/components/TTSList.jsx  在"批量训练"按钮右侧添加"批量合成"按钮
 
+@server/main.go中添加一个批量合成的路由, 并在@server/handlers.go 中具体实现，
+使用@server/audio.go 中的Joint接口, inputs参数为当前要合成的音频地址集合，output为输出地址,
+inputs 集合数据通过web上传的user_id,book_id,section_id,no 组合查询 output_wav_path 生成的数据集合
+output 地址为`user_id`_`book_id`_`section_id`_`当前时间戳`
+
+
+@server/main.go中我新添加了"/auto/joint"路由调用batchSynthesizeHandler 函数; 你继续在@web/src/components/TTSList.jsx 中添加点击"批量合成"的按钮请求 "/auto/joint"服务接口来闭环当前业务，`user_id`, `book_id`, `section_id`, 暂时默认为0
 
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档

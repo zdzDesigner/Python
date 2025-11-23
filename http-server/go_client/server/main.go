@@ -35,6 +35,7 @@ func main() {
 		api.GET("/audio-files", ginc.Handler(audioFilesHandler))
 		api.GET("/audio-file/*path", audioFileHandler)
 		api.POST("/tts", ginc.Handler(ttsHandler))
+		api.POST("/tts/split", ginc.Handler(ttsTplSplit))
 		api.POST("/tts/check", ginc.Handler(checkTTSExistsHandler))
 		api.POST("/tts-tpl", ginc.Handler(ttsTplHandler))
 		api.GET("/tts-tpl", ginc.Handler(ttsTplList))
@@ -43,6 +44,7 @@ func main() {
 		api.DELETE("/delete-file", ginc.Handler(deleteAudioFileHandler))
 		api.POST("/remove-special-symbols", ginc.Handler(removeSpecialSymbolsHandler))
 		api.POST("/sanitize-filenames", ginc.Handler(sanitizeFilenamesHandler))
+		api.POST("/auto/joint", ginc.Handler(batchSynthesizeHandler))
 	}
 
 	// Health check route

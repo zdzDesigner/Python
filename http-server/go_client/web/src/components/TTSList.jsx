@@ -899,6 +899,11 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     // </Card>
   }
 
+  // 批量合成
+  const handleBatchSynthesize = async () => {
+    showSuccess('提示', '功能开发中')
+  }
+
   // 批量训练
   const handleBatchTrain = async () => {
     if (!tableData || tableData.length === 0) {
@@ -1056,6 +1061,9 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
           </Button>
           <Button type="primary" style={{ marginLeft: 10 }} onClick={handleBatchTrain} loading={isBatchTraining} disabled={isBatchTraining}>
             批量训练
+          </Button>
+          <Button type="primary" style={{ marginLeft: 10 }} onClick={handleBatchSynthesize} disabled={isBatchTraining}>
+            批量合成
           </Button>
         </div>
         <div style={{ display: 'flex', alignItems: 'center' }}>

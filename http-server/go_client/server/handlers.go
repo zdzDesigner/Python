@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"go-audio-server/db"
 	"go-audio-server/db/sqlite"
@@ -361,10 +363,56 @@ func ttsTplBulkDelete(ctx ginc.Contexter) {
 
 // ttsTplUpdate updates a single TTS record by ID
 func ttsTplUpdate(ctx ginc.Contexter) {
-	idStr := ctx.ParamRoute("id")
+	idstr := ctx.ParamRoute("id")
 
 	// Convert ID string to integer
-	id, err := strconv.Atoi(idStr)
+	id, err := strconv.Atoi(idstr)
+	if err != nil {
+		ctx.FailErr(400, "Invalid ID parameter")
+		return
+	}
+
+	// Parse the update data from request body
+	var texts []string
+	if err := ctx.ParseReqbody(&texts); err != nil {
+		return
+	}
+
+	records, err := (&db.TTSRecord{}).Get(map[string]int{"id": id}, nil)
+	if err != nil {
+		ctx.FailErr(500, "Failed find record: "+err.Error())
+		return
+	}
+	db_record := records[0]
+	fmt.Println(db_record)
+
+	db_record.Text = texts[0]
+	// Call update by ID to update the record
+	updateErr := db_record.UpdateByID(id, "text")
+	if updateErr != nil {
+		ctx.FailErr(500, "Failed to update record: "+updateErr.Error())
+		return
+	}
+
+	db_record.Text = texts[0]
+	if err := db_record.Add(); err != nil {
+		ctx.FailErr(500, "Failed to update record: "+err.Error())
+		return
+	}
+
+	ctx.Success(gin.H{
+		"status":  "success",
+		"message": "Record updated successfully",
+		"id":      id,
+	})
+}
+
+// 拆分
+func ttsTplSplit(ctx ginc.Contexter) {
+	idstr := ctx.ParamRoute("id")
+
+	// Convert ID string to integer
+	id, err := strconv.Atoi(idstr)
 	if err != nil {
 		ctx.FailErr(400, "Invalid ID parameter")
 		return
@@ -411,6 +459,72 @@ func ttsTplUpdate(ctx ginc.Contexter) {
 		"status":  "success",
 		"message": "Record updated successfully",
 		"id":      id,
+	})
+}
+
+// BatchSynthesizeRequest defines the structure for the batch synthesis request
+type BatchSynthesizeRequest struct {
+	UserID    int `json:"user_id"`
+	BookID    int `json:"book_id"`
+	SectionID int `json:"section_id"`
+}
+
+// batchSynthesizeHandler handles the request to synthesize multiple audio files into one.
+func batchSynthesizeHandler(ctx ginc.Contexter) {
+	var req BatchSynthesizeRequest
+	if err := ctx.ParseReqbody(&req); err != nil {
+		return // error is handled by ParseReqbody
+	}
+
+	record := &db.TTSRecord{}
+	querys := map[string]any{
+		"user_id":    req.UserID,
+		"book_id":    req.BookID,
+		"section_id": req.SectionID,
+	}
+
+	// Get records, ordered by 'no' to ensure correct sequence
+	list, err := record.GetFunc(func(s *sqlite.Sql) *sqlite.Sql {
+		return s.Where(querys).Order("no asc")
+	})
+	if err != nil {
+		ctx.FailErr(500, "Failed to query TTS records: "+err.Error())
+		return
+	}
+
+	if len(list) == 0 {
+		ctx.FailErr(404, "No TTS records found for the given criteria.")
+		return
+	}
+
+	var inputPaths []string
+	for _, r := range list {
+		if r.OutputWavPath != "" {
+			fullPath := filepath.Join(OUTPUT_DIR, r.OutputWavPath)
+			if _, err := os.Stat(fullPath); err == nil {
+				inputPaths = append(inputPaths, fullPath)
+			} else {
+				log.Printf("Warning: audio file not found and will be skipped: %s", fullPath)
+			}
+		}
+	}
+
+	if len(inputPaths) == 0 {
+		ctx.FailErr(404, "No existing audio files found for the records. Please train them first.")
+		return
+	}
+
+	timestamp := time.Now().Unix()
+	outputFilename := fmt.Sprintf("%d_%d_%d_%d.m4a", req.UserID, req.BookID, req.SectionID, timestamp)
+	outputPath := filepath.Join(OUTPUT_DIR, outputFilename)
+
+	// Run the audio joining in a background goroutine to avoid blocking the request
+	go Joint(inputPaths, outputPath)
+
+	ctx.Success(gin.H{
+		"status":      "processing",
+		"message":     "Batch synthesis started. The output will be available shortly.",
+		"output_path": outputPath,
 	})
 }
 
