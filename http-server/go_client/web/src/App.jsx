@@ -92,25 +92,27 @@ const App = () => {
     <div className="flex flex-col h-screen bg-slate-50 text-slate-800 cursor-default">
       <div className="flex flex-1 overflow-hidden">
         {
-          <Sidebar
-            audioFilesCount={audioFiles.length}
-            loading={loading}
-            fileTree={fileTree}
-            onSelectFile={handleFileSelect}
-            onDeleteFile={handleDeleteFile}
-            onSynthesize={handleSynthesize}
-            isSynthesizing={isSynthesizing}
-            selectedFile={selectedFile}
-            currentlyPlaying={currentlyPlaying}
-            onPauseCurrent={handleToggleCurrent}
-          />
+            <Sidebar
+              audioFilesCount={audioFiles.length}
+              loading={loading}
+              fileTree={fileTree}
+              onSelectFile={handleFileSelect}
+              onDeleteFile={handleDeleteFile}
+              onSynthesize={handleSynthesize}
+              isSynthesizing={isSynthesizing}
+              selectedFile={selectedFile}
+              currentlyPlaying={currentlyPlaying}
+              onPauseCurrent={handleToggleCurrent}
+            />
+          // <div style={{ width: 300 }}>
+          // </div>
         }
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-auto">
           <TextDataSettings onUploadSuccess={fetchAudioFiles} onJsonData={handleJsonData} />
           <div className="flex-1">
             <TTSList jsonData={ttsJsonData} audioFiles={audioFiles} onSynthesizeComplete={handleTTSListSynthesize} />
           </div>
-          <div style={{ height: 0 }}>
+          <div style={{ height: 0 }} className="overflow-hidden">
             <AudioPlayer
               selectedFile={selectedFile}
               audioUrl={audioUrl}
