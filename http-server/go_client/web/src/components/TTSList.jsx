@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { Card, Table, Tag, Typography, Select, Button, Space, Modal, Input, InputNumber, Popconfirm } from 'antd'
 
 import { PlayCircleOutlined, ExperimentOutlined, DeleteOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons'
-import { MAP_TTS, mapTTSRecord, mapStatus, synthesizeTTS, checkTTSExists, ttsTplList, ttsTplBulkDelete, ttsTplUpdate } from '@/service/api/tts'
+import { MAP_TTS, mapTTSRecord, mapStatus, synthesizeTTS, checkTTSExists, ttsTplList, ttsTplBulkDelete, ttsTplUpdate, ttsTplSplit } from '@/service/api/tts'
 import { useNotification } from '@/utils/NotificationContext'
 import BatchTrainingProgress from './BatchTrainingProgress'
 
@@ -37,12 +37,12 @@ const MemoizedTableSelect = memo(({ recordKey, value, onChange, options }) => {
 })
 MemoizedTableSelect.displayName = 'MemoizedTableSelect'
 
-const EditableCell = memo(({ record, dataIndex, value, onUpdate, type = 'text', options = null, min = null, max = null, recordKey }) => {
+const EditableCell = memo(({ record, dataIndex, value, onUpdate, onSplit, type = 'text', options = null, min = null, max = null, recordKey }) => {
   const [editing, setEditing] = useState(false)
   const [tempValue, setTempValue] = useState(value)
 
-  const recordKeyInternal = record.id
-  // console.log({ recordKeyInternal, record })
+  const record_id = record.id
+  // console.log({ record_id, record })
 
   // Sync tempValue with value prop when value changes
   useEffect(() => {
@@ -61,8 +61,8 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, type = 'text', 
       if (max !== null && tempValue > max) return
     }
 
-    // console.log({ recordKeyInternal, dataIndex, tempValue, value })
-    if (tempValue != value) onUpdate(recordKeyInternal, dataIndex, tempValue)
+    // console.log({ record_id, dataIndex, tempValue, value })
+    if (tempValue != value) onUpdate(record_id, dataIndex, tempValue)
     setEditing(false)
   }
 
@@ -75,7 +75,8 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, type = 'text', 
     const start = elem.selectionStart
     const end = elem.selectionEnd
     const text = elem.value
-    console.log('break', { start, end, text })
+    onSplit(record_id, [text.slice(0, start), text.slice(start)])
+    console.log('break', { record_id, start, end, text })
   }
 
   const handleCellClick = (e) => {
@@ -92,7 +93,8 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, type = 'text', 
   }
 
   const handleKeyDown = (e) => {
-    if (e.ctrlKey && e.key === 'b') {
+    if (dataIndex == 'content' && e.ctrlKey && e.key === 'b') {
+      console.log({ type, dataIndex })
       handleSplit(e.target)
       e.stopPropagation()
     } else if (e.key === 'Enter') {
@@ -630,6 +632,41 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     [showWarning]
   )
 
+  const splitTableData = useCallback(
+    async (recordId, texts) => {
+      setTableData((prevData) => {
+        const newData = [...prevData]
+        const index = newData.findIndex((item) => item.id === recordId)
+        console.log({ index, texts })
+        if (index !== -1) {
+          // const record = newData[index]
+          // const updatedRecord = { ...record, locked: !record.locked }
+
+          // Update the record in the state
+          // newData[index] = updatedRecord
+          //
+          // // Update the backend as well
+          ttsTplSplit(recordId, texts).catch((error) => {
+            console.error('Failed to update record lock state on backend:', error)
+            showWarning('更新失败', `无法同步更新到服务器: ${error.message}`)
+            // Revert the change in UI if update failed
+            // setTableData((prev) => {
+            //   const revertedData = [...prev]
+            //   const revertIndex = revertedData.findIndex((item) => item.id === recordId)
+            //   if (revertIndex !== -1) {
+            //     revertedData[revertIndex] = record // Revert to original record
+            //   }
+            //   return revertedData
+            // })
+          })
+
+          return newData
+        }
+        return prevData
+      })
+    },
+    [showWarning]
+  )
   // Function to update table data for a specific record field and sync with backend
   const updateTableData = useCallback(
     async (recordKey, field, newValue) => {
@@ -732,7 +769,18 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         dataIndex: 'content',
         key: 'content',
         render: (text, record) => {
-          return <EditableCell record={record} dataIndex="content" title="文本内容" value={text} onUpdate={updateTableData} type="text" recordKey={record.id} />
+          return (
+            <EditableCell
+              record={record}
+              dataIndex="content"
+              title="文本内容"
+              value={text}
+              onUpdate={updateTableData}
+              onSplit={splitTableData}
+              type="text"
+              recordKey={record.id}
+            />
+          )
         }
       },
       {

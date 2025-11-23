@@ -326,3 +326,30 @@ export const ttsTplUpdate = async (id, updates) => {
     throw error
   }
 }
+
+/**
+ * Update a single TTS template record by ID
+ * @param {number} id - Record ID to update
+ * @param {Object} texts - Object containing fields to update
+ * @returns {Promise<Object>} - API response with update status
+ */
+export const ttsTplSplit = async (id, texts) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tts/split/${id}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(texts)
+    })
+
+    if (!response.ok) {
+      throw new Error(`TTS template update API error! status: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error updating TTS template record:', error)
+    throw error
+  }
+}
