@@ -71,6 +71,13 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, type = 'text', 
     setEditing(false)
   }
 
+  const handleSplit = (elem) => {
+    const start = elem.selectionStart
+    const end = elem.selectionEnd
+    const text = elem.value
+    console.log('break', { start, end, text })
+  }
+
   const handleCellClick = (e) => {
     // Prevent editing when clicking on input elements directly
     if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') {
@@ -85,7 +92,10 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, type = 'text', 
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
+    if (e.ctrlKey && e.key === 'b') {
+      handleSplit(e.target)
+      e.stopPropagation()
+    } else if (e.key === 'Enter') {
       handleSave()
       e.stopPropagation()
     } else if (e.key === 'Escape') {
