@@ -959,7 +959,19 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
 
   // 批量合成
   const handleBatchSynthesize = async () => {
-    showSuccess('提示', '功能开发中')
+    try {
+      // Call the batch synthesis API with default values
+      const result = await batchSynthesize(0, 0, 0)
+      
+      if (result.code === 0) {
+        showSuccess('批量合成成功', result.msg || '音频批量合成已完成')
+      } else {
+        showError('批量合成失败', result.msg || '音频批量合成失败')
+      }
+    } catch (error) {
+      console.error('Error during batch synthesis:', error)
+      showError('批量合成失败', error.message || '调用批量合成服务时发生错误')
+    }
   }
 
   // 批量训练

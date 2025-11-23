@@ -449,9 +449,10 @@ func ttsTplSplit(ctx ginc.Contexter) {
 		return
 	}
 
-	db_record.Text = texts[0]
+	db_record.Text = texts[1]
+	db_record.No = db_record.No + 1
 	if err := db_record.Add(); err != nil {
-		ctx.FailErr(500, "Failed to update record: "+err.Error())
+		ctx.FailErr(500, "Failed to add record: "+err.Error())
 		return
 	}
 
