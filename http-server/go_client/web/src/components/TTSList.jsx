@@ -1046,37 +1046,41 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
 
   return (
     <>
-      <div style={{ padding: 10 }}>
-        {
-          // <Button type="primary" onClick={() => setIsMappingModalVisible(true)}>
-        }
-        <Button type="primary" onClick={openMappingModal} disabled={isBatchTraining}>
-          角色配音
-        </Button>
-        <Button type="primary" style={{ marginLeft: 10 }} onClick={handleBatchTrain} loading={isBatchTraining} disabled={isBatchTraining}>
-          批量训练
-        </Button>
-        <Popconfirm
-          title="确认删除"
-          description="您确定要删除当前章节的所有数据吗？此操作不可撤销。"
-          onConfirm={handleBulkDelete}
-          okText="确认"
-          cancelText="取消"
-        >
-          <Button type="primary" danger style={{ marginLeft: 10 }} disabled={isBatchTraining}>
-            批量删除
+      <div style={{ padding: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          {
+            // <Button type="primary" onClick={() => setIsMappingModalVisible(true)}>
+          }
+          <Button type="primary" onClick={openMappingModal} disabled={isBatchTraining}>
+            角色配音
           </Button>
-        </Popconfirm>
-        <BatchTrainingProgress
-          isVisible={isBatchTraining}
-          progress={batchProgress}
-          progressText={batchProgressText}
-          onCancelTraining={() => {
-            if (batchAbortController) {
-              batchAbortController.abort()
-            }
-          }}
-        />
+          <Button type="primary" style={{ marginLeft: 10 }} onClick={handleBatchTrain} loading={isBatchTraining} disabled={isBatchTraining}>
+            批量训练
+          </Button>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Popconfirm
+            title="确认删除"
+            description="您确定要删除当前章节的所有数据吗？此操作不可撤销。"
+            onConfirm={handleBulkDelete}
+            okText="确认"
+            cancelText="取消"
+          >
+            <Button type="primary" danger disabled={isBatchTraining}>
+              批量删除
+            </Button>
+          </Popconfirm>
+          <BatchTrainingProgress
+            isVisible={isBatchTraining}
+            progress={batchProgress}
+            progressText={batchProgressText}
+            onCancelTraining={() => {
+              if (batchAbortController) {
+                batchAbortController.abort()
+              }
+            }}
+          />
+        </div>
       </div>
       {
         <Modal title="角色配音" open={isMappingModalVisible} onOk={handleModalOk} onCancel={handleModalCancel} width={600}>

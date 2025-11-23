@@ -382,6 +382,7 @@ speaker_audio_path参数设置为当前tr中的dubbing的值
 @web/src/components/TTSList.jsx  table 虚拟滚动时 EditableCell 组建input会带上之前编辑的数据
 @web/src/components/TTSList.jsx  table 的操作中添加一个"锁定"操作，点击"锁定"后当前行不可编辑，只能点击播放
 
+> @web/src/components/TTSList.jsx  把"批量删除"按钮布局更改为右对齐
 
 
 ## init
