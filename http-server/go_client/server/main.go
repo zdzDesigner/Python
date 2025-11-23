@@ -35,7 +35,7 @@ func main() {
 		api.GET("/audio-files", ginc.Handler(audioFilesHandler))
 		api.GET("/audio-file/*path", audioFileHandler)
 		api.POST("/tts", ginc.Handler(ttsHandler))
-		api.POST("/tts/split", ginc.Handler(ttsTplSplit))
+		api.POST("/tts/split/:id", ginc.Handler(ttsTplSplit))
 		api.POST("/tts/check", ginc.Handler(checkTTSExistsHandler))
 		api.POST("/tts-tpl", ginc.Handler(ttsTplHandler))
 		api.GET("/tts-tpl", ginc.Handler(ttsTplList))

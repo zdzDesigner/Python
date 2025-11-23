@@ -353,3 +353,37 @@ export const ttsTplSplit = async (id, texts) => {
     throw error
   }
 }
+
+/**
+ * Batch synthesize audio for all records in a book and section
+ * @param {number} user_id - User ID (default 0)
+ * @param {number} book_id - Book ID (default 0)
+ * @param {number} section_id - Section ID (default 0)
+ * @returns {Promise<Object>} - API response with batch synthesis status
+ */
+export const batchSynthesize = async (user_id = 0, book_id = 0, section_id = 0) => {
+  const payload = {
+    user_id,
+    book_id,
+    section_id
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/auto/joint`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+
+    if (!response.ok) {
+      throw new Error(`Batch synthesis API error! status: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error during batch synthesis:', error)
+    throw error
+  }
+}

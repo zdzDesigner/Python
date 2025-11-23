@@ -373,52 +373,6 @@ func ttsTplUpdate(ctx ginc.Contexter) {
 	}
 
 	// Parse the update data from request body
-	var texts []string
-	if err := ctx.ParseReqbody(&texts); err != nil {
-		return
-	}
-
-	records, err := (&db.TTSRecord{}).Get(map[string]int{"id": id}, nil)
-	if err != nil {
-		ctx.FailErr(500, "Failed find record: "+err.Error())
-		return
-	}
-	db_record := records[0]
-	fmt.Println(db_record)
-
-	db_record.Text = texts[0]
-	// Call update by ID to update the record
-	updateErr := db_record.UpdateByID(id, "text")
-	if updateErr != nil {
-		ctx.FailErr(500, "Failed to update record: "+updateErr.Error())
-		return
-	}
-
-	db_record.Text = texts[0]
-	if err := db_record.Add(); err != nil {
-		ctx.FailErr(500, "Failed to update record: "+err.Error())
-		return
-	}
-
-	ctx.Success(gin.H{
-		"status":  "success",
-		"message": "Record updated successfully",
-		"id":      id,
-	})
-}
-
-// 拆分
-func ttsTplSplit(ctx ginc.Contexter) {
-	idstr := ctx.ParamRoute("id")
-
-	// Convert ID string to integer
-	id, err := strconv.Atoi(idstr)
-	if err != nil {
-		ctx.FailErr(400, "Invalid ID parameter")
-		return
-	}
-
-	// Parse the update data from request body
 	var record db.TTSRecord
 	if err := ctx.ParseReqbody(&record); err != nil {
 		return
@@ -452,6 +406,52 @@ func ttsTplSplit(ctx ginc.Contexter) {
 	updateErr := record.UpdateByID(id, updateKeys...)
 	if updateErr != nil {
 		ctx.FailErr(500, "Failed to update record: "+updateErr.Error())
+		return
+	}
+
+	ctx.Success(gin.H{
+		"status":  "success",
+		"message": "Record updated successfully",
+		"id":      id,
+	})
+}
+
+// 拆分
+func ttsTplSplit(ctx ginc.Contexter) {
+	idstr := ctx.ParamRoute("id")
+
+	// Convert ID string to integer
+	id, err := strconv.Atoi(idstr)
+	if err != nil {
+		ctx.FailErr(400, "Invalid ID parameter")
+		return
+	}
+
+	// Parse the update data from request body
+	var texts []string
+	if err := ctx.ParseReqbody(&texts); err != nil {
+		return
+	}
+
+	records, err := (&db.TTSRecord{}).Get(map[string]int{"id": id}, nil)
+	if err != nil {
+		ctx.FailErr(500, "Failed find record: "+err.Error())
+		return
+	}
+	db_record := records[0]
+	fmt.Println(db_record)
+
+	db_record.Text = texts[0]
+	// Call update by ID to update the record
+	updateErr := db_record.UpdateByID(id, "text")
+	if updateErr != nil {
+		ctx.FailErr(500, "Failed to update record: "+updateErr.Error())
+		return
+	}
+
+	db_record.Text = texts[0]
+	if err := db_record.Add(); err != nil {
+		ctx.FailErr(500, "Failed to update record: "+err.Error())
 		return
 	}
 
