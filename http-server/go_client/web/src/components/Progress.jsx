@@ -1,11 +1,11 @@
 import React, { memo } from 'react';
 
-const Footer = () => {
+const Progress = () => {
   return (
     <footer className="bg-white/80 backdrop-blur-lg border-t border-slate-200 py-2.5 text-center text-xs text-slate-500">
-      <p>AudioHub • Powered by Go & React</p>
+      <p>progress</p>
     </footer>
   );
 };
 
-export default memo(Footer);
+export default memo(Progress);

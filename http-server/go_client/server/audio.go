@@ -8,6 +8,8 @@ import (
 
 	"github.com/asticode/go-astiav"
 )
+// ictx(input ctx)
+// octx(output ctx)
 
 func Joint(inputs []string, output string) {
 	// 设置FFmpeg的日志级别为Info

@@ -393,5 +393,16 @@ output 地址为`user_id`_`book_id`_`section_id`_`当前时间戳`
 
 @server/main.go中我新添加了"/auto/joint"路由调用batchSynthesizeHandler 函数; 你继续在@web/src/components/TTSList.jsx 中添加点击"批量合成"的按钮请求 "/auto/joint"服务接口来闭环当前业务，`user_id`, `book_id`, `section_id`, 暂时默认为0
 
+
+@web/src/components/TTSList.jsx 的table 中添加删除按钮, 并在go服务实现删除功能
+
+
+
+@web/src/App.jsx 中添加 audiobook/list 路由跳转到AudioBook组件, 默认路由
+@web/src/App.jsx 中添加 audiobook/section 路由跳转到AudioSection组件
+@web/src/App.jsx 中添加 dubbing/list 路由 跳转到DubbingList组件
+
+
+
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档

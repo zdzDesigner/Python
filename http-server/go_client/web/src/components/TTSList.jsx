@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { Card, Table, Tag, Typography, Select, Button, Space, Modal, Input, InputNumber, Popconfirm } from 'antd'
 
 import { PlayCircleOutlined, ExperimentOutlined, DeleteOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons'
-import { MAP_TTS, mapTTSRecord, mapStatus, synthesizeTTS, checkTTSExists, ttsTplList, ttsTplBulkDelete, ttsTplUpdate, ttsTplSplit, batchSynthesize } from '@/service/api/tts'
+import { MAP_TTS, mapTTSRecord, mapStatus, synthesizeTTS, checkTTSExists, ttsTplList, ttsTplBulkDelete, ttsTplUpdate, ttsTplSplit, batchSynthesize, ttsTplDelete } from '@/service/api/tts'
 import { useNotification } from '@/utils/NotificationContext'
 import BatchTrainingProgress from './BatchTrainingProgress'
 
@@ -632,6 +632,28 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     [showWarning]
   )
 
+  // Function to delete a single record
+  const handleDeleteRecord = useCallback(
+    async (record) => {
+      try {
+        // Call the API to delete the record by ID
+        const result = await ttsTplDelete(record.id)
+        
+        if (result.code === 0) {
+          // Remove the record from the table data
+          setTableData(prevData => prevData.filter(item => item.id !== record.id))
+          showSuccess('删除成功', '记录已成功删除')
+        } else {
+          throw new Error(result.msg || '删除失败')
+        }
+      } catch (error) {
+        console.error('Error deleting record:', error)
+        showError('删除失败', error.message || '删除记录时发生错误')
+      }
+    },
+    [showError, showSuccess]
+  )
+
   const splitTableData = useCallback(
     async (recordId, texts) => {
       setTableData((prevData) => {
@@ -858,7 +880,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
       {
         title: '操作',
         key: 'action',
-        width: 200,
+        width: 250,
         fixed: 'right',
         render: (text, record) => {
           const isTraining = trainingRecords[record.id]
@@ -890,6 +912,20 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
                 type={isLocked ? 'default' : 'default'}
                 style={{ color: isLocked ? '#52c41a' : '#ff4d4f' }}
               ></Button>
+              <Popconfirm
+                title="确认删除"
+                description="您确定要删除这条记录吗？此操作不可撤销。"
+                onConfirm={() => handleDeleteRecord(record)}
+                okText="确认"
+                cancelText="取消"
+              >
+                <Button
+                  icon={<DeleteOutlined />}
+                  title="删除此条数据"
+                  danger
+                  disabled={isTraining || isLocked}
+                />
+              </Popconfirm>
             </Space>
           )
         }

@@ -45,6 +45,7 @@ func main() {
 		api.POST("/remove-special-symbols", ginc.Handler(removeSpecialSymbolsHandler))
 		api.POST("/sanitize-filenames", ginc.Handler(sanitizeFilenamesHandler))
 		api.POST("/audio/joint", ginc.Handler(batchSynthesizeHandler))
+		api.DELETE("/tts-tpl/:id", ginc.Handler(ttsTplDelete))
 	}
 
 	// Health check route

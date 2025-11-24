@@ -387,3 +387,28 @@ export const batchSynthesize = async (user_id = 0, book_id = 0, section_id = 0) 
     throw error
   }
 }
+
+/**
+ * Delete a single TTS template record by ID
+ * @param {number} id - Record ID to delete
+ * @returns {Promise<Object>} - API response with deletion status
+ */
+export const ttsTplDelete = async (id) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/tts-tpl/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`TTS template delete API error! status: ${response.status}`)
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Error deleting TTS template record:', error)
+    throw error
+  }
+}

@@ -463,6 +463,37 @@ func ttsTplSplit(ctx ginc.Contexter) {
 	})
 }
 
+// ttsTplDelete deletes a single TTS record by ID
+func ttsTplDelete(ctx ginc.Contexter) {
+	idstr := ctx.ParamRoute("id")
+
+	// Convert ID string to integer
+	id, err := strconv.Atoi(idstr)
+	if err != nil {
+		ctx.FailErr(400, "Invalid ID parameter")
+		return
+	}
+
+	// Create a TTSRecord instance and delete the record by ID
+	record := &db.TTSRecord{}
+	whereConditions := map[string]any{
+		"id": id,
+	}
+
+	// Perform the deletion
+	deleteErr := record.Del(whereConditions)
+	if deleteErr != nil {
+		ctx.FailErr(500, "Failed to delete record: "+deleteErr.Error())
+		return
+	}
+
+	ctx.Success(gin.H{
+		"status":  "success",
+		"message": "Successfully deleted",
+		"id":      id,
+	})
+}
+
 // BatchSynthesizeRequest defines the structure for the batch synthesis request
 type BatchSynthesizeRequest struct {
 	UserID    int `json:"user_id"`
@@ -520,7 +551,8 @@ func batchSynthesizeHandler(ctx ginc.Contexter) {
 	outputPath := filepath.Join(OUTPUT_DIR, outputFilename)
 
 	// Run the audio joining in a background goroutine to avoid blocking the request
-	go Joint(inputPaths, outputPath)
+	// go Joint(inputPaths, outputPath)
+	Joint(inputPaths, outputPath)
 
 	ctx.Success(gin.H{
 		"status":      "processing",
