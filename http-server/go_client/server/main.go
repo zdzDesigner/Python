@@ -44,7 +44,7 @@ func main() {
 		api.DELETE("/delete-file", ginc.Handler(deleteAudioFileHandler))
 		api.POST("/remove-special-symbols", ginc.Handler(removeSpecialSymbolsHandler))
 		api.POST("/sanitize-filenames", ginc.Handler(sanitizeFilenamesHandler))
-		api.POST("/auto/joint", ginc.Handler(batchSynthesizeHandler))
+		api.POST("/audio/joint", ginc.Handler(batchSynthesizeHandler))
 	}
 
 	// Health check route

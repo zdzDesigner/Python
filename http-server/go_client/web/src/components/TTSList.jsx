@@ -1137,6 +1137,16 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
           </Button>
         </div>
         <div style={{ display: 'flex', alignItems: 'center' }}>
+          <BatchTrainingProgress
+            isVisible={isBatchTraining}
+            progress={batchProgress}
+            progressText={batchProgressText}
+            onCancelTraining={() => {
+              if (batchAbortController) {
+                batchAbortController.abort()
+              }
+            }}
+          />
           <Popconfirm
             title="确认删除"
             description="您确定要删除当前章节的所有数据吗？此操作不可撤销。"
@@ -1148,16 +1158,6 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
               批量删除
             </Button>
           </Popconfirm>
-          <BatchTrainingProgress
-            isVisible={isBatchTraining}
-            progress={batchProgress}
-            progressText={batchProgressText}
-            onCancelTraining={() => {
-              if (batchAbortController) {
-                batchAbortController.abort()
-              }
-            }}
-          />
         </div>
       </div>
       {

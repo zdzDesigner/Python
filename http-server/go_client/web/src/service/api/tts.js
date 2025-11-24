@@ -369,7 +369,7 @@ export const batchSynthesize = async (user_id = 0, book_id = 0, section_id = 0) 
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/auto/joint`, {
+    const response = await fetch(`${API_BASE_URL}/api/audio/joint`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
