@@ -409,8 +409,19 @@ output 地址为`user_id`_`book_id`_`section_id`_`当前时间戳`
 @server/handlers.go 中sectionsUpdateHandler不需要先查询id数据，因为UpdateByID已经支持更新部分数据，更新完成后也无需查询，直接返回"success"即可; **记住这种更新操作**
 
 ### Web 添加section列表
-@web/src/pages/Section.jsx 中的TTSList组件左侧添加SectionList 组件, 组件中是section列表，包含增删改查的功能 
-
+<!-- @web/src/pages/Section.jsx 中的TTSList组件左侧添加SectionList 组件, 组件中是section列表，包含增删改查的功能 , **要求`交互方便`, `美观`, `简洁`** -->
+@web/src/components/SectionList.jsx组件中不需要table结构,一个list结构即可, 宽度在`200px`，在list上方有个`添加章节`的按钮，list的item中只需要展示名称，点击名称可编辑, item内右侧是**删除按钮**
+@web/src/components/SectionList.jsx 点击list中的item名称，变为input ，只需要编辑名称，焦点消失自动保存
+@web/src/components/SectionList.jsx 点击list中在编辑item名称时要**校验**数据`是否更新`, 数据`不能为空`, 编辑操作保持美观
+@web/src/components/SectionList.jsx 去除创建操作
+@web/src/components/SectionList.jsx 保留`添加章节`的按钮, 点击后自动在list中最后追加item, 并且处于*编辑状态*
+@web/src/components/SectionList.jsx 点击list中在编辑item名称时input太长，outline 过于明显
+@web/src/components/SectionList.jsx 点击list中在编辑item名称时input晃动, 和未*聚焦*前高度不一致
+@web/src/components/SectionList.jsx 点击list中在编辑item名称时input晃动, 和未*聚焦*前**宽度**不一致
+@web/src/components/SectionList.jsx 点击list中在编辑item中的`删除按钮`太小，confirm 使用ant-design 组件
+@web/src/components/SectionList.jsx 点击list中在编辑item中的`删除按钮`替换图标
+@web/src/components/SectionList.jsx list中鼠标移动到item中再显示`删除按钮`, 图标换成"x"
+@web/src/components/SectionList.jsx 删除按钮 使用@web/src/components/TTSList.jsx table中删除按钮的confirm组件
 
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档
