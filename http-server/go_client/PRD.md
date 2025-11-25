@@ -397,13 +397,18 @@ output 地址为`user_id`_`book_id`_`section_id`_`当前时间戳`
 @web/src/components/TTSList.jsx 的table 中添加删除按钮, 并在go服务实现删除功能
 
 
-
+### 添加web路由
 @web/src/App.jsx 中添加 audiobook/list 路由跳转到AudioBook组件, 默认路由
 @web/src/App.jsx 中添加 audiobook/section 路由跳转到AudioSection组件
 @web/src/App.jsx 中添加 dubbing/list 路由 跳转到DubbingList组件
 
+### 服务创建sections模块
 @server/build/SQL/sqlite.sql 新增`sections`表，包含`id`, `book_id`,`name`,`describe`,`size`,`created_at`,`updated_at` 字段,
 根据sections表在@server/db/ 目录中创建`sections.go` 文件,其中的具体实现参考 @server/db/tts_record.go 文件; 同时在 @server/handlers.go 文件完成`sections`的*增*，*删*，*改*, *查* 功能。同时在@server/main.go 添加对应的路由
+
+@server/handlers.go 中sectionsUpdateHandler不需要先查询id数据，因为UpdateByID已经支持更新部分数据，更新完成后也无需查询，直接返回"success"即可; **记住这种更新操作**
+
+### Web 添加section列表
 @web/src/pages/Section.jsx 中的TTSList组件左侧添加SectionList 组件, 组件中是section列表，包含增删改查的功能 
 
 

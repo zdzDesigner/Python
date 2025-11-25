@@ -19,6 +19,172 @@ import (
 
 var OUTPUT_DIR = "output/"
 
+func sectionsHandler(ctx ginc.Contexter) {
+	var sectionReq db.Section
+	if err := ctx.ParseReqbody(&sectionReq); err != nil {
+		return
+	}
+
+	// Add the new section to the database
+	if err := sectionReq.Add(); err != nil {
+		ctx.FailErr(500, "Failed to add section: "+err.Error())
+		return
+	}
+
+	ctx.Success(gin.H{
+		"status": "success",
+		"data":   sectionReq,
+	})
+}
+
+func sectionsListHandler(ctx ginc.Contexter) {
+	// Extract query parameters for filtering
+	bookIDStr := ctx.GinCtx().Query("book_id")
+	name := ctx.GinCtx().Query("name")
+	pageStr := ctx.GinCtx().Query("page")
+	pageSizeStr := ctx.GinCtx().Query("size")
+
+	filters := make(map[string]interface{})
+
+	if bookIDStr != "" {
+		if bookID, err := strconv.Atoi(bookIDStr); err == nil {
+			filters["book_id"] = bookID
+		}
+	}
+
+	if name != "" {
+		filters["name"] = name
+	}
+
+	// Parse pagination parameters
+	page := 1
+	pageSize := 20
+
+	if pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	if pageSizeStr != "" {
+		if ps, err := strconv.Atoi(pageSizeStr); err == nil && ps > 0 {
+			if ps > 100 { // Limit maximum page size
+				ps = 100
+			}
+			pageSize = ps
+		}
+	}
+
+	// Calculate offset for pagination
+	offset := (page - 1) * pageSize
+	limit := []string{strconv.Itoa(offset), strconv.Itoa(pageSize)}
+
+	var section db.Section
+	var sections []*db.Section
+	var err error
+
+	if len(filters) > 0 {
+		sections, err = section.Get(filters, limit)
+	} else {
+		sections, err = section.Get(nil, limit)
+	}
+
+	if err != nil {
+		ctx.FailErr(500, "Failed to fetch sections: "+err.Error())
+		return
+	}
+
+	// Get total count for pagination info
+	total := section.Count()
+
+	ctx.Success(gin.H{
+		"status":   "success",
+		"data":     sections,
+		"total":    total,
+		"page":     page,
+		"size":     pageSize,
+		"has_next": total > (page * pageSize),
+	})
+}
+
+func sectionsUpdateHandler(ctx ginc.Contexter) {
+	idStr := ctx.GinCtx().Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		ctx.FailErr(400, "Invalid section ID")
+		return
+	}
+
+	var updates map[string]interface{}
+	if err := ctx.ParseReqbody(&updates); err != nil {
+		return
+	}
+
+	// Update the section with provided fields by creating a new section instance
+	updatedSection := &db.Section{ID: id}
+
+	// Update fields based on the provided updates map
+	for key, value := range updates {
+		switch key {
+		case "book_id":
+			if val, ok := value.(float64); ok {
+				updatedSection.BookId = int(val)
+			}
+		case "name":
+			if val, ok := value.(string); ok {
+				updatedSection.Name = val
+			}
+		case "describe":
+			if val, ok := value.(string); ok {
+				updatedSection.Description = val
+			}
+		case "size":
+			if val, ok := value.(float64); ok {
+				updatedSection.Size = int(val)
+			}
+		}
+	}
+
+	// Get all field names to update
+	keys := make([]string, 0, len(updates))
+	for key := range updates {
+		keys = append(keys, key)
+	}
+
+	// Update the section record
+	if err := updatedSection.UpdateByID(id, keys...); err != nil {
+		ctx.FailErr(500, "Failed to update section: "+err.Error())
+		return
+	}
+
+	ctx.Success(gin.H{
+		"status": "success",
+		"msg":    "Section updated successfully",
+		"id":     id,
+	})
+}
+
+func sectionsDeleteHandler(ctx ginc.Contexter) {
+	idStr := ctx.GinCtx().Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		ctx.FailErr(400, "Invalid section ID")
+		return
+	}
+
+	var section db.Section
+	err = section.Del(map[string]any{"id": id})
+	if err != nil {
+		ctx.FailErr(500, "Failed to delete section: "+err.Error())
+		return
+	}
+
+	ctx.Success(gin.H{
+		"status": "success",
+		"msg":    "Section deleted successfully",
+	})
+}
+
 func ttsHandler(ctx ginc.Contexter) {
 	var ttsReq TTSRequest
 	if err := ctx.ParseReqbody(&ttsReq); err != nil {

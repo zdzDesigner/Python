@@ -46,6 +46,12 @@ func main() {
 		api.POST("/sanitize-filenames", ginc.Handler(sanitizeFilenamesHandler))
 		api.POST("/audio/joint", ginc.Handler(batchSynthesizeHandler))
 		api.DELETE("/tts-tpl/:id", ginc.Handler(ttsTplDelete))
+		
+		// Sections API routes
+		api.POST("/sections", ginc.Handler(sectionsHandler))
+		api.GET("/sections", ginc.Handler(sectionsListHandler))
+		api.PUT("/sections/:id", ginc.Handler(sectionsUpdateHandler))
+		api.DELETE("/sections/:id", ginc.Handler(sectionsDeleteHandler))
 	}
 
 	// Health check route
