@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useNotification } from '@/utils/NotificationContext'
 import api from '@/utils/api'
 import { Popconfirm } from 'antd'
-import { DeleteOutlined } from '@ant-design/icons'
 
 const SectionList = () => {
   const { showError, showSuccess } = useNotification()
@@ -15,6 +14,7 @@ const SectionList = () => {
     describe: '',
     size: ''
   })
+  const [hoveredItem, setHoveredItem] = useState(null)
 
   // Fetch sections from API
   useEffect(() => {
@@ -191,6 +191,8 @@ const SectionList = () => {
               <div 
                 key={section.id} 
                 className="flex items-center justify-between px-2 py-2 hover:bg-gray-100 rounded"
+                onMouseEnter={() => setHoveredItem(section.id)}
+                onMouseLeave={() => setHoveredItem(null)}
               >
                 {formData.id === section.id ? (
                   <input
@@ -237,23 +239,25 @@ const SectionList = () => {
                     {section.name}
                   </span>
                 )}
-                <Popconfirm
-                  title="确认删除"
-                  description="您确定要删除这个章节吗？此操作不可撤销。"
-                  onConfirm={(e) => {
-                    e?.stopPropagation(); // Prevent triggering the edit when clicking delete
-                    handleDelete(section.id);
-                  }}
-                  okText="确认"
-                  cancelText="取消"
-                >
-                  <button
-                    onClick={(e) => e.stopPropagation()}
-                    className="ml-2 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+                {hoveredItem === section.id && (
+                  <Popconfirm
+                    title="确认删除"
+                    description="您确定要删除这个章节吗？此操作不可撤销。"
+                    onConfirm={(e) => {
+                      e?.stopPropagation(); // Prevent triggering the edit when clicking delete
+                      handleDelete(section.id);
+                    }}
+                    okText="确认"
+                    cancelText="取消"
                   >
-                    <DeleteOutlined />
-                  </button>
-                </Popconfirm>
+                    <button
+                      onClick={(e) => e.stopPropagation()}
+                      className="ml-2 text-red-600 hover:text-red-800 transition-colors cursor-pointer text-lg font-bold"
+                    >
+                      ×
+                    </button>
+                  </Popconfirm>
+                )}
               </div>
             ))}
           </div>
