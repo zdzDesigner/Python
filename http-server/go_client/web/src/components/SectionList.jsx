@@ -239,25 +239,27 @@ const SectionList = () => {
                     {section.name}
                   </span>
                 )}
-                {hoveredItem === section.id && (
-                  <Popconfirm
-                    title="确认删除"
-                    description="您确定要删除这个章节吗？此操作不可撤销。"
-                    onConfirm={(e) => {
-                      e?.stopPropagation(); // Prevent triggering the edit when clicking delete
-                      handleDelete(section.id);
-                    }}
-                    okText="确认"
-                    cancelText="取消"
-                  >
-                    <button
-                      onClick={(e) => e.stopPropagation()}
-                      className="ml-2 text-red-600 hover:text-red-800 transition-colors cursor-pointer text-lg font-bold"
+                <div className="w-6 flex justify-center items-center">
+                  {hoveredItem === section.id && (
+                    <Popconfirm
+                      title="确认删除"
+                      description="您确定要删除这个章节吗？此操作不可撤销。"
+                      onConfirm={(e) => {
+                        e?.stopPropagation(); // Prevent triggering the edit when clicking delete
+                        handleDelete(section.id);
+                      }}
+                      okText="确认"
+                      cancelText="取消"
                     >
-                      ×
-                    </button>
-                  </Popconfirm>
-                )}
+                      <button
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-red-600 hover:text-red-800 transition-colors cursor-pointer text-lg font-bold"
+                      >
+                        ×
+                      </button>
+                    </Popconfirm>
+                  )}
+                </div>
               </div>
             ))}
           </div>
