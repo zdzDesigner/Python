@@ -402,6 +402,9 @@ output 地址为`user_id`_`book_id`_`section_id`_`当前时间戳`
 @web/src/App.jsx 中添加 audiobook/section 路由跳转到AudioSection组件
 @web/src/App.jsx 中添加 dubbing/list 路由 跳转到DubbingList组件
 
+@server/build/SQL/sqlite.sql 新增`sections`表，包含`id`, `book_id`,`name`,`describe`,`size`,`created_at`,`updated_at` 字段,
+根据sections表在@server/db/ 目录中创建`sections.go` 文件,其中的具体实现参考 @server/db/tts_record.go 文件; 同时在 @server/handlers.go 文件完成`sections`的*增*，*删*，*改*, *查* 功能。同时在@server/main.go 添加对应的路由
+@web/src/pages/Section.jsx 中的TTSList组件左侧添加SectionList 组件, 组件中是section列表，包含增删改查的功能 
 
 
 ## init

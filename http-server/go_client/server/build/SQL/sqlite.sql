@@ -49,6 +49,13 @@ CREATE INDEX IF NOT EXISTS idx_audio_files_user_id ON audio_files(user_id);
 CREATE INDEX IF NOT EXISTS idx_audio_files_format ON audio_files(format);
 CREATE INDEX IF NOT EXISTS idx_audio_files_created_at ON audio_files(created_at);
 
+
+
+-- dubbins 
+-- name
+-- emotion_text
+
+
 -- Enable foreign key constraints (optional, but recommended)
 PRAGMA foreign_keys = ON;
 

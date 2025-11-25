@@ -12,14 +12,12 @@ export const AudioSection = () => {
 
   const [ttsJsonData, setTtsJsonData] = useState(null)
 
-
   const handleFileSelect = useCallback(
     (fileData) => {
       dispatch({ type: 'SELECT_FILE', payload: fileData })
     },
     [dispatch]
   )
-
 
   const handleJsonData = useCallback((jsonData) => {
     setTtsJsonData(jsonData)
@@ -40,8 +38,11 @@ export const AudioSection = () => {
     <div className="flex flex-col h-screen bg-slate-50 text-slate-800 cursor-default">
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 flex flex-col overflow-auto">
-          <TextDataSettings onUploadSuccess={fetchAudioFiles} onJsonData={handleJsonData} />
+          {
+            <TextDataSettings onUploadSuccess={fetchAudioFiles} onJsonData={handleJsonData} />
+          }
           <div className="flex-1">
+
             <TTSList jsonData={ttsJsonData} audioFiles={audioFiles} onSynthesizeComplete={handleTTSListSynthesize} />
           </div>
         </div>
