@@ -36,27 +36,17 @@ export const AudioSection = () => {
   )
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 text-slate-800 cursor-default">
-      <div className="flex flex-1 overflow-hidden">
-        {/* Section List on the left */}
-        <div className="pr-2 overflow-auto">
+    <div className="flex h-screen bg-slate-50 text-slate-800 cursor-default">
+      <div className="flex flex-col w-full h-full">
+        {<TextDataSettings onUploadSuccess={fetchAudioFiles} onJsonData={handleJsonData} />}
+        <div className="flex flex-1">
           <SectionList />
-        </div>
-        
-        {/* TTS List on the right */}
-        <div className="flex-1 pl-2 overflow-auto">
-          <div className="flex flex-col h-full">
-            {
-              <TextDataSettings onUploadSuccess={fetchAudioFiles} onJsonData={handleJsonData} />
-            }
-            <div className="flex-1 mt-4">
-              <TTSList jsonData={ttsJsonData} audioFiles={audioFiles} onSynthesizeComplete={handleTTSListSynthesize} />
-            </div>
+          <div className="pl-1 overflow-auto">
+            <TTSList jsonData={ttsJsonData} audioFiles={audioFiles} onSynthesizeComplete={handleTTSListSynthesize} />
           </div>
         </div>
+        <Progress />
       </div>
-
-      <Progress />
     </div>
   )
 }

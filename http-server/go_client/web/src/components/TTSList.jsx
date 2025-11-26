@@ -2,7 +2,19 @@ import React, { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { Card, Table, Tag, Typography, Select, Button, Space, Modal, Input, InputNumber, Popconfirm } from 'antd'
 
 import { PlayCircleOutlined, ExperimentOutlined, DeleteOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons'
-import { MAP_TTS, mapTTSRecord, mapStatus, synthesizeTTS, checkTTSExists, ttsTplList, ttsTplBulkDelete, ttsTplUpdate, ttsTplSplit, batchSynthesize, ttsTplDelete } from '@/service/api/tts'
+import {
+  MAP_TTS,
+  mapTTSRecord,
+  mapStatus,
+  synthesizeTTS,
+  checkTTSExists,
+  ttsTplList,
+  ttsTplBulkDelete,
+  ttsTplUpdate,
+  ttsTplSplit,
+  batchSynthesize,
+  ttsTplDelete
+} from '@/service/api/tts'
 import { useNotification } from '@/utils/NotificationContext'
 import BatchTrainingProgress from './BatchTrainingProgress'
 
@@ -19,7 +31,7 @@ const TTSTable = memo(({ columns, tableData, tableHeight }) => {
       key={(record, index) => record.id}
       pagination={false}
       // virtual={true}
-      scroll={{ y: tableHeight, x: 1200 }}
+      scroll={{ y: tableHeight, x: 1400 }}
       locale={{
         emptyText: tableData && tableData.length > 0 ? 'JSON数据有效但不包含TTS条目' : '尚未提供JSON数据'
       }}
@@ -432,7 +444,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   // Update table height when window is resized
   useEffect(() => {
     const updateTableHeight = () => {
-      const newHeight = window.innerHeight - 200 // Adjust this value as needed
+      const newHeight = window.innerHeight - 180 // Adjust this value as needed
       setTableHeight(newHeight > 0 ? newHeight : 100) // Ensure minimum height
     }
 
@@ -638,10 +650,10 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
       try {
         // Call the API to delete the record by ID
         const result = await ttsTplDelete(record.id)
-        
+
         if (result.code === 0) {
           // Remove the record from the table data
-          setTableData(prevData => prevData.filter(item => item.id !== record.id))
+          setTableData((prevData) => prevData.filter((item) => item.id !== record.id))
           showSuccess('删除成功', '记录已成功删除')
         } else {
           throw new Error(result.msg || '删除失败')
@@ -919,12 +931,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
                 okText="确认"
                 cancelText="取消"
               >
-                <Button
-                  icon={<DeleteOutlined />}
-                  title="删除此条数据"
-                  danger
-                  disabled={isTraining || isLocked}
-                />
+                <Button icon={<DeleteOutlined />} title="删除此条数据" danger disabled={isTraining || isLocked} />
               </Popconfirm>
             </Space>
           )
@@ -998,7 +1005,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     try {
       // Call the batch synthesis API with default values
       const result = await batchSynthesize(0, 0, 0)
-      
+
       if (result.code === 0) {
         showSuccess('批量合成成功', result.msg || '音频批量合成已完成')
       } else {
@@ -1156,7 +1163,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   }
 
   return (
-    <>
+    <div className="flex-1 mt-1">
       <div style={{ padding: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           {
@@ -1223,7 +1230,7 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         </Modal>
       }
       {<TTSTable columns={columns} tableData={tableData} tableHeight={tableHeight} />}
-    </>
+    </div>
   )
 }
 

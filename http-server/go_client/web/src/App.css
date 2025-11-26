@@ -16,6 +16,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   /* background-color: #f9fafb;  */
   background-color: #fff;
+  overflow: hidden;
 }
 
 /* Ensure the root element takes up the full height */
