@@ -9,7 +9,7 @@ const { TextArea } = Input
 
 const TextDataSettings = ({ onUploadSuccess, onJsonData }) => {
   const { showError, showSuccess } = useNotification()
-  const [jsonModalVisible, setJsonModalVisible] = useState(false)
+  // const [jsonModalVisible, setJsonModalVisible] = useState(false)
   const [jsonInput, setJsonInput] = useState('')
   const [formattedJson, setFormattedJson] = useState('')
   const [loading, setLoading] = useState(false)
@@ -31,7 +31,7 @@ const TextDataSettings = ({ onUploadSuccess, onJsonData }) => {
         const { list } = await ttsTplList()
         onJsonData(list) // Pass the JSON input to parent component
       }
-      setJsonModalVisible(false) // Close the modal after successful submission
+      // setJsonModalVisible(false) // Close the modal after successful submission
     } catch (error) {
       console.error('Error saving TTS template:', error)
       showError('Save Failed', error.message || 'Please enter valid JSON data.')
@@ -64,50 +64,37 @@ const TextDataSettings = ({ onUploadSuccess, onJsonData }) => {
   }
 
   return (
-    <div className="w-full bg-white/80 backdrop-blur-lg border-b border-slate-200 p-3 flex justify-end items-center space-x-3">
+    <div className="space-y-4">
       <Space>
         <Upload {...uploadProps}>
           <Button icon={<UploadOutlined />}>Upload File</Button>
         </Upload>
-        <Button icon={<EditOutlined />} onClick={() => setJsonModalVisible(true)}>
-          Manual Input
-        </Button>
+        {
+          // <Button icon={<EditOutlined />} onClick={() => setJsonModalVisible(true)}>
+          //   Manual Input
+          // </Button>
+        }
       </Space>
-
-      <Modal
-        title="Manual JSON Input"
-        open={jsonModalVisible}
-        onCancel={() => {
-          setJsonModalVisible(false)
-          setJsonInput('')
-          setFormattedJson('')
-        }}
-        footer={null}
-        width={700}
-      >
-        <div className="space-y-4">
-          {
-            <TextArea
-              rows={8}
-              placeholder="Paste your JSON data here..."
-              value={jsonInput}
-              onChange={(e) => setJsonInput(e.target.value)}
-              style={{ fontFamily: 'monospace', fontSize: '14px' }}
-            />
-          }
-          <div className="flex justify-end py-4">
-            <Button type="primary" onClick={handleJsonSubmit} disabled={!jsonInput.trim() || loading} loading={loading}>
-              确定
-            </Button>
-          </div>
-          {formattedJson && (
-            <div className="mt-4">
-              <h4 className="font-medium mb-2">Formatted JSON Error:</h4>
-              <TextArea rows={10} value={formattedJson} readOnly style={{ fontFamily: 'monospace', fontSize: '14px', backgroundColor: '#f9fafb' }} />
-            </div>
-          )}
+      {
+        <TextArea
+          rows={8}
+          placeholder="Paste your JSON data here..."
+          value={jsonInput}
+          onChange={(e) => setJsonInput(e.target.value)}
+          style={{ fontFamily: 'monospace', fontSize: '14px' }}
+        />
+      }
+      <div className="flex justify-end py-4">
+        <Button type="primary" onClick={handleJsonSubmit} disabled={!jsonInput.trim() || loading} loading={loading}>
+          确定
+        </Button>
+      </div>
+      {formattedJson && (
+        <div className="mt-4">
+          <h4 className="font-medium mb-2">Formatted JSON Error:</h4>
+          <TextArea rows={10} value={formattedJson} readOnly style={{ fontFamily: 'monospace', fontSize: '14px', backgroundColor: '#f9fafb' }} />
         </div>
-      </Modal>
+      )}
     </div>
   )
 }

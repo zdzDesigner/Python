@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react'
 import { Card, Table, Tag, Typography, Select, Button, Space, Modal, Input, InputNumber, Popconfirm } from 'antd'
+import TextDataSettings from '@/components/TextDataSettings'
 
+import { useAudioLibraryState, useAudioLibraryDispatch } from '@/context/AudioLibraryContext'
 import { PlayCircleOutlined, ExperimentOutlined, DeleteOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons'
 import {
   MAP_TTS,
@@ -375,7 +377,7 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, onSplit, type =
   }
 })
 
-const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
+const TTSList = () => {
   // State to store the table height
   const [tableHeight, setTableHeight] = useState('calc(100vh - 200px)')
   // State to track currently training records
@@ -385,7 +387,8 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   // State to track the output paths for trained records
   const [trainedRecords, setTrainedRecords] = useState({})
   // State for character mapping modal
-  const [isMappingModalVisible, setIsMappingModalVisible] = useState(false)
+  const [isshow_dubbing, setShowDubbing] = useState(false)
+  const [isshow_text, setShowText] = useState(false)
   // State for character mappings
   const [characterMappings, setCharacterMappings] = useState({})
   // State for table data
@@ -397,6 +400,33 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
   const [batchAbortController, setBatchAbortController] = useState(null)
 
   const { showError, showSuccess, showWarning } = useNotification()
+
+  const { audioFiles, loading, fileTree, selectedFile, isSynthesizing, currentlyPlaying } = useAudioLibraryState()
+  const { dispatch, fetchAudioFiles } = useAudioLibraryDispatch()
+
+  const [jsonData, setTtsJsonData] = useState(null)
+
+  const fileSelect = useCallback(
+    (data) => {
+      dispatch({ type: 'SELECT_FILE', payload: data })
+    },
+    [dispatch]
+  )
+
+  const handleJsonData = useCallback((jsonData) => {
+    setTtsJsonData(jsonData)
+  }, [])
+
+  const onSynthesizeComplete = useCallback(
+    async (synthesizedFile) => {
+      if (synthesizedFile) {
+        fileSelect(synthesizedFile)
+        await fetchAudioFiles()
+        showSuccess('Audio synthesized successfully', 'The new audio file has been created.')
+      }
+    },
+    [fileSelect, fetchAudioFiles, showSuccess]
+  )
 
   // Update tableData when jsonData changes, and fetch TTS records from API when jsonData is null/undefined
   useEffect(() => {
@@ -959,45 +989,44 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
     }))
   }, [])
 
-  // 批量设置音色
-  const handleModalOk = useCallback(() => {
-    // Apply the mappings to the table data
-    setTableData((prevData) => {
-      return prevData.map((item) => {
-        if (characterMappings[item.speaker]) {
-          return { ...item, dubbing: characterMappings[item.speaker] }
-        }
-        return item
-      })
-    })
-    setIsMappingModalVisible(false)
-  }, [characterMappings])
-
-  // Function to handle modal cancellation
-  const handleModalCancel = useCallback(() => {
-    setIsMappingModalVisible(false)
-    // Reset character mappings when modal is closed
-    setCharacterMappings({})
-  }, [])
-
-  // Function to open the mapping modal
-  const openMappingModal = useCallback(() => {
-    // Initialize character mappings with current values
+  // dubbing ====================================
+  const dubModalOpen = useCallback(() => {
     const initialMappings = {}
     if (tableData) {
       tableData.forEach((item) => {
-        if (item.dubbing && item.dubbing !== '') {
-          initialMappings[item.speaker] = item.dubbing
-        }
+        if (item.dubbing && item.dubbing !== '') initialMappings[item.speaker] = item.dubbing
       })
     }
     setCharacterMappings(initialMappings)
-    setIsMappingModalVisible(true)
+    setShowDubbing(true)
   }, [tableData])
 
-  {
-    // <Card className="w-full mt-4">
-    // </Card>
+  const dubModalOk = useCallback(() => {
+    // 批量设置音色
+    setTableData((prevData) => {
+      return prevData.map((item) => {
+        if (characterMappings[item.speaker]) return { ...item, dubbing: characterMappings[item.speaker] }
+        return item
+      })
+    })
+    setShowDubbing(false)
+  }, [characterMappings])
+
+  // Function to handle modal cancellation
+  const dubModalCancel = useCallback(() => {
+    setShowDubbing(false)
+    setCharacterMappings({})
+  }, [])
+
+  // text ====================================
+  const textModalOpen = () => {
+    setShowText(true)
+  }
+  const textModalOk = () => {
+    setShowText(false)
+  }
+  const textModalCancle = () => {
+    setShowText(false)
   }
 
   // 批量合成
@@ -1167,15 +1196,18 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
       <div style={{ padding: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           {
-            // <Button type="primary" onClick={() => setIsMappingModalVisible(true)}>
+            // <Button type="primary" onClick={() => setShowDubbing(true)}>
           }
-          <Button type="primary" onClick={openMappingModal} disabled={isBatchTraining}>
+          <Button type="primary" onClick={textModalOpen} disabled={isBatchTraining}>
+            添加文本
+          </Button>
+          <Button type="primary" className="ml-[10px]" onClick={dubModalOpen} disabled={isBatchTraining}>
             角色配音
           </Button>
-          <Button type="primary" style={{ marginLeft: 10 }} onClick={handleBatchTrain} loading={isBatchTraining} disabled={isBatchTraining}>
+          <Button type="primary" className="ml-[10px]" onClick={handleBatchTrain} loading={isBatchTraining} disabled={isBatchTraining}>
             批量训练
           </Button>
-          <Button type="primary" style={{ marginLeft: 10 }} onClick={handleBatchSynthesize} disabled={isBatchTraining}>
+          <Button type="primary" className="ml-[10px]" onClick={handleBatchSynthesize} disabled={isBatchTraining}>
             批量合成
           </Button>
         </div>
@@ -1204,7 +1236,23 @@ const TTSList = ({ jsonData, audioFiles, onSynthesizeComplete }) => {
         </div>
       </div>
       {
-        <Modal title="角色配音" open={isMappingModalVisible} onOk={handleModalOk} onCancel={handleModalCancel} width={600}>
+        <Modal
+          title="章节文本"
+          open={isshow_text}
+          onCancel={() => {
+            setShowText(false)
+            // setJsonInput('')
+            // setFormattedJson('')
+          }}
+          footer={null}
+          width={700}
+        >
+          xxxx
+          {<TextDataSettings onUploadSuccess={fetchAudioFiles} onJsonData={handleJsonData} />}
+        </Modal>
+      }
+      {
+        <Modal title="角色配音" open={isshow_dubbing} onOk={dubModalOk} onCancel={dubModalCancel} width={600}>
           <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
             {uniqueCharacterNames.map((characterName, index) => (
               <div key={characterName} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
