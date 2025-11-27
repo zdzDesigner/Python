@@ -1019,15 +1019,15 @@ const TTSList = () => {
   }, [])
 
   // text ====================================
-  const textModalOpen = () => {
+  const textModalOpen = useCallback(() => {
     setShowText(true)
-  }
-  const textModalOk = () => {
+  }, [])
+  const textModalOk = useCallback(() => {
     setShowText(false)
-  }
-  const textModalCancle = () => {
+  }, [])
+  const textModalCancle = useCallback(() => {
     setShowText(false)
-  }
+  }, [])
 
   // 批量合成
   const handleBatchSynthesize = async () => {
@@ -1195,9 +1195,6 @@ const TTSList = () => {
     <div className="flex-1 mt-1">
       <div style={{ padding: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          {
-            // <Button type="primary" onClick={() => setShowDubbing(true)}>
-          }
           <Button type="primary" onClick={textModalOpen} disabled={isBatchTraining}>
             添加文本
           </Button>
@@ -1247,8 +1244,7 @@ const TTSList = () => {
           footer={null}
           width={700}
         >
-          xxxx
-          {<TextDataSettings onUploadSuccess={fetchAudioFiles} onJsonData={handleJsonData} />}
+          {<TextDataSettings onJsonData={handleJsonData} />}
         </Modal>
       }
       {

@@ -423,5 +423,10 @@ output 地址为`user_id`_`book_id`_`section_id`_`当前时间戳`
 @web/src/components/SectionList.jsx list中鼠标移动到item中再显示`删除按钮`, 图标换成"x"
 @web/src/components/SectionList.jsx 删除按钮 使用@web/src/components/TTSList.jsx table中删除按钮的confirm组件
 
+
+@/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/components/TextDataSettings.jsx
+  组件中执行uploadProps操作后，把文件上传到go server 并返回文件内容
+
+
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档

@@ -7,7 +7,7 @@ import { ttsTplSave, ttsTplList } from '../service/api/tts'
 // const { TextArea } = Typography
 const { TextArea } = Input
 
-const TextDataSettings = ({ onUploadSuccess, onJsonData }) => {
+const TextDataSettings = ({ onJsonData }) => {
   const { showError, showSuccess } = useNotification()
   // const [jsonModalVisible, setJsonModalVisible] = useState(false)
   const [jsonInput, setJsonInput] = useState('')
@@ -33,7 +33,7 @@ const TextDataSettings = ({ onUploadSuccess, onJsonData }) => {
       }
       // setJsonModalVisible(false) // Close the modal after successful submission
     } catch (error) {
-      console.error('Error saving TTS template:', error)
+      // console.error('Error saving TTS template:', error)
       showError('Save Failed', error.message || 'Please enter valid JSON data.')
       setFormattedJson(error.message)
     } finally {
@@ -43,23 +43,38 @@ const TextDataSettings = ({ onUploadSuccess, onJsonData }) => {
 
   const uploadProps = {
     name: 'file',
-    action: 'http://localhost:8081/api/upload', // Assuming this is the upload endpoint
-    headers: {
-      authorization: 'authorization-text'
-    },
+    // Remove action to prevent actual upload to server
     onChange(info) {
       if (info.file.status !== 'uploading') {
         console.log(info.file, info.fileList)
       }
-      if (info.file.status === 'done') {
-        message.success(`${info.file.name} file uploaded successfully`)
-        if (onUploadSuccess) {
-          onUploadSuccess() // Refresh the file list after upload
-        }
-      } else if (info.file.status === 'error') {
-        message.error(`${info.file.name} file upload failed.`)
-        showError('Upload Failed', `Failed to upload ${info.file.name}`)
+      // Since we're not uploading, status will not be 'done'
+      // But the content will be processed in beforeUpload
+    },
+    // Process file before upload to handle different formats
+    beforeUpload(file) {
+      const reader = new FileReader()
+
+      reader.onload = (e) => {
+        const content = e.target.result
+        // Set the content to the input field for review
+        setJsonInput(content)
       }
+
+      // Handle different file types
+      if (file.type === 'application/json' || file.name.endsWith('.json')) {
+        reader.readAsText(file)
+      } else if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+        reader.readAsText(file)
+      } else if (file.name.endsWith('.csv')) {
+        reader.readAsText(file)
+      } else {
+        // For other file types, try to read as text
+        reader.readAsText(file)
+      }
+
+      // Return false to prevent actual upload to server
+      return false
     }
   }
 
