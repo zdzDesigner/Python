@@ -1,22 +1,113 @@
 import React, { useState, useCallback, useMemo, useRef } from 'react'
+import { Card, Table, Tag, Typography, Select, Button, Space, Modal, Input, InputNumber, Popconfirm } from 'antd'
+import { useAudioLibraryState, useAudioLibraryDispatch } from '@/context/AudioLibraryContext'
 import TTSList from '@/components/TTSList'
 import SectionList from '@/components/SectionList'
 import Progress from '@/components/Progress'
 import { LeftOutlined } from '@ant-design/icons'
 
 export const AudioSection = () => {
+  const { audioFiles } = useAudioLibraryState()
+  const [isshow_dubbing, setShowDubbing] = useState(false)
+  const [characterMappings, setCharacterMappings] = useState({})
+  const [ttsdata, setTtsData] = useState([])
+
+  const uniqueCharacterNames = useMemo(() => {
+    if (!ttsdata) return []
+    const uniqueNames = [...new Set(ttsdata.map((item) => item.speaker))]
+    return uniqueNames
+  }, [ttsdata])
+  // Memoize the audio files options to prevent unnecessary re-renders
+  const audioFileOptions = useMemo(() => {
+    if (!audioFiles) return []
+    return audioFiles.map((file) => (
+      <Option key={file.path} value={file.path}>
+        {file.name}
+      </Option>
+    ))
+  }, [audioFiles])
+
+  // Function to handle character mapping changes
+  const handleMappingChange = useCallback((characterName, audioPath) => {
+    setCharacterMappings((prev) => ({
+      ...prev,
+      [characterName]: audioPath
+    }))
+  }, [])
+
+  // dubbing ====================================
+  const dubModalOpen = useCallback(() => {
+    const initialMappings = {}
+    if (ttsdata) {
+      ttsdata.forEach((item) => {
+        if (item.dubbing && item.dubbing !== '') initialMappings[item.speaker] = item.dubbing
+      })
+    }
+    setCharacterMappings(initialMappings)
+    setShowDubbing(true)
+  }, [ttsdata])
+
+  const dubModalOk = useCallback(() => {
+    // 批量设置音色
+    setTtsData((prevData) => {
+      return prevData.map((item) => {
+        if (characterMappings[item.speaker]) return { ...item, dubbing: characterMappings[item.speaker] }
+        return item
+      })
+    })
+    setShowDubbing(false)
+  }, [characterMappings])
+
+  // Function to handle modal cancellation
+  const dubModalCancel = useCallback(() => {
+    setShowDubbing(false)
+    setCharacterMappings({})
+  }, [])
+
   return (
     <div className="flex h-screen bg-slate-50 text-slate-800 cursor-default">
       <div className="flex flex-col w-full h-full">
         <div className="flex w-full bg-white/80 backdrop-blur-lg border-b border-slate-200 p-3 flex justify-end items-center space-x-3">
-          <div><LeftOutlined /> 小说名称</div>
-          <div className='flex-1'></div>
-          <div></div>
+          <div>
+            <LeftOutlined /> 小说名称
+          </div>
+          <div className="flex-1"></div>
+          <div>
+            <Button type="primary" className="ml-[10px]" onClick={dubModalOpen}>
+              角色配音
+            </Button>
+          </div>
+          {
+            <Modal title="角色配音" open={isshow_dubbing} onOk={dubModalOk} onCancel={dubModalCancel} width={600}>
+              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                {uniqueCharacterNames.map((characterName, index) => (
+                  <div key={characterName} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div style={{ flex: 1, textAlign: 'left' }}>
+                      <strong>{characterName}</strong>
+                    </div>
+                    <div style={{ flex: 2, marginLeft: '20px' }}>
+                      <Select
+                        showSearch
+                        style={{ width: '100%' }}
+                        placeholder="选择音频文件"
+                        value={characterMappings[characterName] || undefined}
+                        onChange={(value) => handleMappingChange(characterName, value)}
+                        allowClear
+                        virtual
+                      >
+                        {audioFileOptions}
+                      </Select>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Modal>
+          }
         </div>
         <div className="flex flex-1">
           <SectionList />
           <div className="pl-1 overflow-auto">
-            <TTSList />
+            <TTSList ttsdata={ttsdata} setTtsData={setTtsData} />
           </div>
         </div>
         <Progress />

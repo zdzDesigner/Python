@@ -377,7 +377,7 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, onSplit, type =
   }
 })
 
-const TTSList = () => {
+const TTSList = ({ ttsdata, setTtsData }) => {
   // State to store the table height
   const [tableHeight, setTableHeight] = useState('calc(100vh - 200px)')
   // State to track currently training records
@@ -387,12 +387,10 @@ const TTSList = () => {
   // State to track the output paths for trained records
   const [trainedRecords, setTrainedRecords] = useState({})
   // State for character mapping modal
-  const [isshow_dubbing, setShowDubbing] = useState(false)
   const [isshow_text, setShowText] = useState(false)
   // State for character mappings
-  const [characterMappings, setCharacterMappings] = useState({})
   // State for table data
-  const [tableData, setTableData] = useState([])
+  const [tableData, setTableData] = useState([ttsdata])
   // State for batch training progress
   const [isBatchTraining, setIsBatchTraining] = useState(false)
   const [batchProgress, setBatchProgress] = useState(0)
@@ -401,7 +399,7 @@ const TTSList = () => {
 
   const { showError, showSuccess, showWarning } = useNotification()
 
-  const { audioFiles, loading, fileTree, selectedFile, isSynthesizing, currentlyPlaying } = useAudioLibraryState()
+  const { audioFiles } = useAudioLibraryState()
   const { dispatch, fetchAudioFiles } = useAudioLibraryDispatch()
 
   const [jsonData, setTtsJsonData] = useState(null)
@@ -429,6 +427,9 @@ const TTSList = () => {
   )
 
   // Update tableData when jsonData changes, and fetch TTS records from API when jsonData is null/undefined
+  useEffect(() => {
+    setTtsData(tableData)
+  }, [tableData])
   useEffect(() => {
     const fetchTTSRecords = async () => {
       try {
@@ -463,11 +464,6 @@ const TTSList = () => {
   }, [jsonData])
 
   // Extract unique character names using useMemo to prevent unnecessary recalculations
-  const uniqueCharacterNames = useMemo(() => {
-    if (!tableData) return []
-    const uniqueNames = [...new Set(tableData.map((item) => item.speaker))]
-    return uniqueNames
-  }, [tableData])
 
   // console.log({jsonData})
 
@@ -971,53 +967,6 @@ const TTSList = () => {
     [handlePlay, handleTrain, tableAudioFileOptions, trainingRecords, playingRecords, updateTableDataDubbing, updateTableData]
   )
 
-  // Memoize the audio files options to prevent unnecessary re-renders
-  const audioFileOptions = useMemo(() => {
-    if (!audioFiles) return []
-    return audioFiles.map((file) => (
-      <Option key={file.path} value={file.path}>
-        {file.name}
-      </Option>
-    ))
-  }, [audioFiles])
-
-  // Function to handle character mapping changes
-  const handleMappingChange = useCallback((characterName, audioPath) => {
-    setCharacterMappings((prev) => ({
-      ...prev,
-      [characterName]: audioPath
-    }))
-  }, [])
-
-  // dubbing ====================================
-  const dubModalOpen = useCallback(() => {
-    const initialMappings = {}
-    if (tableData) {
-      tableData.forEach((item) => {
-        if (item.dubbing && item.dubbing !== '') initialMappings[item.speaker] = item.dubbing
-      })
-    }
-    setCharacterMappings(initialMappings)
-    setShowDubbing(true)
-  }, [tableData])
-
-  const dubModalOk = useCallback(() => {
-    // 批量设置音色
-    setTableData((prevData) => {
-      return prevData.map((item) => {
-        if (characterMappings[item.speaker]) return { ...item, dubbing: characterMappings[item.speaker] }
-        return item
-      })
-    })
-    setShowDubbing(false)
-  }, [characterMappings])
-
-  // Function to handle modal cancellation
-  const dubModalCancel = useCallback(() => {
-    setShowDubbing(false)
-    setCharacterMappings({})
-  }, [])
-
   // text ====================================
   const textModalOpen = useCallback(() => {
     setShowText(true)
@@ -1198,9 +1147,6 @@ const TTSList = () => {
           <Button type="primary" onClick={textModalOpen} disabled={isBatchTraining}>
             添加文本
           </Button>
-          <Button type="primary" className="ml-[10px]" onClick={dubModalOpen} disabled={isBatchTraining}>
-            角色配音
-          </Button>
           <Button type="primary" className="ml-[10px]" onClick={handleBatchTrain} loading={isBatchTraining} disabled={isBatchTraining}>
             批量训练
           </Button>
@@ -1245,32 +1191,6 @@ const TTSList = () => {
           width={700}
         >
           {<TextDataSettings onJsonData={handleJsonData} />}
-        </Modal>
-      }
-      {
-        <Modal title="角色配音" open={isshow_dubbing} onOk={dubModalOk} onCancel={dubModalCancel} width={600}>
-          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-            {uniqueCharacterNames.map((characterName, index) => (
-              <div key={characterName} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <div style={{ flex: 1, textAlign: 'left' }}>
-                  <strong>{characterName}</strong>
-                </div>
-                <div style={{ flex: 2, marginLeft: '20px' }}>
-                  <Select
-                    showSearch
-                    style={{ width: '100%' }}
-                    placeholder="选择音频文件"
-                    value={characterMappings[characterName] || undefined}
-                    onChange={(value) => handleMappingChange(characterName, value)}
-                    allowClear
-                    virtual
-                  >
-                    {audioFileOptions}
-                  </Select>
-                </div>
-              </div>
-            ))}
-          </div>
         </Modal>
       }
       {<TTSTable columns={columns} tableData={tableData} tableHeight={tableHeight} />}
