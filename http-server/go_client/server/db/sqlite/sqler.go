@@ -313,7 +313,11 @@ func (s *Sql) Edt(keys ...string) error {
 	SQL := s.sqlmount(fmt.Sprintf("UPDATE %s SET %s", s.t_name, setStr))
 	allVals := append(vals, s.w_vals...)
 	DEBUG.Println(SQL, allVals)
-	_, err := s.DB.Exec(SQL, allVals...)
+	res, err := s.DB.Exec(SQL, allVals...)
+	n, err := res.RowsAffected()
+	if 0 == n {
+		return errors.New("SQL error:" + SQL)
+	}
 	return err
 }
 
@@ -771,4 +775,3 @@ func DB(p ...any) *Sql {
 	}
 	return &Sql{DB: db}
 }
-

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { useNotification } from '@/utils/NotificationContext'
 import api from '@/utils/api'
 import { Popconfirm } from 'antd'
 
-const SectionList = () => {
+const SectionList = forwardRef((props, ref) => {
   const { showError, showSuccess } = useNotification()
   const [sections, setSections] = useState([])
   const [loading, setLoading] = useState(false)
@@ -16,6 +16,10 @@ const SectionList = () => {
   })
   const [hoveredItem, setHoveredItem] = useState(null)
 
+  // Expose the addNewSection function to parent components
+  useImperativeHandle(ref, () => ({
+    addNewSection
+  }))
   // Fetch sections from API
   useEffect(() => {
     fetchSections()
@@ -115,47 +119,31 @@ const SectionList = () => {
       })
 
       if (response.code === 0) {
-        // Replace the temporary section with the one from the backend
-        setSections((prev) => prev.map((section) => (section.id === tempId ? response.data : section)))
+        setSections((prev) => prev.map((section) => (section.id === formData.id ? { ...section, name: newName, id: response.id } : section)))
         showSuccess('Success', 'Section created successfully')
         setFormData({ book_id: '', name: '', describe: '', size: '' }) // Exit edit mode
-      } else {
-        showError(response.error || 'Failed to create section')
-        // Remove the temporary section
-        setSections((prev) => prev.filter((s) => s.id !== tempId))
-        setFormData({ book_id: '', name: '', describe: '', size: '' })
       }
     } catch (error) {
       showError(error.message || 'Error creating section')
       // Remove the temporary section
-      setSections((prev) => prev.filter((s) => s.id !== tempId))
-      setFormData({ book_id: '', name: '', describe: '', size: '' })
     }
   }
 
   // Function to add a new section
-  const addNewSection = async () => {
+  const addNewSection = useCallback(() => {
     // Create a temporary section object with a temporary ID
     const newSection = {
       id: `temp-${Date.now()}`, // Use a temporary ID
-      name: 'New Section',
-      book_id: 1, // Default value, can be changed
-      describe: '',
-      size: 0
+      name: '',
+      book_id: 1 // Default value, can be changed
     }
 
     // Add the new section to the end of the list
     setSections((prev) => [...prev, newSection])
 
     // Set the form data to edit this new section
-    setFormData({
-      id: newSection.id,
-      name: newSection.name,
-      book_id: newSection.book_id,
-      describe: newSection.describe,
-      size: newSection.size
-    })
-  }
+    setFormData({ ...newSection })
+  }, [])
 
   return (
     <div className="bg-white border-r border-gray-200 h-full flex flex-col">
@@ -181,6 +169,9 @@ const SectionList = () => {
           <div className="text-center py-5 text-gray-500 text-sm">No sections</div>
         ) : (
           <div className="space-y-1">
+            {
+              //sections.map(({ id }) => `${id}-`)
+            }
             {sections.map((section) => (
               <div
                 key={section.id}
@@ -234,7 +225,7 @@ const SectionList = () => {
                   </span>
                 )}
                 <div className="w-6 flex justify-center items-center">
-                  {hoveredItem === section.id && formData.id != section.id && (
+                  {formData.id != section.id && (
                     <Popconfirm
                       title="确认删除"
                       description="您确定要删除这个章节吗？此操作不可撤销。"
@@ -245,12 +236,16 @@ const SectionList = () => {
                       okText="确认"
                       cancelText="取消"
                     >
-                      <button
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-red-600 text-[20px]/[1]  hover:text-red-800 transition-colors cursor-pointer text-lg font-bold"
-                      >
-                        ×
-                      </button>
+                      {hoveredItem === section.id ? (
+                        <button
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-red-600 text-[20px]/[1]  hover:text-red-800 transition-colors cursor-pointer text-lg font-bold"
+                        >
+                          ×
+                        </button>
+                      ) : (
+                        <span className="text-red-600 text-[20px]/[1] invisible">x</span>
+                      )}
                     </Popconfirm>
                   )}
                 </div>
@@ -261,6 +256,6 @@ const SectionList = () => {
       </div>
     </div>
   )
-}
+})
 
 export default SectionList

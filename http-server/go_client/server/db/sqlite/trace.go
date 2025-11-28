@@ -1,5 +1,7 @@
 package sqlite
 
+import "fmt"
+
 type (
 	// Logger interface allows implementations to provide to this package any
 	// object that implements the methods defined in it.
@@ -13,7 +15,9 @@ type (
 	NOOPLogger struct{}
 )
 
-func (NOOPLogger) Println(v ...interface{})               {}
+func (NOOPLogger) Println(v ...interface{}) {
+	fmt.Println(v...)
+}
 func (NOOPLogger) Printf(format string, v ...interface{}) {}
 
 // Internal levels of library output that are initialised to not print
@@ -24,3 +28,4 @@ var (
 	WARN     Logger = NOOPLogger{}
 	DEBUG    Logger = NOOPLogger{}
 )
+

@@ -26,14 +26,15 @@ func sectionsHandler(ctx ginc.Contexter) {
 	}
 
 	// Add the new section to the database
-	if err := sectionReq.Add(); err != nil {
+	ret, err := sectionReq.Add()
+	if err != nil {
 		ctx.FailErr(500, "Failed to add section: "+err.Error())
 		return
 	}
 
 	ctx.Success(gin.H{
 		"status": "success",
-		"data":   sectionReq,
+		"id":     ret.Id,
 	})
 }
 
@@ -84,9 +85,9 @@ func sectionsListHandler(ctx ginc.Contexter) {
 	var err error
 
 	if len(filters) > 0 {
-		sections, err = section.Get(filters, limit)
+		sections, err = section.Get(filters, limit, false)
 	} else {
-		sections, err = section.Get(nil, limit)
+		sections, err = section.Get(nil, limit, false)
 	}
 
 	if err != nil {

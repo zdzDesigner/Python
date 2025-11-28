@@ -1,8 +1,8 @@
 import './App.css'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { AudioBook } from './pages/Book'
-import { AudioSection } from './pages/Section'
-import { DubbingList } from './pages/Dubbing'
+import { AudioBook } from './pages/book/Book'
+import { AudioSection } from './pages/section/Section'
+import { DubbingList } from './pages/dubbing/Dubbing'
 
 const App = () => {
   return (

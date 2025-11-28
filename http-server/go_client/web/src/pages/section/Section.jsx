@@ -1,12 +1,13 @@
 import React, { useState, useCallback, useMemo, useRef } from 'react'
 import { Card, Table, Tag, Typography, Select, Button, Space, Modal, Input, InputNumber, Popconfirm } from 'antd'
-import { useAudioLibraryState, useAudioLibraryDispatch } from '@/context/AudioLibraryContext'
-import TTSList from '@/components/TTSList'
-import SectionList from '@/components/SectionList'
-import Progress from '@/components/Progress'
 import { LeftOutlined } from '@ant-design/icons'
+import { useAudioLibraryState, useAudioLibraryDispatch } from '@/context/AudioLibraryContext'
+import TTSList from './TTSList'
+import SectionList from './SectionList'
+import Progress from '@/components/Progress'
 
 export const AudioSection = () => {
+  const sectionListRef = useRef(null)
   const { audioFiles } = useAudioLibraryState()
   const [isshow_dubbing, setShowDubbing] = useState(false)
   const [characterMappings, setCharacterMappings] = useState({})
@@ -73,6 +74,9 @@ export const AudioSection = () => {
           </div>
           <div className="flex-1"></div>
           <div>
+            <Button type="primary" className="ml-[10px]" onClick={() => sectionListRef.current.addNewSection()}>
+              添加章节
+            </Button>
             <Button type="primary" className="ml-[10px]" onClick={dubModalOpen}>
               角色配音
             </Button>
@@ -105,7 +109,7 @@ export const AudioSection = () => {
           }
         </div>
         <div className="flex flex-1">
-          <SectionList />
+          <SectionList ref={sectionListRef} />
           <div className="pl-1 overflow-auto">
             <TTSList ttsdata={ttsdata} setTtsData={setTtsData} />
           </div>

@@ -18,8 +18,11 @@ type Section struct {
 }
 
 func (s *Section) TableName() string { return "sections" }
-func (s *Section) Add() error        { return sqlite.DB(s).Add("created_at", "updated_at") }
-func (s *Section) Count() int        { return sqlite.DB(s).Count() }
+func (s *Section) Add() (sqlite.Ret, error) {
+	sqler := sqlite.DB(s)
+	return sqler.Ret, sqler.Add("created_at", "updated_at")
+}
+func (s *Section) Count() int { return sqlite.DB(s).Count() }
 func (s *Section) Del(val map[string]any) error {
 	return sqlite.DB(s).Del(val)
 }
@@ -32,12 +35,16 @@ func (s *Section) GetFunc(fn func(*sqlite.Sql) *sqlite.Sql) ([]*Section, error) 
 	return sqlite.GetField[Section](func(dbm sqlite.DBSql) *sqlite.Sql { return fn(dbm(s)) })
 }
 
-func (s *Section) Get(w any, limit []string) ([]*Section, error) {
+func (s *Section) Get(w any, limit []string, isdesc bool) ([]*Section, error) {
 	if limit == nil {
 		limit = []string{"1", "1"}
 	}
 	return sqlite.GetField[Section](func(dbm sqlite.DBSql) *sqlite.Sql {
-		return dbm(s).Where(w).Page(limit[0], limit[1]).Order("id desc")
+		if isdesc {
+			return dbm(s).Where(w).Page(limit[0], limit[1]).Order("id desc")
+		} else {
+			return dbm(s).Where(w).Page(limit[0], limit[1]).Order("id asc")
+		}
 	})
 }
 
@@ -56,3 +63,4 @@ func (s *Section) UpdateByID(id int, keys ...string) error {
 	fmt.Println("id:", id, keys, *s)
 	return sqlite.DB(s).Where(map[string]any{"id": id}).Update(keys...)
 }
+
