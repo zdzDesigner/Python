@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
+import { Popconfirm } from 'antd'
+import { EditOutlined, CloseOutlined } from '@ant-design/icons'
 import { useNotification } from '@/utils/NotificationContext'
 import api from '@/utils/api'
-import { Popconfirm } from 'antd'
 
 const SectionList = forwardRef((props, ref) => {
   const { showError, showSuccess } = useNotification()
@@ -147,18 +148,6 @@ const SectionList = forwardRef((props, ref) => {
 
   return (
     <div className="bg-white border-r border-gray-200 h-full flex flex-col">
-      {
-        // <div className="p-3 border-b border-gray-200 bg-gray-50">
-        //   <h3 className="text-sm font-semibold text-gray-700 mb-2">Sections</h3>
-        //   <button
-        //     onClick={addNewSection}
-        //     className="w-full px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
-        //   >
-        //     添加章节
-        //   </button>
-        // </div>
-      }
-
       {/* Sections list */}
       <div className="p-1 overflow-auto w-[200px]">
         {loading ? (
@@ -217,14 +206,14 @@ const SectionList = forwardRef((props, ref) => {
                     autoFocus
                   />
                 ) : (
-                  <span
-                    className="text-sm text-[14px]/[2] text-gray-700 truncate flex-1 px-0 py-0 cursor-pointer hover:text-blue-600 transition-colors leading-5"
-                    onClick={() => startInlineEdit(section)}
-                  >
+                  <span className="text-sm text-[14px]/[2] text-gray-700 truncate flex-1 px-0 py-0 cursor-pointer hover:text-blue-600 transition-colors leading-5">
                     {section.name}
                   </span>
                 )}
                 <div className="w-6 flex justify-center items-center">
+                  {formData.id != section.id && hoveredItem === section.id && (
+                    <EditOutlined style={{ fontSize: 12 }} onClick={() => startInlineEdit(section)} />
+                  )}
                   {formData.id != section.id && (
                     <Popconfirm
                       title="确认删除"
@@ -237,14 +226,9 @@ const SectionList = forwardRef((props, ref) => {
                       cancelText="取消"
                     >
                       {hoveredItem === section.id ? (
-                        <button
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-red-600 text-[20px]/[1]  hover:text-red-800 transition-colors cursor-pointer text-lg font-bold"
-                        >
-                          ×
-                        </button>
+                        <CloseOutlined style={{ fontSize: 12, color: 'red' }} className="px-2" onClick={(e) => e.stopPropagation()} />
                       ) : (
-                        <span className="text-red-600 text-[20px]/[1] invisible">x</span>
+                        <CloseOutlined className="invisible" />
                       )}
                     </Popconfirm>
                   )}
