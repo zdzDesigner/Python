@@ -4,11 +4,10 @@ import { EditOutlined, CloseOutlined } from '@ant-design/icons'
 import { useNotification } from '@/utils/NotificationContext'
 import api from '@/utils/api'
 
-const SectionList = forwardRef((props, ref) => {
+const SectionList = forwardRef(({ id }, ref) => {
   const { showError, showSuccess } = useNotification()
   const [sections, setSections] = useState([])
   const [loading, setLoading] = useState(false)
-  const [editingSection, setEditingSection] = useState(null)
   const [section_edit, setSectionEdit] = useState({
     book_id: '',
     name: '',
@@ -16,12 +15,10 @@ const SectionList = forwardRef((props, ref) => {
     size: ''
   })
   const [hover_id, setHoverId] = useState(null)
-  const [open_id, setOpenId] = useState(-1)
+  const [open_id, setOpenId] = useState(null)
 
   // Expose the addNewSection function to parent components
-  useImperativeHandle(ref, () => ({
-    addNewSection
-  }))
+  useImperativeHandle(ref, () => ({ addNewSection }))
   // Fetch sections from API
   useEffect(() => {
     fetchSections()
@@ -30,12 +27,8 @@ const SectionList = forwardRef((props, ref) => {
   const fetchSections = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/sections')
-      if (response.code === 0) {
-        setSections(response.data || [])
-      } else {
-        showError(response.error || 'Failed to fetch sections')
-      }
+      const data = await api.get('/sections')
+      setSections(data || [])
     } catch (error) {
       showError(error.message || 'Error fetching sections')
     } finally {
@@ -159,13 +152,10 @@ const SectionList = forwardRef((props, ref) => {
           <div className="text-center py-5 text-gray-500 text-sm">No sections</div>
         ) : (
           <div className="space-y-1">
-            {
-              //sections.map(({ id }) => `${id}-`)
-            }
             {sections.map((section) => (
               <div
                 key={section.id}
-                className="flex items-center justify-between px-2 py-2 hover:bg-gray-100 rounded"
+                className={`flex items-center justify-between px-2 py-2 hover:bg-gray-100 rounded ${id == section.id && 'bg-gray-100'}`}
                 onMouseEnter={() => setHoverId(section.id)}
                 onMouseLeave={() => setHoverId(null)}
               >
@@ -213,7 +203,7 @@ const SectionList = forwardRef((props, ref) => {
                     <Popconfirm
                       title="确认删除"
                       description="您确定要删除这个章节吗？此操作不可撤销。"
-                      onOpenChange={(isopen) => setOpenId(isopen ? section.id : -1)}
+                      onOpenChange={(isopen) => setOpenId(isopen ? section.id : null)}
                       onConfirm={(e) => {
                         e?.stopPropagation() // Prevent triggering the edit when clicking delete
                         handleDelete(section.id)

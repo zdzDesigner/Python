@@ -32,7 +32,7 @@ const TTSTable = memo(({ columns, tableData, tableHeight }) => {
       size="small"
       key={(record, index) => record.id}
       pagination={false}
-      // virtual={true}
+      virtual={true}
       scroll={{ y: tableHeight, x: 1400 }}
       locale={{
         emptyText: tableData && tableData.length > 0 ? 'JSON数据有效但不包含TTS条目' : '尚未提供JSON数据'

@@ -7,13 +7,13 @@ import { NotificationProvider } from './utils/NotificationContext.jsx'
 import { AudioLibraryProvider } from './context/AudioLibraryContext.jsx'
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <NotificationProvider>
-      <AudioLibraryProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </AudioLibraryProvider>
-    </NotificationProvider>
-  </StrictMode>
+  <NotificationProvider>
+    <AudioLibraryProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </AudioLibraryProvider>
+  </NotificationProvider>
 )
+// <StrictMode>
+// </StrictMode>
