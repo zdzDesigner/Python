@@ -17,6 +17,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var OUTPUT_DIR = "output/"
 
 // Books handlers
 func booksHandler(ctx ginc.Contexter) {
