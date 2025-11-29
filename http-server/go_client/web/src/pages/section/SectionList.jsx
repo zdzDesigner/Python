@@ -185,20 +185,16 @@ const SectionList = forwardRef((props, ref) => {
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
-                        // Check if this is a temporary section (just added)
                         if (String(section.id).startsWith('temp-')) {
-                          // This is a new section that needs to be saved to the backend
                           saveNewSection(section.id, section_edit.name)
                         } else {
                           saveInlineEdit(section.id, section_edit.name)
                         }
                       } else if (e.key === 'Escape') {
-                        // Cancel edit and remove the temporary section if it was just added
                         if (String(section.id).startsWith('temp-')) {
                           setSections((prev) => prev.filter((s) => s.id !== section.id))
                           setSectionEdit({ book_id: '', name: '', describe: '', size: '' })
                         } else {
-                          // Cancel edit and revert to original name
                           setSectionEdit((prev) => ({ ...prev, name: section.name, id: null }))
                         }
                       }
