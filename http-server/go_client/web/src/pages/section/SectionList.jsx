@@ -9,13 +9,14 @@ const SectionList = forwardRef((props, ref) => {
   const [sections, setSections] = useState([])
   const [loading, setLoading] = useState(false)
   const [editingSection, setEditingSection] = useState(null)
-  const [formData, setFormData] = useState({
+  const [section_edit, setSectionEdit] = useState({
     book_id: '',
     name: '',
     describe: '',
     size: ''
   })
-  const [hoveredItem, setHoveredItem] = useState(null)
+  const [hover_id, setHoverId] = useState(null)
+  const [open_id, setOpenId] = useState(-1)
 
   // Expose the addNewSection function to parent components
   useImperativeHandle(ref, () => ({
@@ -59,7 +60,7 @@ const SectionList = forwardRef((props, ref) => {
   // Function to handle inline editing of section name
   const startInlineEdit = (section) => {
     // Set the section being edited for inline editing (not the full form)
-    setFormData((prev) => ({ ...prev, id: section.id, name: section.name }))
+    setSectionEdit((prev) => ({ ...prev, id: section.id, name: section.name }))
   }
 
   const saveInlineEdit = async (sectionId, newName) => {
@@ -71,14 +72,14 @@ const SectionList = forwardRef((props, ref) => {
     if (!newName.trim()) {
       showError('Section name cannot be empty')
       // Revert to original name
-      setFormData((prev) => ({ ...prev, name: originalName }))
+      setSectionEdit((prev) => ({ ...prev, name: originalName }))
       return
     }
 
     // Check if the name has actually changed
     if (newName === originalName) {
       // If no change, simply exit edit mode
-      setFormData((prev) => ({ ...prev, id: null }))
+      setSectionEdit((prev) => ({ ...prev, id: null }))
       return
     }
 
@@ -87,16 +88,16 @@ const SectionList = forwardRef((props, ref) => {
       if (response.code === 0) {
         setSections((prev) => prev.map((section) => (section.id === sectionId ? { ...section, name: newName } : section)))
         showSuccess('Success', 'Section name updated successfully')
-        setFormData((prev) => ({ ...prev, id: null })) // Exit edit mode
+        setSectionEdit((prev) => ({ ...prev, id: null })) // Exit edit mode
       } else {
         showError(response.error || 'Failed to update section name')
         // Revert the name back to the original
-        setFormData((prev) => ({ ...prev, name: originalName }))
+        setSectionEdit((prev) => ({ ...prev, name: originalName }))
       }
     } catch (error) {
       showError(error.message || 'Error updating section name')
       // Revert the name back to the original
-      setFormData((prev) => ({ ...prev, name: originalName }))
+      setSectionEdit((prev) => ({ ...prev, name: originalName }))
     }
   }
 
@@ -107,22 +108,22 @@ const SectionList = forwardRef((props, ref) => {
       showError('Section name cannot be empty')
       // Remove the temporary section
       setSections((prev) => prev.filter((s) => s.id !== tempId))
-      setFormData({ book_id: '', name: '', describe: '', size: '' })
+      setSectionEdit({ book_id: '', name: '', describe: '', size: '' })
       return
     }
 
     try {
       const response = await api.post('/sections', {
         name: newName,
-        book_id: formData.book_id || 1, // Use provided book_id or default to 1
-        describe: formData.describe || '',
-        size: formData.size || 0
+        book_id: section_edit.book_id || 1, // Use provided book_id or default to 1
+        describe: section_edit.describe || '',
+        size: section_edit.size || 0
       })
 
       if (response.code === 0) {
-        setSections((prev) => prev.map((section) => (section.id === formData.id ? { ...section, name: newName, id: response.id } : section)))
+        setSections((prev) => prev.map((section) => (section.id === section_edit.id ? { ...section, name: newName, id: response.id } : section)))
         showSuccess('Success', 'Section created successfully')
-        setFormData({ book_id: '', name: '', describe: '', size: '' }) // Exit edit mode
+        setSectionEdit({ book_id: '', name: '', describe: '', size: '' }) // Exit edit mode
       }
     } catch (error) {
       showError(error.message || 'Error creating section')
@@ -143,7 +144,7 @@ const SectionList = forwardRef((props, ref) => {
     setSections((prev) => [...prev, newSection])
 
     // Set the form data to edit this new section
-    setFormData({ ...newSection })
+    setSectionEdit({ ...newSection })
   }, [])
 
   return (
@@ -165,21 +166,21 @@ const SectionList = forwardRef((props, ref) => {
               <div
                 key={section.id}
                 className="flex items-center justify-between px-2 py-2 hover:bg-gray-100 rounded"
-                onMouseEnter={() => setHoveredItem(section.id)}
-                onMouseLeave={() => setHoveredItem(null)}
+                onMouseEnter={() => setHoverId(section.id)}
+                onMouseLeave={() => setHoverId(null)}
               >
-                {formData.id === section.id ? (
+                {section_edit.id === section.id ? (
                   <input
                     type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                    value={section_edit.name}
+                    onChange={(e) => setSectionEdit((prev) => ({ ...prev, name: e.target.value }))}
                     onBlur={() => {
                       // Check if this is a temporary section (just added)
                       if (String(section.id).startsWith('temp-')) {
                         // This is a new section that needs to be saved to the backend
-                        saveNewSection(section.id, formData.name)
+                        saveNewSection(section.id, section_edit.name)
                       } else {
-                        saveInlineEdit(section.id, formData.name)
+                        saveInlineEdit(section.id, section_edit.name)
                       }
                     }}
                     onKeyDown={(e) => {
@@ -187,18 +188,18 @@ const SectionList = forwardRef((props, ref) => {
                         // Check if this is a temporary section (just added)
                         if (String(section.id).startsWith('temp-')) {
                           // This is a new section that needs to be saved to the backend
-                          saveNewSection(section.id, formData.name)
+                          saveNewSection(section.id, section_edit.name)
                         } else {
-                          saveInlineEdit(section.id, formData.name)
+                          saveInlineEdit(section.id, section_edit.name)
                         }
                       } else if (e.key === 'Escape') {
                         // Cancel edit and remove the temporary section if it was just added
                         if (String(section.id).startsWith('temp-')) {
                           setSections((prev) => prev.filter((s) => s.id !== section.id))
-                          setFormData({ book_id: '', name: '', describe: '', size: '' })
+                          setSectionEdit({ book_id: '', name: '', describe: '', size: '' })
                         } else {
                           // Cancel edit and revert to original name
-                          setFormData((prev) => ({ ...prev, name: section.name, id: null }))
+                          setSectionEdit((prev) => ({ ...prev, name: section.name, id: null }))
                         }
                       }
                     }}
@@ -210,14 +211,13 @@ const SectionList = forwardRef((props, ref) => {
                     {section.name}
                   </span>
                 )}
-                <div className="w-6 flex justify-center items-center">
-                  {formData.id != section.id && hoveredItem === section.id && (
-                    <EditOutlined style={{ fontSize: 12 }} onClick={() => startInlineEdit(section)} />
-                  )}
-                  {formData.id != section.id && (
+                {section_edit.id != section.id && (open_id === section.id || hover_id === section.id) && (
+                  <div className="w-6 flex justify-center items-center">
+                    {<EditOutlined style={{ fontSize: 12 }} onClick={() => startInlineEdit(section)} />}
                     <Popconfirm
                       title="确认删除"
                       description="您确定要删除这个章节吗？此操作不可撤销。"
+                      onOpenChange={(isopen) => setOpenId(isopen ? section.id : -1)}
                       onConfirm={(e) => {
                         e?.stopPropagation() // Prevent triggering the edit when clicking delete
                         handleDelete(section.id)
@@ -225,14 +225,10 @@ const SectionList = forwardRef((props, ref) => {
                       okText="确认"
                       cancelText="取消"
                     >
-                      {hoveredItem === section.id ? (
-                        <CloseOutlined style={{ fontSize: 12, color: 'red' }} className="px-2" onClick={(e) => e.stopPropagation()} />
-                      ) : (
-                        <CloseOutlined className="invisible" />
-                      )}
+                      <CloseOutlined style={{ fontSize: 12, color: 'red' }} className="px-2" onClick={(e) => e.stopPropagation()} />
                     </Popconfirm>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
