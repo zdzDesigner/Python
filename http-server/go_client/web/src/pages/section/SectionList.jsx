@@ -140,14 +140,57 @@ const SectionList = forwardRef(({ id }, ref) => {
     setSectionEdit({ ...newSection })
   }, [])
 
+  const TPLLoading = () => {
+    return (
+      <div className="flex justify-center items-center h-20">
+        <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    )
+  }
+
+  const TPLInput = (section) => {
+    return (
+      <input
+        type="text"
+        value={section_edit.name}
+        onChange={(e) => setSectionEdit((prev) => ({ ...prev, name: e.target.value }))}
+        onBlur={() => {
+          // Check if this is a temporary section (just added)
+          if (String(section.id).startsWith('temp-')) {
+            // This is a new section that needs to be saved to the backend
+            saveNewSection(section.id, section_edit.name)
+          } else {
+            saveInlineEdit(section.id, section_edit.name)
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            if (String(section.id).startsWith('temp-')) {
+              saveNewSection(section.id, section_edit.name)
+            } else {
+              saveInlineEdit(section.id, section_edit.name)
+            }
+          } else if (e.key === 'Escape') {
+            if (String(section.id).startsWith('temp-')) {
+              setSections((prev) => prev.filter((s) => s.id !== section.id))
+              setSectionEdit({ book_id: '', name: '', describe: '', size: '' })
+            } else {
+              setSectionEdit((prev) => ({ ...prev, name: section.name, id: null }))
+            }
+          }
+        }}
+        className="text-sm text-[14px]/[2] rounded px-0 py-0 flex-1 outline-none truncate bg-transparent leading-5"
+        autoFocus
+      />
+    )
+  }
+
   return (
     <div className="bg-white border-r border-gray-200 h-full flex flex-col">
       {/* Sections list */}
       <div className="p-1 overflow-auto w-[200px]">
         {loading ? (
-          <div className="flex justify-center items-center h-20">
-            <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-          </div>
+          TPLLoading()
         ) : sections.length === 0 ? (
           <div className="text-center py-5 text-gray-500 text-sm">No sections</div>
         ) : (
@@ -160,38 +203,7 @@ const SectionList = forwardRef(({ id }, ref) => {
                 onMouseLeave={() => setHoverId(null)}
               >
                 {section_edit.id === section.id ? (
-                  <input
-                    type="text"
-                    value={section_edit.name}
-                    onChange={(e) => setSectionEdit((prev) => ({ ...prev, name: e.target.value }))}
-                    onBlur={() => {
-                      // Check if this is a temporary section (just added)
-                      if (String(section.id).startsWith('temp-')) {
-                        // This is a new section that needs to be saved to the backend
-                        saveNewSection(section.id, section_edit.name)
-                      } else {
-                        saveInlineEdit(section.id, section_edit.name)
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        if (String(section.id).startsWith('temp-')) {
-                          saveNewSection(section.id, section_edit.name)
-                        } else {
-                          saveInlineEdit(section.id, section_edit.name)
-                        }
-                      } else if (e.key === 'Escape') {
-                        if (String(section.id).startsWith('temp-')) {
-                          setSections((prev) => prev.filter((s) => s.id !== section.id))
-                          setSectionEdit({ book_id: '', name: '', describe: '', size: '' })
-                        } else {
-                          setSectionEdit((prev) => ({ ...prev, name: section.name, id: null }))
-                        }
-                      }
-                    }}
-                    className="text-sm text-[14px]/[2] rounded px-0 py-0 flex-1 outline-none truncate bg-transparent leading-5"
-                    autoFocus
-                  />
+                  TPLInput(section)
                 ) : (
                   <span className="text-sm text-[14px]/[2] text-gray-700 truncate flex-1 px-0 py-0 cursor-pointer hover:text-blue-600 transition-colors leading-5">
                     {section.name}

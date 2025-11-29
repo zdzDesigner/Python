@@ -54,6 +54,24 @@ CREATE INDEX IF NOT EXISTS idx_audio_files_created_at ON audio_files(created_at)
 -- dubbins 
 -- name
 -- emotion_text
+-- Create Sections table
+CREATE TABLE IF NOT EXISTS sections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    book_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    describe TEXT DEFAULT '',
+    size INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for Sections table
+CREATE INDEX IF NOT EXISTS idx_sections_book_id ON sections(book_id);
+CREATE INDEX IF NOT EXISTS idx_sections_created_at ON sections(created_at);
+
+
+
+
 
 
 -- Enable foreign key constraints (optional, but recommended)
@@ -74,20 +92,7 @@ BEGIN
     UPDATE tts_records SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
 END;
 
--- Create Sections table
-CREATE TABLE IF NOT EXISTS sections (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    book_id INTEGER NOT NULL,
-    name TEXT NOT NULL,
-    describe TEXT DEFAULT '',
-    size INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
 
--- Create indexes for Sections table
-CREATE INDEX IF NOT EXISTS idx_sections_book_id ON sections(book_id);
-CREATE INDEX IF NOT EXISTS idx_sections_created_at ON sections(created_at);
 
 -- Create a trigger to update the updated_at field automatically for sections
 CREATE TRIGGER IF NOT EXISTS update_sections_updated_at 
@@ -102,3 +107,4 @@ AFTER UPDATE ON audio_files
 BEGIN
     UPDATE audio_files SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
 END;
+
