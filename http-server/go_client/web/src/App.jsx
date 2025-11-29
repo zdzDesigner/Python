@@ -11,14 +11,14 @@ const App = () => {
       {
         // <Route path="/" element={<Navigate to="/audiobook/list" replace />} />
         // <Route path="/" element={<Navigate to="/dubbing/list" replace />} />
-        <Route path="/" element={<Navigate to="/audiobook/section" replace />} />
+        <Route path="/" element={<Navigate to="/audiobook/1/section/3" replace />} />
       }
 
       {/* audiobook/list route */}
       <Route path="/audiobook/list" element={<AudioBook />} />
 
       {/* audiobook/section route */}
-      <Route path="/audiobook/section" element={<AudioSection />} />
+      <Route path="/audiobook/:book_id/section/:section_id" element={<AudioSection />} />
 
       {/* dubbing/list route */}
       <Route path="/dubbing/list" element={<DubbingList />} />

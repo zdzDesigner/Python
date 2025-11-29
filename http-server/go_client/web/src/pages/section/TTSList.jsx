@@ -26,6 +26,7 @@ const { Text } = Typography
 const { Option } = Select
 
 const TTSTable = memo(({ columns, tableData, tableHeight }) => {
+  console.log({columns},columns.length)
   return (
     <Table
       // style={{ padding: 10, backgroundColor: '#fff', width: 'calc(100vw - 300px)' }}
