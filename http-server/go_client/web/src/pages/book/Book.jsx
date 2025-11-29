@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Typography, Button, Spin, Alert } from 'antd'
+import { Card, Typography, Button, Spin, Alert, Modal, Input, Form } from 'antd'
 import { TPLLoading } from '@/components/Loadding'
 import api from '@/utils/api'
 
@@ -11,31 +11,27 @@ export const AudioBook = () => {
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [isModalVisible, setIsModalVisible] = useState(false)
+  const [form] = Form.useForm()
 
   // 获取小说数据
   useEffect(() => {
     const fetchBooks = async () => {
       try {
         setLoading(true)
-        // 由于目前没有专门的小说API，我们通过获取章节来推断小说信息
-        const sections = await api.get('/sections')
-
-        // 从章节数据中提取唯一的小说信息
-        const uniqueBooks = [
-          ...new Map(
-            sections.map((section) => [
-              section.book_id,
-              {
-                id: section.book_id,
-                title: `小说 ${section.book_id}`,
-                description: `包含 ${sections.filter((s) => s.book_id === section.book_id).length} 个章节`,
-                cover: null
-              }
-            ])
-          ).values()
-        ]
-
-        setBooks(uniqueBooks)
+        // 使用专门的小说API获取数据
+        const response = await api.get('/books')
+        const booksData = response.data || []
+        
+        // 转换数据格式以匹配现有的UI
+        const formattedBooks = booksData.map(book => ({
+          id: book.id,
+          title: book.name || `小说 ${book.id}`,
+          description: book.describe || '暂无描述',
+          cover: book.bg || null
+        }))
+        
+        setBooks(formattedBooks)
       } catch (err) {
         setError('获取小说数据失败')
         console.error('Error fetching books:', err)
@@ -50,6 +46,51 @@ export const AudioBook = () => {
   // 处理小说点击
   const bookClick = (book) => {
     navigate(`/audiobook/${book.id}/section/1`)
+  }
+
+  // 显示添加小说模态框
+  const showModal = () => {
+    setIsModalVisible(true)
+  }
+
+  // 处理模态框确认
+  const handleOk = async () => {
+    try {
+      const values = await form.validateFields()
+      // 调用后端API添加新小说
+      const response = await api.post('/books', {
+        name: values.title,
+        describe: values.description || '',
+        bg: values.cover || '',
+        size: 0
+      })
+      
+      if (response.code === 0) {
+        // 添加成功后重新获取小说列表
+        const response = await api.get('/books')
+        const booksData = response.data || []
+        
+        // 转换数据格式以匹配现有的UI
+        const formattedBooks = booksData.map(book => ({
+          id: book.id,
+          title: book.name || `小说 ${book.id}`,
+          description: book.describe || '暂无描述',
+          cover: book.bg || null
+        }))
+        
+        setBooks(formattedBooks)
+        setIsModalVisible(false)
+        form.resetFields()
+      }
+    } catch (err) {
+      console.error('添加小说失败:', err)
+    }
+  }
+
+  // 处理模态框取消
+  const handleCancel = () => {
+    setIsModalVisible(false)
+    form.resetFields()
   }
 
   if (loading) {
@@ -94,7 +135,7 @@ export const AudioBook = () => {
             <Card
               hoverable
               className="shadow-sm transition-shadow duration-300 h-full flex flex-col items-center justify-center"
-              onClick={() => console.log('添加新小说')}
+              onClick={showModal}
             >
               <div className="text-8xl text-center text-gray-200" style={{ lineHeight: '1em' }}>
                 +
@@ -104,6 +145,38 @@ export const AudioBook = () => {
           </div>
         </div>
       </div>
+
+      {/* 添加小说模态框 */}
+      <Modal
+        title="添加新小说"
+        open={isModalVisible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        okText="确认"
+        cancelText="取消"
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item
+            name="title"
+            label="小说标题"
+            rules={[{ required: true, message: '请输入小说标题' }]}
+          >
+            <Input placeholder="请输入小说标题" />
+          </Form.Item>
+          <Form.Item
+            name="description"
+            label="小说描述"
+          >
+            <Input.TextArea placeholder="请输入小说描述" rows={3} />
+          </Form.Item>
+          <Form.Item
+            name="cover"
+            label="封面图片URL"
+          >
+            <Input placeholder="请输入封面图片URL" />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   )
 }

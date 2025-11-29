@@ -18,7 +18,9 @@ export const api = {
       },
       body: JSON.stringify(data)
     })
-    return response.json()
+    const { code, data } = await response.json()
+    if (code != 0) return Promise.reject('err')
+    return { code, data }
   },
 
   put: async (endpoint, data) => {
@@ -29,14 +31,18 @@ export const api = {
       },
       body: JSON.stringify(data)
     })
-    return response.json()
+    const { code, data } = await response.json()
+    if (code != 0) return Promise.reject('err')
+    return { code, data }
   },
 
   delete: async (endpoint) => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'DELETE'
     })
-    return response.json()
+    const { code, data } = await response.json()
+    if (code != 0) return Promise.reject('err')
+    return { code, data }
   }
 }
 
