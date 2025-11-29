@@ -291,6 +291,12 @@ func (s *Sql) Del(kv map[string]any) error {
 	SQL := s.sqlmount(fmt.Sprintf("DELETE FROM %s", s.t_name))
 	_, err := s.DB.Exec(SQL, s.w_vals...)
 	return err
+	// res, err := s.DB.Exec(SQL, s.w_vals...)
+	// n, err := res.RowsAffected()
+	// if 0 == n {
+	// 	return errors.New("SQL error:" + SQL)
+	// }
+	// return err
 }
 
 // Update 更新别名
