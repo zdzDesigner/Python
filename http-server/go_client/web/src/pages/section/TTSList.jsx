@@ -19,14 +19,13 @@ import {
 } from '@/service/api/tts'
 import { useNotification } from '@/utils/NotificationContext'
 import BatchTrainingProgress from './BatchTrainingProgress'
-import "./TTSList.css"
-
+import './TTSList.css'
 
 const { Text } = Typography
 const { Option } = Select
 
 const TTSTable = memo(({ columns, tableData, tableHeight }) => {
-  console.log({columns},columns.length)
+  console.log({ columns }, columns.length)
   return (
     <Table
       // style={{ padding: 10, backgroundColor: '#fff', width: 'calc(100vw - 300px)' }}
@@ -380,7 +379,7 @@ const EditableCell = memo(({ record, dataIndex, value, onUpdate, onSplit, type =
   }
 })
 
-const TTSList = ({ ttsdata, setTtsData }) => {
+const TTSList = ({ book_id, section_id, ttsdata, setTtsData }) => {
   // State to store the table height
   const [tableHeight, setTableHeight] = useState('calc(100vh - 200px)')
   // State to track currently training records

@@ -127,7 +127,9 @@ export const AudioSection = () => {
         <TPLHeader />
         <div className="flex flex-1">
           <SectionList ref={sectionListRef} book_id={book_id} section_id={section_id} hookSections={hookSections} />
-          <div className="pl-1 overflow-auto">{section_id > 0 && <TTSList section_id={section_id} ttsdata={ttsdata} setTtsData={setTtsData} />}</div>
+          <div className="pl-1 overflow-auto">
+            {section_id > 0 && <TTSList book_id={book_id} section_id={section_id} ttsdata={ttsdata} setTtsData={setTtsData} />}
+          </div>
         </div>
         <Progress />
       </div>
