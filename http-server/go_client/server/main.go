@@ -47,11 +47,29 @@ func main() {
 		api.POST("/audio/joint", ginc.Handler(batchSynthesizeHandler))
 		api.DELETE("/tts-tpl/:id", ginc.Handler(ttsTplDelete))
 		
+		// Books API routes
+		api.POST("/books", ginc.Handler(booksHandler))
+		api.GET("/books", ginc.Handler(booksListHandler))
+		api.PUT("/books/:id", ginc.Handler(booksUpdateHandler))
+		api.DELETE("/books/:id", ginc.Handler(booksDeleteHandler))
+		
 		// Sections API routes
 		api.POST("/sections", ginc.Handler(sectionsHandler))
 		api.GET("/sections", ginc.Handler(sectionsListHandler))
 		api.PUT("/sections/:id", ginc.Handler(sectionsUpdateHandler))
 		api.DELETE("/sections/:id", ginc.Handler(sectionsDeleteHandler))
+		
+		// Dubbings API routes
+		api.POST("/dubbings", ginc.Handler(dubbingsHandler))
+		api.GET("/dubbings", ginc.Handler(dubbingsListHandler))
+		api.PUT("/dubbings/:id", ginc.Handler(dubbingsUpdateHandler))
+		api.DELETE("/dubbings/:id", ginc.Handler(dubbingsDeleteHandler))
+		
+		// BookDubbings API routes
+		api.POST("/book-dubbings", ginc.Handler(bookDubbingsHandler))
+		api.GET("/book-dubbings", ginc.Handler(bookDubbingsListHandler))
+		api.PUT("/book-dubbings/:id", ginc.Handler(bookDubbingsUpdateHandler))
+		api.DELETE("/book-dubbings/:id", ginc.Handler(bookDubbingsDeleteHandler))
 	}
 
 	// Health check route

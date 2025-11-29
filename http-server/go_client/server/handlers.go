@@ -17,7 +17,340 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var OUTPUT_DIR = "output/"
+
+// Books handlers
+func booksHandler(ctx ginc.Contexter) {
+	var bookReq db.Book
+	if err := ctx.ParseReqbody(&bookReq); err != nil {
+		return
+	}
+
+	// Add the new book to the database
+	ret, err := bookReq.Add()
+	if err != nil {
+		ctx.FailErr(500, "Failed to add book: "+err.Error())
+		return
+	}
+
+	ctx.Success(gin.H{
+		"status": "success",
+		"id":     ret.Id,
+	})
+}
+
+func booksListHandler(ctx ginc.Contexter) {
+	// Extract query parameters for filtering
+	name := ctx.GinCtx().Query("name")
+	pageStr := ctx.GinCtx().Query("page")
+	pageSizeStr := ctx.GinCtx().Query("size")
+
+	filters := make(map[string]interface{})
+
+	if name != "" {
+		filters["name"] = name
+	}
+
+	// Parse pagination parameters
+	page := 1
+	pageSize := 20
+
+	if pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	if pageSizeStr != "" {
+		if ps, err := strconv.Atoi(pageSizeStr); err == nil && ps > 0 {
+			if ps > 100 { // Limit maximum page size
+				ps = 100
+			}
+			pageSize = ps
+		}
+	}
+
+	// Calculate offset for pagination
+	offset := (page - 1) * pageSize
+	limit := []string{strconv.Itoa(offset), strconv.Itoa(pageSize)}
+
+	var book db.Book
+	var books []*db.Book
+	var err error
+
+	if len(filters) > 0 {
+		books, err = book.Get(filters, limit, false)
+	} else {
+		books, err = book.Get(nil, limit, false)
+	}
+
+	if err != nil {
+		ctx.FailErr(500, "Failed to fetch books: "+err.Error())
+		return
+	}
+
+	// Get total count for pagination info
+	total := book.Count()
+
+	ctx.Success(gin.H{
+		"status":   "success",
+		"data":     books,
+		"total":    total,
+		"page":     page,
+		"size":     pageSize,
+		"has_next": total > (page * pageSize),
+	})
+}
+
+func booksUpdateHandler(ctx ginc.Contexter) {
+	idStr := ctx.GinCtx().Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		ctx.FailErr(400, "Invalid book ID")
+		return
+	}
+
+	var updates map[string]interface{}
+	if err := ctx.ParseReqbody(&updates); err != nil {
+		return
+	}
+
+	// Update the book with provided fields by creating a new book instance
+	updatedBook := &db.Book{ID: id}
+
+	// Update fields based on the provided updates map
+	for key, value := range updates {
+		switch key {
+		case "name":
+			if val, ok := value.(string); ok {
+				updatedBook.Name = val
+			}
+		case "describe":
+			if val, ok := value.(string); ok {
+				updatedBook.Description = val
+			}
+		case "bg":
+			if val, ok := value.(string); ok {
+				updatedBook.Bg = val
+			}
+		case "size":
+			if val, ok := value.(float64); ok {
+				updatedBook.Size = int(val)
+			}
+		}
+	}
+
+	// Get all field names to update
+	keys := make([]string, 0, len(updates))
+	for key := range updates {
+		keys = append(keys, key)
+	}
+
+	// Update the book record
+	if err := updatedBook.UpdateByID(id, keys...); err != nil {
+		ctx.FailErr(500, "Failed to update book: "+err.Error())
+		return
+	}
+
+	ctx.Success(gin.H{
+		"status": "success",
+		"msg":    "Book updated successfully",
+		"id":     id,
+	})
+}
+
+func booksDeleteHandler(ctx ginc.Contexter) {
+	idStr := ctx.GinCtx().Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		ctx.FailErr(400, "Invalid book ID")
+		return
+	}
+
+	var book db.Book
+	err = book.Del(map[string]any{"id": id})
+	if err != nil {
+		ctx.FailErr(500, "Failed to delete book: "+err.Error())
+		return
+	}
+
+	ctx.Success(gin.H{
+		"status": "success",
+		"msg":    "Book deleted successfully",
+	})
+}
+
+
+// Dubbings handlers
+func dubbingsHandler(ctx ginc.Contexter) {
+	var dubbingReq db.Dubbing
+	if err := ctx.ParseReqbody(&dubbingReq); err != nil {
+		return
+	}
+
+	// Add the new dubbing to the database
+	ret, err := dubbingReq.Add()
+	if err != nil {
+		ctx.FailErr(500, "Failed to add dubbing: "+err.Error())
+		return
+	}
+
+	ctx.Success(gin.H{
+		"status": "success",
+		"id":     ret.Id,
+	})
+}
+
+func dubbingsListHandler(ctx ginc.Contexter) {
+	// Extract query parameters for filtering
+	bookIDStr := ctx.GinCtx().Query("book_id")
+	name := ctx.GinCtx().Query("name")
+	pageStr := ctx.GinCtx().Query("page")
+	pageSizeStr := ctx.GinCtx().Query("size")
+
+	filters := make(map[string]interface{})
+
+	if bookIDStr != "" {
+		if bookID, err := strconv.Atoi(bookIDStr); err == nil {
+			filters["book_id"] = bookID
+		}
+	}
+
+	if name != "" {
+		filters["name"] = name
+	}
+
+	// Parse pagination parameters
+	page := 1
+	pageSize := 20
+
+	if pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	if pageSizeStr != "" {
+		if ps, err := strconv.Atoi(pageSizeStr); err == nil && ps > 0 {
+			if ps > 100 { // Limit maximum page size
+				ps = 100
+			}
+			pageSize = ps
+		}
+	}
+
+	// Calculate offset for pagination
+	offset := (page - 1) * pageSize
+	limit := []string{strconv.Itoa(offset), strconv.Itoa(pageSize)}
+
+	var dubbing db.Dubbing
+	var dubbings []*db.Dubbing
+	var err error
+
+	if len(filters) > 0 {
+		dubbings, err = dubbing.Get(filters, limit, false)
+	} else {
+		dubbings, err = dubbing.Get(nil, limit, false)
+	}
+
+	if err != nil {
+		ctx.FailErr(500, "Failed to fetch dubbings: "+err.Error())
+		return
+	}
+
+	// Get total count for pagination info
+	total := dubbing.Count()
+
+	ctx.Success(gin.H{
+		"status":   "success",
+		"data":     dubbings,
+		"total":    total,
+		"page":     page,
+		"size":     pageSize,
+		"has_next": total > (page * pageSize),
+	})
+}
+
+func dubbingsUpdateHandler(ctx ginc.Contexter) {
+	idStr := ctx.GinCtx().Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		ctx.FailErr(400, "Invalid dubbing ID")
+		return
+	}
+
+	var updates map[string]interface{}
+	if err := ctx.ParseReqbody(&updates); err != nil {
+		return
+	}
+
+	// Update the dubbing with provided fields by creating a new dubbing instance
+	updatedDubbing := &db.Dubbing{ID: id}
+
+	// Update fields based on the provided updates map
+	for key, value := range updates {
+		switch key {
+		case "book_id":
+			if val, ok := value.(float64); ok {
+				updatedDubbing.BookId = int(val)
+			}
+		case "name":
+			if val, ok := value.(string); ok {
+				updatedDubbing.Name = val
+			}
+		case "age_text":
+			if val, ok := value.(string); ok {
+				updatedDubbing.AgeText = val
+			}
+		case "emotion_text":
+			if val, ok := value.(string); ok {
+				updatedDubbing.EmotionText = val
+			}
+		case "wav_path":
+			if val, ok := value.(string); ok {
+				updatedDubbing.WavPath = val
+			}
+		}
+	}
+
+	// Get all field names to update
+	keys := make([]string, 0, len(updates))
+	for key := range updates {
+		keys = append(keys, key)
+	}
+
+	// Update the dubbing record
+	if err := updatedDubbing.UpdateByID(id, keys...); err != nil {
+		ctx.FailErr(500, "Failed to update dubbing: "+err.Error())
+		return
+	}
+
+	ctx.Success(gin.H{
+		"status": "success",
+		"msg":    "Dubbing updated successfully",
+		"id":     id,
+	})
+}
+
+func dubbingsDeleteHandler(ctx ginc.Contexter) {
+	idStr := ctx.GinCtx().Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		ctx.FailErr(400, "Invalid dubbing ID")
+		return
+	}
+
+	var dubbing db.Dubbing
+	err = dubbing.Del(map[string]any{"id": id})
+	if err != nil {
+		ctx.FailErr(500, "Failed to delete dubbing: "+err.Error())
+		return
+	}
+
+	ctx.Success(gin.H{
+		"status": "success",
+		"msg":    "Dubbing deleted successfully",
+	})
+}
 
 func sectionsHandler(ctx ginc.Contexter) {
 	var sectionReq db.Section
@@ -725,6 +1058,168 @@ func batchSynthesizeHandler(ctx ginc.Contexter) {
 		"status":      "processing",
 		"message":     "Batch synthesis started. The output will be available shortly.",
 		"output_path": outputPath,
+	})
+}
+
+// BookDubbings handlers
+func bookDubbingsHandler(ctx ginc.Contexter) {
+	var bookDubbingReq db.BookDubbing
+	if err := ctx.ParseReqbody(&bookDubbingReq); err != nil {
+		return
+	}
+
+	// Add the new book_dubbing to the database
+	ret, err := bookDubbingReq.Add()
+	if err != nil {
+		ctx.FailErr(500, "Failed to add book dubbing: "+err.Error())
+		return
+	}
+
+	ctx.Success(gin.H{
+		"status": "success",
+		"id":     ret.Id,
+	})
+}
+
+func bookDubbingsListHandler(ctx ginc.Contexter) {
+	// Extract query parameters for filtering
+	bookIDStr := ctx.GinCtx().Query("book_id")
+	dubbingIDStr := ctx.GinCtx().Query("dubbing_id")
+	pageStr := ctx.GinCtx().Query("page")
+	pageSizeStr := ctx.GinCtx().Query("size")
+
+	filters := make(map[string]interface{})
+
+	if bookIDStr != "" {
+		if bookID, err := strconv.Atoi(bookIDStr); err == nil {
+			filters["book_id"] = bookID
+		}
+	}
+
+	if dubbingIDStr != "" {
+		if dubbingID, err := strconv.Atoi(dubbingIDStr); err == nil {
+			filters["dubbing_id"] = dubbingID
+		}
+	}
+
+	// Parse pagination parameters
+	page := 1
+	pageSize := 20
+
+	if pageStr != "" {
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	if pageSizeStr != "" {
+		if ps, err := strconv.Atoi(pageSizeStr); err == nil && ps > 0 {
+			if ps > 100 { // Limit maximum page size
+				ps = 100
+			}
+			pageSize = ps
+		}
+	}
+
+	// Calculate offset for pagination
+	offset := (page - 1) * pageSize
+	limit := []string{strconv.Itoa(offset), strconv.Itoa(pageSize)}
+
+	var bookDubbing db.BookDubbing
+	var bookDubbings []*db.BookDubbing
+	var err error
+
+	if len(filters) > 0 {
+		bookDubbings, err = bookDubbing.Get(filters, limit, false)
+	} else {
+		bookDubbings, err = bookDubbing.Get(nil, limit, false)
+	}
+
+	if err != nil {
+		ctx.FailErr(500, "Failed to fetch book dubbings: "+err.Error())
+		return
+	}
+
+	// Get total count for pagination info
+	total := bookDubbing.Count()
+
+	ctx.Success(gin.H{
+		"status":   "success",
+		"data":     bookDubbings,
+		"total":    total,
+		"page":     page,
+		"size":     pageSize,
+		"has_next": total > (page * pageSize),
+	})
+}
+
+func bookDubbingsUpdateHandler(ctx ginc.Contexter) {
+	idStr := ctx.GinCtx().Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		ctx.FailErr(400, "Invalid book dubbing ID")
+		return
+	}
+
+	var updates map[string]interface{}
+	if err := ctx.ParseReqbody(&updates); err != nil {
+		return
+	}
+
+	// Update the book_dubbing with provided fields by creating a new book_dubbing instance
+	updatedBookDubbing := &db.BookDubbing{ID: id}
+
+	// Update fields based on the provided updates map
+	for key, value := range updates {
+		switch key {
+		case "book_id":
+			if val, ok := value.(float64); ok {
+				updatedBookDubbing.BookId = int(val)
+			}
+		case "dubbing_id":
+			if val, ok := value.(float64); ok {
+				updatedBookDubbing.DubbingId = int(val)
+			}
+		}
+	}
+
+	// Get all field names to update
+	keys := make([]string, 0, len(updates))
+	for key := range updates {
+		keys = append(keys, key)
+	}
+
+	// Update the book_dubbing record
+	if err := updatedBookDubbing.UpdateByID(id, keys...); err != nil {
+		ctx.FailErr(500, "Failed to update book dubbing: "+err.Error())
+		return
+	}
+
+	ctx.Success(gin.H{
+		"status": "success",
+		"msg":    "Book dubbing updated successfully",
+		"id":     id,
+	})
+}
+
+func bookDubbingsDeleteHandler(ctx ginc.Contexter) {
+	idStr := ctx.GinCtx().Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		ctx.FailErr(400, "Invalid book dubbing ID")
+		return
+	}
+
+	var bookDubbing db.BookDubbing
+	err = bookDubbing.Del(map[string]any{"id": id})
+	if err != nil {
+		ctx.FailErr(500, "Failed to delete book dubbing: "+err.Error())
+		return
+	}
+
+	ctx.Success(gin.H{
+		"status": "success",
+		"msg":    "Book dubbing deleted successfully",
 	})
 }
 
