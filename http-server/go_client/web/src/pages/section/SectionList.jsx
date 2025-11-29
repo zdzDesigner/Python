@@ -3,6 +3,7 @@ import { Popconfirm } from 'antd'
 import { EditOutlined, CloseOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useNotification } from '@/utils/NotificationContext'
+import { TPLLoading } from '@/components/Loadding'
 import api from '@/utils/api'
 
 const SectionList = forwardRef(({ id }, ref) => {
@@ -135,14 +136,6 @@ const SectionList = forwardRef(({ id }, ref) => {
     // Set the form data to edit this new section
     setSectionEdit({ ...newSection })
   }, [])
-
-  const TPLLoading = () => {
-    return (
-      <div className="flex justify-center items-center h-20">
-        <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    )
-  }
 
   const TPLInput = (section) => {
     return (
