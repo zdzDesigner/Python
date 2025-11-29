@@ -98,7 +98,7 @@ const SectionList = forwardRef(({ id }, ref) => {
   const saveNewSection = async (tempId, newName) => {
     // Check if the name is empty
     if (!newName.trim()) {
-      showError('Section name cannot be empty')
+      // showError('Section name cannot be empty')
       // Remove the temporary section
       setSections((prev) => prev.filter((s) => s.id !== tempId))
       setSectionEdit({ book_id: '', name: '', describe: '', size: '' })

@@ -19,6 +19,8 @@ import {
 } from '@/service/api/tts'
 import { useNotification } from '@/utils/NotificationContext'
 import BatchTrainingProgress from './BatchTrainingProgress'
+import "./TTSList.css"
+
 
 const { Text } = Typography
 const { Option } = Select
@@ -30,7 +32,7 @@ const TTSTable = memo(({ columns, tableData, tableHeight }) => {
       dataSource={tableData}
       columns={columns}
       size="small"
-      key={(record, index) => record.id}
+      key="id"
       pagination={false}
       virtual={true}
       scroll={{ y: tableHeight, x: 1400 }}
