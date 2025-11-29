@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { Popconfirm } from 'antd'
 import { EditOutlined, CloseOutlined } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
 import { useNotification } from '@/utils/NotificationContext'
 import api from '@/utils/api'
 
 const SectionList = forwardRef(({ id }, ref) => {
+  const navigate = useNavigate()
   const { showError, showSuccess } = useNotification()
   const [sections, setSections] = useState([])
   const [loading, setLoading] = useState(false)
@@ -50,13 +52,7 @@ const SectionList = forwardRef(({ id }, ref) => {
     }
   }
 
-  // Function to handle inline editing of section name
-  const startInlineEdit = (section) => {
-    // Set the section being edited for inline editing (not the full form)
-    setSectionEdit((prev) => ({ ...prev, id: section.id, name: section.name }))
-  }
-
-  const saveInlineEdit = async (sectionId, newName) => {
+  const editSection = async (sectionId, newName) => {
     // Find the original section to compare with the new name
     const originalSection = sections.find((s) => s.id === sectionId)
     const originalName = originalSection ? originalSection.name : ''
@@ -95,7 +91,7 @@ const SectionList = forwardRef(({ id }, ref) => {
   }
 
   // Function to save a new section to the backend
-  const saveNewSection = async (tempId, newName) => {
+  const addSection = async (tempId, newName) => {
     // Check if the name is empty
     if (!newName.trim()) {
       // showError('Section name cannot be empty')
@@ -157,18 +153,17 @@ const SectionList = forwardRef(({ id }, ref) => {
         onBlur={() => {
           // Check if this is a temporary section (just added)
           if (String(section.id).startsWith('temp-')) {
-            // This is a new section that needs to be saved to the backend
-            saveNewSection(section.id, section_edit.name)
+            addSection(section.id, section_edit.name)
           } else {
-            saveInlineEdit(section.id, section_edit.name)
+            editSection(section.id, section_edit.name)
           }
         }}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
             if (String(section.id).startsWith('temp-')) {
-              saveNewSection(section.id, section_edit.name)
+              addSection(section.id, section_edit.name)
             } else {
-              saveInlineEdit(section.id, section_edit.name)
+              editSection(section.id, section_edit.name)
             }
           } else if (e.key === 'Escape') {
             if (String(section.id).startsWith('temp-')) {
@@ -205,13 +200,16 @@ const SectionList = forwardRef(({ id }, ref) => {
                 {section_edit.id === section.id ? (
                   TPLInput(section)
                 ) : (
-                  <span className="text-sm text-[14px]/[2] text-gray-700 truncate flex-1 px-0 py-0 cursor-pointer hover:text-blue-600 transition-colors leading-5">
+                  <span
+                    className="text-sm text-[14px]/[2] text-gray-700 truncate flex-1 px-0 py-0 cursor-pointer hover:text-blue-600 transition-colors leading-5"
+                    onClick={() => navigate(`/audiobook/1/section/${section.id}`)}
+                  >
                     {section.name}
                   </span>
                 )}
                 {section_edit.id != section.id && (open_id === section.id || hover_id === section.id) && (
                   <div className="w-6 flex justify-center items-center">
-                    {<EditOutlined style={{ fontSize: 12 }} onClick={() => startInlineEdit(section)} />}
+                    {<EditOutlined style={{ fontSize: 12 }} onClick={() => setSectionEdit((prev) => ({ ...prev, id: section.id, name: section.name }))} />}
                     <Popconfirm
                       title="确认删除"
                       description="您确定要删除这个章节吗？此操作不可撤销。"
