@@ -6,7 +6,7 @@ import { useNotification } from '@/utils/NotificationContext'
 import { TPLLoading } from '@/components/Loadding'
 import api from '@/utils/api'
 
-const SectionList = forwardRef(({ id }, ref) => {
+const SectionList = forwardRef(({ book_id, section_id, hookSections }, ref) => {
   const navigate = useNavigate()
   const { showError, showSuccess } = useNotification()
   const [sections, setSections] = useState([])
@@ -30,8 +30,10 @@ const SectionList = forwardRef(({ id }, ref) => {
   const fetchSections = async () => {
     try {
       setLoading(true)
-      const data = await api.get('/sections')
-      setSections(data || [])
+      const data = await api.get(`/sections?book_id=${book_id}`)
+      console.log({ data })
+      setSections(data)
+      hookSections(data)
     } catch (error) {
       showError(error.message || 'Error fetching sections')
     } finally {
@@ -186,7 +188,7 @@ const SectionList = forwardRef(({ id }, ref) => {
             {sections.map((section) => (
               <div
                 key={section.id}
-                className={`flex items-center justify-between px-2 py-2 hover:bg-gray-100 rounded ${id == section.id && 'bg-gray-100'}`}
+                className={`flex items-center justify-between px-2 py-2 hover:bg-gray-100 rounded ${section_id == section.id && 'bg-gray-100'}`}
                 onMouseEnter={() => setHoverId(section.id)}
                 onMouseLeave={() => setHoverId(null)}
               >

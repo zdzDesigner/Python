@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react'
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { Card, Table, Tag, Typography, Select, Button, Space, Modal, Input, InputNumber, Popconfirm } from 'antd'
 import { LeftOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -9,13 +9,21 @@ import SectionList from './SectionList'
 import Progress from '@/components/Progress'
 
 export const AudioSection = () => {
-  const { section_id } = useParams()
+  const { section_id: router_section_id, book_id } = useParams()
   const navigate = useNavigate()
   const sectionListRef = useRef(null)
   const { audioFiles } = useAudioLibraryState()
   const [isshow_dubbing, setShowDubbing] = useState(false)
   const [characterMappings, setCharacterMappings] = useState({})
   const [ttsdata, setTtsData] = useState([])
+  const [section_id, setSectionId] = useState(+router_section_id)
+
+  const hookSections = useCallback((sections) => {
+    console.log({ sections })
+    if (section_id == 0 && sections.length > 0) {
+      setSectionId(sections[0].id)
+    }
+  }, [])
 
   const uniqueCharacterNames = useMemo(() => {
     if (!ttsdata) return []
@@ -118,10 +126,8 @@ export const AudioSection = () => {
       <div className="flex flex-col w-full h-full">
         <TPLHeader />
         <div className="flex flex-1">
-          <SectionList id={section_id} ref={sectionListRef} />
-          <div className="pl-1 overflow-auto">
-            <TTSList ttsdata={ttsdata} setTtsData={setTtsData} />
-          </div>
+          <SectionList ref={sectionListRef} book_id={book_id} section_id={section_id} hookSections={hookSections} />
+          <div className="pl-1 overflow-auto">{section_id > 0 && <TTSList section_id={section_id} ttsdata={ttsdata} setTtsData={setTtsData} />}</div>
         </div>
         <Progress />
       </div>

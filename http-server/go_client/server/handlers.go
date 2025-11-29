@@ -180,7 +180,6 @@ func booksDeleteHandler(ctx ginc.Contexter) {
 	})
 }
 
-
 // Dubbings handlers
 func dubbingsHandler(ctx ginc.Contexter) {
 	var dubbingReq db.Dubbing
@@ -430,7 +429,7 @@ func sectionsListHandler(ctx ginc.Contexter) {
 	}
 
 	// Get total count for pagination info
-	total := section.Count()
+	total := len(sections)
 
 	ctx.Success(gin.H{
 		"status":   "success",

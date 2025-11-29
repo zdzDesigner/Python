@@ -44,7 +44,7 @@ export const AudioBook = () => {
 
   // 处理小说点击
   const bookClick = (book) => {
-    navigate(`/audiobook/${book.id}/section/1`)
+    navigate(`/audiobook/${book.id}/section/0`)
   }
 
   // 显示添加小说模态框

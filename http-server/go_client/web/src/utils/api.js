@@ -5,9 +5,9 @@ export const api = {
   get: async (endpoint) => {
     const res = await fetch(`${API_BASE_URL}${endpoint}`)
     const { code, data } = await res.json()
-    console.log({ code, data, res }, data.length)
+    console.log({ code, data, res })
     if (code != 0) return Promise.reject('err')
-    return data
+    return data || []
   },
 
   post: async (endpoint, payload) => {
