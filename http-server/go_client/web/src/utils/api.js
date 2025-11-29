@@ -10,26 +10,26 @@ export const api = {
     return data
   },
 
-  post: async (endpoint, data) => {
+  post: async (endpoint, payload) => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(payload)
     })
     const { code, data } = await response.json()
     if (code != 0) return Promise.reject('err')
     return { code, data }
   },
 
-  put: async (endpoint, data) => {
+  put: async (endpoint, payload) => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(payload)
     })
     const { code, data } = await response.json()
     if (code != 0) return Promise.reject('err')

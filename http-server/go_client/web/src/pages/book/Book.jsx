@@ -20,8 +20,7 @@ export const AudioBook = () => {
       try {
         setLoading(true)
         // 使用专门的小说API获取数据
-        const response = await api.get('/books')
-        const booksData = response.data || []
+        const booksData = await api.get('/books')
         
         // 转换数据格式以匹配现有的UI
         const formattedBooks = booksData.map(book => ({
@@ -67,8 +66,7 @@ export const AudioBook = () => {
       
       if (response.code === 0) {
         // 添加成功后重新获取小说列表
-        const response = await api.get('/books')
-        const booksData = response.data || []
+        const booksData = await api.get('/books')
         
         // 转换数据格式以匹配现有的UI
         const formattedBooks = booksData.map(book => ({
