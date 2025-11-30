@@ -146,6 +146,14 @@ export const AudioBook = () => {
     setPreviewCover(null)
   }
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Spin size="large" />
+      </div>
+    )
+  }
+
   if (error) {
     return (
       <div className="flex justify-center items-center h-screen">
