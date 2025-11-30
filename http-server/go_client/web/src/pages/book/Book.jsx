@@ -247,9 +247,6 @@ export const AudioBook = () => {
               </div>
             )}
           </Form.Item>
-          <Form.Item name="cover" label="封面URL">
-            <Input placeholder="或输入封面图片URL" />
-          </Form.Item>
         </Form>
       </Modal>
     </div>
