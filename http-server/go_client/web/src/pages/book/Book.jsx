@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Typography, Button, Spin, Alert, Modal, Input, Form, Upload, message } from 'antd'
+import { Card, Typography, Button, Spin, Alert, Modal, Input, Form, Upload, message, Popconfirm } from 'antd'
 import { TPLLoading } from '@/components/Loadding'
-import { PlusOutlined, UploadOutlined } from '@ant-design/icons'
+import { PlusOutlined, UploadOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import api from '@/utils/api'
-import { bookList } from '@/service/api/book'
+import { bookList, deleteBook } from '@/service/api/book'
+import './style.css'
 
 const { Title, Text } = Typography
 
@@ -124,16 +125,25 @@ export const AudioBook = () => {
     }
   }
 
+  // 处理删除小说
+  const handleDeleteBook = async (id) => {
+    try {
+      await deleteBook(id);
+      // 删除成功后重新获取小说列表
+      setBooks(await bookList());
+      message.success('小说删除成功');
+    } catch (err) {
+      console.error('删除小说失败:', err);
+      message.error('删除小说失败');
+    }
+  };
+
   // 处理模态框取消
   const handleCancel = () => {
     setIsModalVisible(false)
     form.resetFields()
     setCoverFile(null)
     setPreviewCover(null)
-  }
-
-  if (loading) {
-    return TPLLoading()
   }
 
   if (error) {
@@ -150,11 +160,11 @@ export const AudioBook = () => {
       <div className="flex-grow overflow-auto p-4">
         <div className="flex flex-wrap gap-4">
           {books.map((book) => (
-            <div key={book.id} className="w-[150px]">
+            <div key={book.id} className="card-hover w-[150px]">
               <Card
                 hoverable
                 size="small"
-                className="shadow-sm transition-shadow duration-300 h-full"
+                className="shadow-sm transition-shadow duration-300 h-full relative"
                 cover={
                   book.cover ? (
                     <img alt={book.title} src={book.cover} className="h-32 object-cover" />
@@ -164,9 +174,44 @@ export const AudioBook = () => {
                     </div>
                   )
                 }
-                onClick={() => bookClick(book)}
               >
-                <Card.Meta title={book.title} description={book.description} />
+                {/* Action buttons - only show on hover */}
+                <div className="absolute actions top-2 right-2 left-2 flex gap-1 opacity-0 transition-opacity duration-300">
+                  <Button 
+                    type="primary" 
+                    shape="circle" 
+                    icon={<EditOutlined />} 
+                    size="small" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // TODO: Implement edit functionality
+                      console.log('Edit book:', book);
+                    }} 
+                  />
+                  <div className="flex-1" />
+                  <Popconfirm 
+                    title="删除小说" 
+                    description="确定要删除这本小说吗？" 
+                    onConfirm={(e) => {
+                      e.stopPropagation();
+                      handleDeleteBook(book.id);
+                    }} 
+                    okText="确定" 
+                    cancelText="取消"
+                  >
+                    <Button 
+                      type="primary" 
+                      danger 
+                      shape="circle" 
+                      icon={<DeleteOutlined />} 
+                      size="small" 
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </Popconfirm>
+                </div>
+                <div onClick={() => bookClick(book)}>
+                  <Card.Meta title={book.title} description={book.description} />
+                </div>
               </Card>
             </div>
           ))}

@@ -10,3 +10,7 @@ export const bookList = async () => {
     cover: `/${book.bg}` || null
   }))
 }
+
+export const deleteBook = async (id) => {
+  return await methods.delete(`/books/${id}`)
+}
