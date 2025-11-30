@@ -132,8 +132,10 @@ export const AudioBook = () => {
           ))}
           <div className="w-[150px]">
             <Card hoverable className="shadow-sm transition-shadow duration-300 h-full flex flex-col items-center justify-center" onClick={showModal}>
-              <div className="text-8xl text-center text-gray-200" style={{ lineHeight: '1em' }}>
-                +
+              <div className="flex flex-col h-full cursor-pointer">
+                <div className="flex-1" />
+                <div className="text-6xl text-center text-gray-200">+</div>
+                <div className="flex-1" />
               </div>
               <br />
             </Card>
@@ -143,14 +145,14 @@ export const AudioBook = () => {
 
       {/* 添加小说模态框 */}
       <Modal title="添加新小说" open={isModalVisible} onOk={handleOk} onCancel={handleCancel} okText="确认" cancelText="取消">
-        <Form form={form} layout="vertical">
+        <Form form={form} labelCol={{ span: 4 }}>
           <Form.Item name="title" label="小说标题" rules={[{ required: true, message: '请输入小说标题' }]}>
             <Input placeholder="请输入小说标题" />
           </Form.Item>
           <Form.Item name="description" label="小说描述">
             <Input.TextArea placeholder="请输入小说描述" rows={3} />
           </Form.Item>
-          <Form.Item name="cover" label="封面图片URL">
+          <Form.Item name="cover" label="封面图片">
             <Input placeholder="请输入封面图片URL" />
           </Form.Item>
         </Form>

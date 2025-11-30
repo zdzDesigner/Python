@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { Button, Modal, Form, Input, Upload, message, Popconfirm } from 'antd'
+import { Button, Modal, Card, Form, Input, Upload, message, Popconfirm } from 'antd'
 import { EditOutlined, DeleteOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons'
 import { fetchVoices, createVoice, updateVoice, deleteVoice } from '@/service/api/dubbing'
+
+export const CSS_CARD = 'border border-gray-300 rounded-lg p-4 m-2 w-36 text-center shadow-sm bg-white relative transition-shadow duration-300 hover:shadow-md'
 
 // Voice Card Component
 const VoiceCard = ({ voice, onEdit, onDelete }) => {
@@ -18,34 +20,9 @@ const VoiceCard = ({ voice, onEdit, onDelete }) => {
   }
 
   return (
-    <div
-      style={{
-        border: '1px solid #ddd',
-        borderRadius: '8px',
-        padding: '6px',
-        margin: '8px',
-        width: '140px',
-        textAlign: 'center',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        backgroundColor: '#fff',
-        position: 'relative',
-        transition: 'box-shadow 0.3s'
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
+    <div className={CSS_CARD} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
       {/* Action buttons - only show on hover */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '8px',
-          right: '8px',
-          display: 'flex',
-          gap: '4px',
-          opacity: hovered ? 1 : 0,
-          transition: 'opacity 0.3s'
-        }}
-      >
+      <div className={`absolute top-2 right-2 flex gap-1 transition-opacity duration-300 ${hovered ? 'opacity-100' : 'opacity-0'}`}>
         <Button type="primary" shape="circle" icon={<EditOutlined />} size="small" onClick={() => onEdit(voice)} />
         <Popconfirm title="删除音色" description="确定要删除这个音色吗？" onConfirm={() => onDelete(voice.id)} okText="确定" cancelText="取消">
           <Button type="primary" danger shape="circle" icon={<DeleteOutlined />} size="small" />
@@ -53,53 +30,23 @@ const VoiceCard = ({ voice, onEdit, onDelete }) => {
       </div>
 
       {/* Avatar */}
-      <div
-        style={{
-          width: '100px',
-          height: '100px',
-          borderRadius: '50%',
-          overflow: 'hidden',
-          margin: '0 auto 12px',
-          border: '2px solid #eee'
-        }}
-      >
+      <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-3 border-2 border-gray-200">
         {voice.avatar ? (
-          <img src={getAvatarUrl()} alt={voice.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={getAvatarUrl()} alt={voice.name} className="w-full h-full object-cover" />
         ) : (
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              backgroundColor: '#f0f0f0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '40px',
-              color: '#999'
-            }}
-          >
+          <div className="w-full h-full bg-gray-200 flex items-center justify-center text-4xl text-gray-500">
             <UserOutlined />
           </div>
         )}
       </div>
 
       {/* Name and Age */}
-      <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+      <div className="font-bold mb-1 text-sm">
         {voice.name} · {voice.age_text}
       </div>
 
       {/* Emotion Text */}
-      <div
-        style={{
-          color: '#666',
-          minHeight: '40px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-      >
-        {voice.emotion_text}
-      </div>
+      <div className="text-gray-600 text-xs">{voice.emotion_text}</div>
     </div>
   )
 }
@@ -185,8 +132,8 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
             <Button icon={<PlusOutlined />}>选择文件</Button>
           </Upload>
           {previewAvatar && (
-            <div style={{ marginTop: '8px' }}>
-              <img src={previewAvatar} alt="Preview" style={{ width: '50px', height: '50px', borderRadius: '50%' }} />
+            <div className="mt-2">
+              <img src={previewAvatar} alt="Preview" className="w-12 h-12 rounded-full" />
             </div>
           )}
         </Form.Item>
@@ -287,52 +234,30 @@ export const DubbingList = () => {
   }
 
   if (loading) {
-    return <div>加载中...</div>
+    return <div className="p-5">加载中...</div>
   }
 
   if (error) {
-    return <div>错误: {error}</div>
+    return <div className="p-5 text-red-500">错误: {error}</div>
   }
 
   return (
-    <div style={{ padding: '20px' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px'
-        }}
-      >
-        <h1>音色管理</h1>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddClick} size="large">
-          新增音色
-        </Button>
-      </div>
+    <div className="p-5">
+      <div className="flex justify-between items-center mb-5"></div>
 
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '16px'
-        }}
-      >
+      <div className="flex flex-wrap gap-4">
         {voices.map((voice) => (
           <VoiceCard key={voice.id} voice={voice} onEdit={handleEditClick} onDelete={handleDeleteVoice} />
         ))}
 
-        {voices.length === 0 && !loading && (
-          <div
-            style={{
-              width: '100%',
-              textAlign: 'center',
-              padding: '40px',
-              color: '#666'
-            }}
-          >
-            暂无音色数据，请添加新的音色
-          </div>
-        )}
+        <div className={`flex flex-col cursor-pointer border-dotted ${CSS_CARD}`} onClick={handleAddClick}>
+          <div className="flex-1" />
+          <div className="text-6xl text-center text-gray-200">+</div>
+          <div className="flex-1" />
+        </div>
+        <br />
+
+        {voices.length === 0 && !loading && <div className="w-full text-center py-10 text-gray-600">暂无音色数据，请添加新的音色</div>}
       </div>
 
       <VoiceFormModal
