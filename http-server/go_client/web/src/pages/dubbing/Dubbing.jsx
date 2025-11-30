@@ -344,7 +344,8 @@ export const DubbingList = () => {
 
   const handleUpdateVoice = async (voiceData, avatarFile, wavFile) => {
     try {
-      await updateVoice(editingVoice.id, voiceData, avatarFile, wavFile)
+      console.log({ editingVoice, voiceData })
+      await updateVoice(editingVoice.id, { ...editingVoice, ...voiceData }, avatarFile, wavFile)
       setIsModalOpen(false)
       setEditingVoice(null)
       loadVoices() // Refresh the list

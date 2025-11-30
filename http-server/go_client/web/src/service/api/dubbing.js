@@ -3,20 +3,18 @@
  * Handles communication with the backend Dubbing API
  */
 
-const API_BASE_URL = 'http://localhost:8081'
+import { methods } from './method.js'
 
+const patchServerPath = (item) => ({ ...item, avatar: `/${item.avatar}`, wav_path: `/${item.wav_path}` })
+const unpatchServerPath = (item) => ({ ...item, avatar: item.avatar?.substring(1), wav_path: item.wav_path?.substring(1) })
 /**
  * Fetch all voices
  * @returns {Promise<Array>} - List of voice objects
  */
 export const fetchVoices = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/dubbings`)
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-    const data = await response.json()
-    return data.data.map((item) => ({ ...item, avatar: `/${item.avatar}`, wav_path: `/${item.wav_path}` })) || []
+    const data = await methods.get('/dubbings')
+    return data.map(patchServerPath) || []
   } catch (error) {
     console.error('Error fetching voices:', error)
     throw error
@@ -50,17 +48,8 @@ export const createVoice = async (voiceData, avatarFile = null, wavFile = null) 
       formData.append('wav_file', wavFile)
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/dubbings`, {
-      method: 'POST',
-      body: formData
-    })
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    const result = await response.json()
-    return result
+    const response = await methods.form('/dubbings', formData)
+    return response
   } catch (error) {
     console.error('Error creating voice:', error)
     throw error
@@ -79,12 +68,15 @@ export const updateVoice = async (id, voiceData, avatarFile = null, wavFile = nu
   try {
     const formData = new FormData()
 
+    console.log({ voiceData })
+    const { avatar, wav_path } = unpatchServerPath(voiceData)
+    console.log({ avatar, wav_path })
     // Append text fields
     formData.append('name', voiceData.name || '')
     formData.append('age_text', voiceData.age_text || '')
     formData.append('emotion_text', voiceData.emotion_text || '')
-    formData.append('avatar', voiceData.avatar || '')
-    formData.append('wav_path', voiceData.wav_path || '')
+    formData.append('avatar', avatar || '')
+    formData.append('wav_path', wav_path || '')
 
     // Append files if provided
     if (avatarFile) {
@@ -95,17 +87,8 @@ export const updateVoice = async (id, voiceData, avatarFile = null, wavFile = nu
       formData.append('wav_file', wavFile)
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/dubbings/${id}`, {
-      method: 'PUT',
-      body: formData
-    })
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    const result = await response.json()
-    return result
+    const response = await methods.form(`/dubbings/${id}`, formData, 'PUT')
+    return response
   } catch (error) {
     console.error('Error updating voice:', error)
     throw error
@@ -119,16 +102,8 @@ export const updateVoice = async (id, voiceData, avatarFile = null, wavFile = nu
  */
 export const deleteVoice = async (id) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/dubbings/${id}`, {
-      method: 'DELETE'
-    })
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    const result = await response.json()
-    return result
+    const response = await methods.delete(`/dubbings/${id}`)
+    return response
   } catch (error) {
     console.error('Error deleting voice:', error)
     throw error

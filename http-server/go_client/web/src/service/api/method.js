@@ -45,9 +45,9 @@ export const methods = {
     return { code, data }
   },
 
-  form: async (endpoint, formData) => {
+  form: async (endpoint, formData, method = 'POST') => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: 'POST',
+      method,
       body: formData
     })
     const { code, data } = await response.json()
