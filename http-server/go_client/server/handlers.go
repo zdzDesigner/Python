@@ -1090,7 +1090,7 @@ func ttsTplUpdate(ctx ginc.Contexter) {
 	ctx.Success(gin.H{
 		"status":  "success",
 		"message": "Record updated successfully",
-		"data":   gin.H{"id": id},
+		"data":    gin.H{"id": id},
 	})
 }
 
@@ -1137,7 +1137,7 @@ func ttsTplSplit(ctx ginc.Contexter) {
 	ctx.Success(gin.H{
 		"status":  "success",
 		"message": "Record updated successfully",
-		"data":   gin.H{"id": id},
+		"data":    gin.H{"id": id},
 	})
 }
 
@@ -1168,7 +1168,7 @@ func ttsTplDelete(ctx ginc.Contexter) {
 	ctx.Success(gin.H{
 		"status":  "success",
 		"message": "Successfully deleted",
-		"data":   gin.H{"id": id},
+		"data":    gin.H{"id": id},
 	})
 }
 
@@ -1452,6 +1452,6 @@ func uploadHandler(ctx ginc.Contexter) {
 	relativePath := filepath.Join("uploads", filename)
 	ctx.Success(gin.H{
 		"status": "success",
-		"data":   relativePath,
+		"data":   gin.H{"path": relativePath},
 	})
 }

@@ -115,7 +115,7 @@ export const AudioBook = () => {
         try {
           const res = await uploadFile(coverFile)
           // 使用返回的文件路径
-          coverPath = res.data
+          coverPath = res.data.path
         } catch (uploadError) {
           message.error('文件上传失败')
           return
