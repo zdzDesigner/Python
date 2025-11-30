@@ -43,5 +43,15 @@ export const methods = {
     const { code, data } = await response.json()
     if (code != 0) return Promise.reject('err')
     return { code, data }
+  },
+
+  form: async (endpoint, formData) => {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'POST',
+      body: formData
+    })
+    const { code, data } = await response.json()
+    if (code != 0) return Promise.reject('err')
+    return { code, data }
   }
 }

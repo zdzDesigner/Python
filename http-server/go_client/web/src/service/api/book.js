@@ -34,3 +34,9 @@ export const createBook = async (data) => {
   }
   return await methods.post('/books', data)
 }
+
+export const uploadFile = async (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return await methods.form('/upload', formData)
+}

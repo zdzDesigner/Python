@@ -67,7 +67,7 @@ func booksHandler(ctx ginc.Contexter) {
 
 		ctx.Success(gin.H{
 			"status": "success",
-			"id":     ret.Id,
+			"data":   gin.H{"id": ret.Id},
 		})
 		return
 	}
@@ -112,7 +112,7 @@ func booksHandler(ctx ginc.Contexter) {
 
 	ctx.Success(gin.H{
 		"status": "success",
-		"id":     ret.Id,
+		"data":   gin.H{"id": ret.Id},
 	})
 }
 
@@ -232,7 +232,7 @@ func booksUpdateHandler(ctx ginc.Contexter) {
 	ctx.Success(gin.H{
 		"status": "success",
 		"msg":    "Book updated successfully",
-		"id":     id,
+		"data":   gin.H{"id": id},
 	})
 }
 
@@ -311,7 +311,7 @@ func dubbingsHandler(ctx ginc.Contexter) {
 
 	ctx.Success(gin.H{
 		"status": "success",
-		"id":     ret.Id,
+		"data":   gin.H{"id": ret.Id},
 	})
 }
 
@@ -436,7 +436,7 @@ func dubbingsUpdateHandler(ctx ginc.Contexter) {
 		ctx.Success(gin.H{
 			"status": "success",
 			"msg":    "Dubbing updated successfully",
-			"id":     id,
+			"data":   gin.H{"id": id},
 		})
 		return
 	}
@@ -505,7 +505,7 @@ func dubbingsUpdateHandler(ctx ginc.Contexter) {
 	ctx.Success(gin.H{
 		"status": "success",
 		"msg":    "Dubbing updated successfully",
-		"id":     id,
+		"data":   gin.H{"id": id},
 	})
 }
 
@@ -545,7 +545,7 @@ func sectionsHandler(ctx ginc.Contexter) {
 
 	ctx.Success(gin.H{
 		"status": "success",
-		"id":     ret.Id,
+		"data":   gin.H{"id": ret.Id},
 	})
 }
 
@@ -672,7 +672,7 @@ func sectionsUpdateHandler(ctx ginc.Contexter) {
 	ctx.Success(gin.H{
 		"status": "success",
 		"msg":    "Section updated successfully",
-		"id":     id,
+		"data":   gin.H{"id": id},
 	})
 }
 
@@ -1090,7 +1090,7 @@ func ttsTplUpdate(ctx ginc.Contexter) {
 	ctx.Success(gin.H{
 		"status":  "success",
 		"message": "Record updated successfully",
-		"id":      id,
+		"data":   gin.H{"id": id},
 	})
 }
 
@@ -1137,7 +1137,7 @@ func ttsTplSplit(ctx ginc.Contexter) {
 	ctx.Success(gin.H{
 		"status":  "success",
 		"message": "Record updated successfully",
-		"id":      id,
+		"data":   gin.H{"id": id},
 	})
 }
 
@@ -1168,7 +1168,7 @@ func ttsTplDelete(ctx ginc.Contexter) {
 	ctx.Success(gin.H{
 		"status":  "success",
 		"message": "Successfully deleted",
-		"id":      id,
+		"data":   gin.H{"id": id},
 	})
 }
 
@@ -1255,7 +1255,7 @@ func bookDubbingsHandler(ctx ginc.Contexter) {
 
 	ctx.Success(gin.H{
 		"status": "success",
-		"id":     ret.Id,
+		"data":   gin.H{"id": ret.Id},
 	})
 }
 
@@ -1376,7 +1376,7 @@ func bookDubbingsUpdateHandler(ctx ginc.Contexter) {
 	ctx.Success(gin.H{
 		"status": "success",
 		"msg":    "Book dubbing updated successfully",
-		"id":     id,
+		"data":   gin.H{"id": id},
 	})
 }
 
@@ -1452,6 +1452,6 @@ func uploadHandler(ctx ginc.Contexter) {
 	relativePath := filepath.Join("uploads", filename)
 	ctx.Success(gin.H{
 		"status": "success",
-		"path":   relativePath,
+		"data":   relativePath,
 	})
 }

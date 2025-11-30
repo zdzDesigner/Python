@@ -21,7 +21,6 @@ const SectionList = forwardRef(({ book_id, section_id, hookSections }, ref) => {
   const [hover_id, setHoverId] = useState(null)
   const [open_id, setOpenId] = useState(null)
 
-
   // Expose the addNewSection function to parent components
   useImperativeHandle(ref, () => ({ addNewSection }))
   // Fetch sections from API
@@ -115,7 +114,7 @@ const SectionList = forwardRef(({ book_id, section_id, hookSections }, ref) => {
       })
 
       if (response.code === 0) {
-        setSections((prev) => prev.map((section) => (section.id === section_edit.id ? { ...section, name: newName, id: response.id } : section)))
+        setSections((prev) => prev.map((section) => (section.id === section_edit.id ? { ...section, name: newName, id: response.data.id } : section)))
         showSuccess('Success', 'Section created successfully')
         setSectionEdit({ book_id: '', name: '', describe: '', size: '' }) // Exit edit mode
       }

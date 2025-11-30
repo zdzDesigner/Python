@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Card, Typography, Button, Spin, Alert, Modal, Input, Form, Upload, message, Popconfirm } from 'antd'
 import { TPLLoading } from '@/components/Loadding'
 import { PlusOutlined, UploadOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
-import { bookList, deleteBook, updateBook, getBook, createBook } from '@/service/api/book'
+import { bookList, deleteBook, updateBook, getBook, createBook, uploadFile } from '@/service/api/book'
 import './style.css'
 
 const { Title, Text } = Typography
@@ -112,23 +112,10 @@ export const AudioBook = () => {
 
       // 直接上传文件到服务器
       if (coverFile) {
-        const formData = new FormData()
-        formData.append('file', coverFile)
-
         try {
-          const uploadResponse = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData
-          })
-
-          if (uploadResponse.ok) {
-            const uploadResult = await uploadResponse.json()
-            // 使用返回的文件路径
-            coverPath = uploadResult.path
-          } else {
-            message.error('文件上传失败')
-            return
-          }
+          const res = await uploadFile(coverFile)
+          // 使用返回的文件路径
+          coverPath = res.data
         } catch (uploadError) {
           message.error('文件上传失败')
           return
@@ -270,7 +257,7 @@ export const AudioBook = () => {
                     <Button type="primary" danger shape="circle" icon={<DeleteOutlined />} size="small" onClick={(e) => e.stopPropagation()} />
                   </Popconfirm>
                 </div>
-                <div className='cursor-pointer' onClick={() => bookClick(book)}>
+                <div className="cursor-pointer" onClick={() => bookClick(book)}>
                   <Card.Meta title={book.title} description={book.description} />
                 </div>
               </Card>
