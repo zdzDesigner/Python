@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Button, Modal, Card, Form, Input, Upload, message, Popconfirm } from 'antd'
+import { Button, Modal, Form, Input, Upload, message, Popconfirm } from 'antd'
 import { EditOutlined, DeleteOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons'
 import { fetchVoices, createVoice, updateVoice, deleteVoice } from '@/service/api/dubbing'
 
@@ -46,7 +46,7 @@ const VoiceCard = ({ voice, onEdit, onDelete }) => {
       </div>
 
       {/* Emotion Text */}
-      <div className="text-gray-600 text-xs">{voice.emotion_text}</div>
+      <div className="text-gray-600 min-h-10 flex items-center justify-center text-xs">{voice.emotion_text}</div>
     </div>
   )
 }
@@ -79,23 +79,73 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
   }, [initialData, isOpen, form])
 
   const handleFileChange = (info, setFile, setPreview) => {
-    if (info.file.status === 'done') {
-      setFile(info.file.originFileObj)
+    if (info.file.status === 'removed') {
+      setFile(null)
       if (setPreview) {
-        // Preview avatar
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          setPreview(e.target.result)
-        }
-        reader.readAsDataURL(info.file.originFileObj)
+        setPreview(null)
       }
-    } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} file upload failed.`)
+    } else {
+      // 获取文件对象 - 使用 info.file.originFileObj 或 info.file 作为备选
+      const file = info.file.originFileObj || info.file
+      if (file && file instanceof File) {
+        setFile(file)
+        if (setPreview) {
+          // Preview avatar
+          const reader = new FileReader()
+          reader.onload = (e) => {
+            setPreview(e.target.result)
+          }
+          reader.readAsDataURL(file)
+        }
+      }
     }
   }
 
-  const handleSubmit = (values) => {
-    onSubmit(values, avatarFile, wavFile)
+  const handleSubmit = async (values) => {
+    try {
+      // Handle avatar file upload
+      if (avatarFile) {
+        const avatarFormData = new FormData()
+        avatarFormData.append('file', avatarFile)
+
+        const avatarResponse = await fetch('http://localhost:8081/api/upload', {
+          method: 'POST',
+          body: avatarFormData
+        })
+
+        if (avatarResponse.ok) {
+          const avatarResult = await avatarResponse.json()
+          values.avatar = avatarResult.path
+        } else {
+          message.error('头像上传失败')
+          return
+        }
+      }
+
+      // Handle audio file upload
+      if (wavFile) {
+        const audioFormData = new FormData()
+        audioFormData.append('file', wavFile)
+
+        const audioResponse = await fetch('http://localhost:8081/api/upload', {
+          method: 'POST',
+          body: audioFormData
+        })
+
+        if (audioResponse.ok) {
+          const audioResult = await audioResponse.json()
+          values.wav_path = audioResult.path
+        } else {
+          message.error('音频文件上传失败')
+          return
+        }
+      }
+
+      onSubmit(values, avatarFile, wavFile)
+    } catch (err) {
+      console.error('文件上传失败:', err)
+      message.error('文件上传失败')
+    }
   }
 
   const avatarUploadProps = {
@@ -249,7 +299,6 @@ export const DubbingList = () => {
         {voices.map((voice) => (
           <VoiceCard key={voice.id} voice={voice} onEdit={handleEditClick} onDelete={handleDeleteVoice} />
         ))}
-
         <div className={`flex flex-col cursor-pointer border-dotted ${CSS_CARD}`} onClick={handleAddClick}>
           <div className="flex-1" />
           <div className="text-6xl text-center text-gray-200">+</div>

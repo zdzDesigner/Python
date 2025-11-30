@@ -55,6 +55,7 @@ func main() {
 		api.GET("/books", ginc.Handler(booksListHandler))
 		api.PUT("/books/:id", ginc.Handler(booksUpdateHandler))
 		api.DELETE("/books/:id", ginc.Handler(booksDeleteHandler))
+		api.POST("/upload", ginc.Handler(uploadHandler))
 
 		// Sections API routes
 		api.POST("/sections", ginc.Handler(sectionsHandler))

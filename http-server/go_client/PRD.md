@@ -455,6 +455,11 @@ output 地址为`user_id`_`book_id`_`section_id`_`当前时间戳`
 把@web/src/pages/book/Book.jsx中的添加小时封面改为上传图片的方式
 
 
+添加 `book/book.go`, `section/section.go`, `dubbing/dubbing.og`
+
+
+
+
 
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档

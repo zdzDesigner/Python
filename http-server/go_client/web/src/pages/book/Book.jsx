@@ -30,7 +30,7 @@ export const AudioBook = () => {
           id: book.id,
           title: book.name || `小说 ${book.id}`,
           description: book.describe || '暂无描述',
-          cover: book.bg || null
+          cover: `/${book.bg}` || null
         }))
 
         setBooks(formattedBooks)
@@ -61,14 +61,18 @@ export const AudioBook = () => {
     if (info.file.status === 'removed') {
       setCoverFile(null)
       setPreviewCover(null)
-    } else if (info.file.originFileObj) {
-      setCoverFile(info.file.originFileObj)
-      // Preview cover
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setPreviewCover(e.target.result)
+    } else {
+      // 获取文件对象 - 使用 info.file.originFileObj 或 info.file 作为备选
+      const file = info.file.originFileObj || info.file
+      if (file && file instanceof File) {
+        setCoverFile(file)
+        // Preview cover
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          setPreviewCover(e.target.result)
+        }
+        reader.readAsDataURL(file)
       }
-      reader.readAsDataURL(info.file.originFileObj)
     }
   }
 
@@ -76,52 +80,62 @@ export const AudioBook = () => {
   const handleOk = async () => {
     try {
       const values = await form.validateFields()
-      
-      // Create FormData to handle file upload
-      const formData = new FormData()
-      formData.append('name', values.title)
-      formData.append('describe', values.description || '')
-      formData.append('size', '0')
-      
-      // Append cover file if provided
+
+      // 直接上传文件到服务器
       if (coverFile) {
-        formData.append('cover_file', coverFile)
-      } else if (values.cover) {
-        // If no file but URL provided, use the URL
-        formData.append('bg', values.cover)
+        const formData = new FormData()
+        formData.append('file', coverFile)
+
+        try {
+          const uploadResponse = await fetch('http://localhost:8081/api/upload', {
+            method: 'POST',
+            body: formData
+          })
+
+          if (uploadResponse.ok) {
+            const uploadResult = await uploadResponse.json()
+            // 使用返回的文件路径
+            values.cover = uploadResult.path
+          } else {
+            message.error('文件上传失败')
+            return
+          }
+        } catch (uploadError) {
+          message.error('文件上传失败')
+          return
+        }
       }
 
       // 调用后端API添加新小说
-      const response = await fetch('http://localhost:8081/api/books', {
-        method: 'POST',
-        body: formData,
-      })
+      const bookData = {
+        name: values.title,
+        describe: values.description || '',
+        bg: values.cover || '',
+        size: 0
+      }
 
-      if (response.ok) {
-        const result = await response.json()
-        if (result.status === 'success') {
-          message.success('小说添加成功')
-          // 添加成功后重新获取小说列表
-          const booksData = await api.get('/books')
+      const response = await api.post('/books', bookData)
 
-          // 转换数据格式以匹配现有的UI
-          const formattedBooks = booksData.map((book) => ({
-            id: book.id,
-            title: book.name || `小说 ${book.id}`,
-            description: book.describe || '暂无描述',
-            cover: book.bg || null
-          }))
+      if (response.status === 'success') {
+        message.success('小说添加成功')
+        // 添加成功后重新获取小说列表
+        const booksData = await api.get('/books')
 
-          setBooks(formattedBooks)
-          setIsModalVisible(false)
-          form.resetFields()
-          setCoverFile(null)
-          setPreviewCover(null)
-        } else {
-          message.error('添加小说失败')
-        }
+        // 转换数据格式以匹配现有的UI
+        const formattedBooks = booksData.map((book) => ({
+          id: book.id,
+          title: book.name || `小说 ${book.id}`,
+          description: book.describe || '暂无描述',
+          cover: book.bg || null
+        }))
+
+        setBooks(formattedBooks)
+        setIsModalVisible(false)
+        form.resetFields()
+        setCoverFile(null)
+        setPreviewCover(null)
       } else {
-        message.error('添加小说失败: ' + (await response.text()))
+        message.error('添加小说失败')
       }
     } catch (err) {
       console.error('添加小说失败:', err)
@@ -198,12 +212,7 @@ export const AudioBook = () => {
             <Input.TextArea placeholder="请输入小说描述" rows={3} />
           </Form.Item>
           <Form.Item label="上传封面">
-            <Upload 
-              beforeUpload={() => false} 
-              onChange={handleCoverChange}
-              showUploadList={false}
-              accept="image/*"
-            >
+            <Upload beforeUpload={() => false} onChange={handleCoverChange} showUploadList={false} accept="image/*">
               <Button icon={<UploadOutlined />}>选择文件</Button>
             </Upload>
             {previewCover && (

@@ -1410,3 +1410,48 @@ func getStringValue(m map[string]interface{}, key string, defaultValue string) s
 	}
 	return defaultValue
 }
+
+// File upload handler
+func uploadHandler(ctx ginc.Contexter) {
+	c := ctx.GinCtx()
+
+	// Parse multipart form
+	err := c.Request.ParseMultipartForm(32 << 20) // 32MB max memory
+	if err != nil {
+		ctx.FailErr(400, "Failed to parse form: "+err.Error())
+		return
+	}
+
+	// Handle file upload
+	uploadDir := filepath.Join("assets", "uploads")
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		ctx.FailErr(400, "No file provided: "+err.Error())
+		return
+	}
+
+	// Create upload directory if it doesn't exist
+	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+		ctx.FailErr(500, "Failed to create upload directory: "+err.Error())
+		return
+	}
+
+	// Generate unique filename
+	ext := filepath.Ext(file.Filename)
+	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
+	filePath := filepath.Join(uploadDir, filename)
+
+	// Save file
+	if err := c.SaveUploadedFile(file, filePath); err != nil {
+		ctx.FailErr(500, "Failed to save file: "+err.Error())
+		return
+	}
+
+	// Return relative path
+	relativePath := filepath.Join("uploads", filename)
+	ctx.Success(gin.H{
+		"status": "success",
+		"path":   relativePath,
+	})
+}
