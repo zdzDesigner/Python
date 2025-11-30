@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Button, Modal, Form, Input, Upload, message, Popconfirm } from 'antd'
+import { Button, Modal, Form, Input, Upload, message, Popconfirm, Spin } from 'antd'
 import { EditOutlined, DeleteOutlined, PlusOutlined, UserOutlined, PlayCircleOutlined, PauseCircleOutlined } from '@ant-design/icons'
 import { fetchVoices, createVoice, updateVoice, deleteVoice } from '@/service/api/dubbing'
 import './style.css'
@@ -15,21 +15,13 @@ const VoiceCard = ({ voice, onEdit, onDelete }) => {
   // Construct full URL for avatar if it's a relative path
   const getAvatarUrl = () => {
     if (!voice.avatar) return null
-    if (voice.avatar.startsWith('http')) {
-      return voice.avatar
-    }
-    // Assuming the avatar is served from the backend
-    return `http://localhost:8081/${voice.avatar}`
+    return voice.avatar
   }
 
   // Construct full URL for audio if it's a relative path
   const getAudioUrl = () => {
     if (!voice.wav_path) return null
-    if (voice.wav_path.startsWith('http')) {
-      return voice.wav_path
-    }
-    // Assuming the audio is served from the backend
-    return `http://localhost:8081/${voice.wav_path}`
+    return voice.wav_path
   }
 
   const togglePlay = () => {
@@ -139,7 +131,7 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
       setWavFile(null)
       // Set audio URL for existing voice
       if (initialData.wav_path) {
-        setAudioUrl(`http://localhost:8081/${initialData.wav_path}`)
+        setAudioUrl(initialData.wav_path)
       } else {
         setAudioUrl(null)
       }
@@ -194,7 +186,7 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
         const avatarFormData = new FormData()
         avatarFormData.append('file', avatarFile)
 
-        const avatarResponse = await fetch('http://localhost:8081/api/upload', {
+        const avatarResponse = await fetch('/api/upload', {
           method: 'POST',
           body: avatarFormData
         })
@@ -213,7 +205,7 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
         const audioFormData = new FormData()
         audioFormData.append('file', wavFile)
 
-        const audioResponse = await fetch('http://localhost:8081/api/upload', {
+        const audioResponse = await fetch('/api/upload', {
           method: 'POST',
           body: audioFormData
         })
@@ -392,7 +384,11 @@ export const DubbingList = () => {
   }
 
   if (loading) {
-    return <div className="p-5">加载中...</div>
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Spin size="large" />
+      </div>
+    )
   }
 
   if (error) {
@@ -401,8 +397,7 @@ export const DubbingList = () => {
 
   return (
     <div className="p-5">
-      <div className="flex justify-between items-center mb-5">
-      </div>
+      <div className="flex justify-between items-center mb-5"></div>
 
       <div className="flex flex-wrap gap-4">
         {voices.map((voice) => (

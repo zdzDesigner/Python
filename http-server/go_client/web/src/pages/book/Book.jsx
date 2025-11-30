@@ -4,6 +4,7 @@ import { Card, Typography, Button, Spin, Alert, Modal, Input, Form, Upload, mess
 import { TPLLoading } from '@/components/Loadding'
 import { PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import api from '@/utils/api'
+import { bookList } from '@/service/api/book'
 
 const { Title, Text } = Typography
 
@@ -23,17 +24,7 @@ export const AudioBook = () => {
       try {
         setLoading(true)
         // 使用专门的小说API获取数据
-        const booksData = await api.get('/books')
-
-        // 转换数据格式以匹配现有的UI
-        const formattedBooks = booksData.map((book) => ({
-          id: book.id,
-          title: book.name || `小说 ${book.id}`,
-          description: book.describe || '暂无描述',
-          cover: `/${book.bg}` || null
-        }))
-
-        setBooks(formattedBooks)
+        setBooks(await bookList())
       } catch (err) {
         setError('获取小说数据失败')
         console.error('Error fetching books:', err)
@@ -119,17 +110,7 @@ export const AudioBook = () => {
       if (response.status === 'success') {
         message.success('小说添加成功')
         // 添加成功后重新获取小说列表
-        const booksData = await api.get('/books')
-
-        // 转换数据格式以匹配现有的UI
-        const formattedBooks = booksData.map((book) => ({
-          id: book.id,
-          title: book.name || `小说 ${book.id}`,
-          description: book.describe || '暂无描述',
-          cover: book.bg || null
-        }))
-
-        setBooks(formattedBooks)
+        setBooks(await bookList())
         setIsModalVisible(false)
         form.resetFields()
         setCoverFile(null)

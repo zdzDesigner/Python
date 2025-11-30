@@ -3,7 +3,7 @@
  * Handles communication with the backend Dubbing API
  */
 
-const API_BASE_URL = 'http://localhost:8081';
+const API_BASE_URL = 'http://localhost:8081'
 
 /**
  * Fetch all voices
@@ -11,17 +11,17 @@ const API_BASE_URL = 'http://localhost:8081';
  */
 export const fetchVoices = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/dubbings`);
+    const response = await fetch(`${API_BASE_URL}/api/dubbings`)
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
-    const data = await response.json();
-    return data.data || [];
+    const data = await response.json()
+    return data.data.map((item) => ({ ...item, avatar: `/${item.avatar}`, wav_path: `/${item.wav_path}` })) || []
   } catch (error) {
-    console.error('Error fetching voices:', error);
-    throw error;
+    console.error('Error fetching voices:', error)
+    throw error
   }
-};
+}
 
 /**
  * Create a new voice with file uploads
@@ -32,40 +32,40 @@ export const fetchVoices = async () => {
  */
 export const createVoice = async (voiceData, avatarFile = null, wavFile = null) => {
   try {
-    const formData = new FormData();
-    
+    const formData = new FormData()
+
     // Append text fields
-    formData.append('name', voiceData.name || '');
-    formData.append('age_text', voiceData.age_text || '');
-    formData.append('emotion_text', voiceData.emotion_text || '');
-    formData.append('avatar', voiceData.avatar || '');
-    formData.append('wav_path', voiceData.wav_path || '');
-    
+    formData.append('name', voiceData.name || '')
+    formData.append('age_text', voiceData.age_text || '')
+    formData.append('emotion_text', voiceData.emotion_text || '')
+    formData.append('avatar', voiceData.avatar || '')
+    formData.append('wav_path', voiceData.wav_path || '')
+
     // Append files if provided
     if (avatarFile) {
-      formData.append('avatar_file', avatarFile);
+      formData.append('avatar_file', avatarFile)
     }
-    
+
     if (wavFile) {
-      formData.append('wav_file', wavFile);
+      formData.append('wav_file', wavFile)
     }
 
     const response = await fetch(`${API_BASE_URL}/api/dubbings`, {
       method: 'POST',
-      body: formData,
-    });
+      body: formData
+    })
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
-    
-    const result = await response.json();
-    return result;
+
+    const result = await response.json()
+    return result
   } catch (error) {
-    console.error('Error creating voice:', error);
-    throw error;
+    console.error('Error creating voice:', error)
+    throw error
   }
-};
+}
 
 /**
  * Update a voice with file uploads
@@ -77,40 +77,40 @@ export const createVoice = async (voiceData, avatarFile = null, wavFile = null) 
  */
 export const updateVoice = async (id, voiceData, avatarFile = null, wavFile = null) => {
   try {
-    const formData = new FormData();
-    
+    const formData = new FormData()
+
     // Append text fields
-    formData.append('name', voiceData.name || '');
-    formData.append('age_text', voiceData.age_text || '');
-    formData.append('emotion_text', voiceData.emotion_text || '');
-    formData.append('avatar', voiceData.avatar || '');
-    formData.append('wav_path', voiceData.wav_path || '');
-    
+    formData.append('name', voiceData.name || '')
+    formData.append('age_text', voiceData.age_text || '')
+    formData.append('emotion_text', voiceData.emotion_text || '')
+    formData.append('avatar', voiceData.avatar || '')
+    formData.append('wav_path', voiceData.wav_path || '')
+
     // Append files if provided
     if (avatarFile) {
-      formData.append('avatar_file', avatarFile);
+      formData.append('avatar_file', avatarFile)
     }
-    
+
     if (wavFile) {
-      formData.append('wav_file', wavFile);
+      formData.append('wav_file', wavFile)
     }
 
     const response = await fetch(`${API_BASE_URL}/api/dubbings/${id}`, {
       method: 'PUT',
-      body: formData,
-    });
+      body: formData
+    })
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
-    
-    const result = await response.json();
-    return result;
+
+    const result = await response.json()
+    return result
   } catch (error) {
-    console.error('Error updating voice:', error);
-    throw error;
+    console.error('Error updating voice:', error)
+    throw error
   }
-};
+}
 
 /**
  * Delete a voice
@@ -120,17 +120,17 @@ export const updateVoice = async (id, voiceData, avatarFile = null, wavFile = nu
 export const deleteVoice = async (id) => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/dubbings/${id}`, {
-      method: 'DELETE',
-    });
+      method: 'DELETE'
+    })
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error! status: ${response.status}`)
     }
-    
-    const result = await response.json();
-    return result;
+
+    const result = await response.json()
+    return result
   } catch (error) {
-    console.error('Error deleting voice:', error);
-    throw error;
+    console.error('Error deleting voice:', error)
+    throw error
   }
-};
+}
