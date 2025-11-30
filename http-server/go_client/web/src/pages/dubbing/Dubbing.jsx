@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Button, Modal, Form, Input, Upload, message, Popconfirm } from 'antd'
-import { EditOutlined, DeleteOutlined, PlusOutlined, UserOutlined } from '@ant-design/icons'
+import { EditOutlined, DeleteOutlined, PlusOutlined, UserOutlined, PlayCircleOutlined, PauseCircleOutlined } from '@ant-design/icons'
 import { fetchVoices, createVoice, updateVoice, deleteVoice } from '@/service/api/dubbing'
 
 export const CSS_CARD = 'border border-gray-300 rounded-lg p-4 m-2 w-36 text-center shadow-sm bg-white relative transition-shadow duration-300 hover:shadow-md'
@@ -57,6 +57,9 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
   const [avatarFile, setAvatarFile] = useState(null)
   const [wavFile, setWavFile] = useState(null)
   const [previewAvatar, setPreviewAvatar] = useState(null)
+  const [audioUrl, setAudioUrl] = useState(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const audioRef = useRef(null)
 
   useEffect(() => {
     if (initialData) {
@@ -70,19 +73,32 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
       setPreviewAvatar(initialData.avatar || null)
       setAvatarFile(null)
       setWavFile(null)
+      // Set audio URL for existing voice
+      if (initialData.wav_path) {
+        setAudioUrl(`http://localhost:8081/${initialData.wav_path}`)
+      } else {
+        setAudioUrl(null)
+      }
+      setIsPlaying(false)
     } else {
       form.resetFields()
       setPreviewAvatar(null)
       setAvatarFile(null)
       setWavFile(null)
+      setAudioUrl(null)
+      setIsPlaying(false)
     }
   }, [initialData, isOpen, form])
 
-  const handleFileChange = (info, setFile, setPreview) => {
+  const handleFileChange = (info, setFile, setPreview, isAudio = false) => {
     if (info.file.status === 'removed') {
       setFile(null)
       if (setPreview) {
         setPreview(null)
+      }
+      if (isAudio) {
+        setAudioUrl(null)
+        setIsPlaying(false)
       }
     } else {
       // 获取文件对象 - 使用 info.file.originFileObj 或 info.file 作为备选
@@ -96,6 +112,12 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
             setPreview(e.target.result)
           }
           reader.readAsDataURL(file)
+        }
+        // For audio files, create object URL for playback
+        if (isAudio) {
+          const url = URL.createObjectURL(file)
+          setAudioUrl(url)
+          setIsPlaying(false)
         }
       }
     }
@@ -157,7 +179,7 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
 
   const wavUploadProps = {
     beforeUpload: () => false, // Prevent automatic upload
-    onChange: (info) => handleFileChange(info, setWavFile),
+    onChange: (info) => handleFileChange(info, setWavFile, null, true),
     showUploadList: false,
     accept: 'audio/wav,audio/mp3'
   }
@@ -192,6 +214,28 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
           <Upload {...wavUploadProps}>
             <Button icon={<PlusOutlined />}>选择文件</Button>
           </Upload>
+          {audioUrl && (
+            <Button className='ml-2'
+              icon={isPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+              onClick={() => {
+                if (!audioRef.current) {
+                  audioRef.current = new Audio(audioUrl)
+                  audioRef.current.onended = () => {
+                    setIsPlaying(false)
+                  }
+                }
+
+                if (isPlaying) {
+                  audioRef.current.pause()
+                  setIsPlaying(false)
+                } else {
+                  audioRef.current.play()
+                  setIsPlaying(true)
+                }
+              }}
+            >
+            </Button>
+          )}
         </Form.Item>
 
         <Form.Item label={null}>
@@ -293,7 +337,12 @@ export const DubbingList = () => {
 
   return (
     <div className="p-5">
-      <div className="flex justify-between items-center mb-5"></div>
+      <div className="flex justify-between items-center mb-5">
+        <h1>音色管理</h1>
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddClick} size="large">
+          新增音色
+        </Button>
+      </div>
 
       <div className="flex flex-wrap gap-4">
         {voices.map((voice) => (
