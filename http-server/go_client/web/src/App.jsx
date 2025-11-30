@@ -10,8 +10,8 @@ const App = () => {
       {/* Default route - redirect to audiobook/list */}
       {
         // <Route path="/" element={<Navigate to="/audiobook/list" replace />} />
-        // <Route path="/" element={<Navigate to="/dubbing/list" replace />} />
-        <Route path="/" element={<Navigate to="/audiobook/1/section/2" replace />} />
+        <Route path="/" element={<Navigate to="/dubbing/list" replace />} />
+        // <Route path="/" element={<Navigate to="/audiobook/1/section/2" replace />} />
       }
 
       {/* audiobook/list route */}

@@ -19,6 +19,32 @@ import (
 
 var OUTPUT_DIR = "output/"
 
+// Helper function to save uploaded file
+func saveUploadedFile(c *gin.Context, formKey string, uploadDir string) (string, error) {
+	file, err := c.FormFile(formKey)
+	if err != nil {
+		return "", err
+	}
+
+	// Create upload directory if it doesn't exist
+	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+		return "", err
+	}
+
+	// Generate unique filename
+	ext := filepath.Ext(file.Filename)
+	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
+	filePath := filepath.Join(uploadDir, filename)
+
+	// Save file
+	if err := c.SaveUploadedFile(file, filePath); err != nil {
+		return "", err
+	}
+
+	// Return relative path
+	return filepath.Join("uploads", filename), nil
+}
+
 // Books handlers
 func booksHandler(ctx ginc.Contexter) {
 	var bookReq db.Book
@@ -181,14 +207,52 @@ func booksDeleteHandler(ctx ginc.Contexter) {
 }
 
 // Dubbings handlers
+// Dubbings handlers
 func dubbingsHandler(ctx ginc.Contexter) {
-	var dubbingReq db.Dubbing
-	if err := ctx.ParseReqbody(&dubbingReq); err != nil {
+	c := ctx.GinCtx()
+
+	// Parse multipart form
+	err := c.Request.ParseMultipartForm(32 << 20) // 32MB max memory
+	if err != nil {
+		ctx.FailErr(400, "Failed to parse form: "+err.Error())
+		return
+	}
+
+	// Create new dubbing instance
+	dubbing := &db.Dubbing{}
+
+	// Get form values
+	dubbing.Name = c.PostForm("name")
+	dubbing.AgeText = c.PostForm("age_text")
+	dubbing.EmotionText = c.PostForm("emotion_text")
+	dubbing.Avatar = c.PostForm("avatar")
+	dubbing.WavPath = c.PostForm("wav_path")
+
+	// Handle file uploads
+	uploadDir := filepath.Join("assets", "uploads")
+
+	// Handle avatar upload
+	if _, err := c.FormFile("avatar_file"); err == nil {
+		if avatarPath, err := saveUploadedFile(c, "avatar_file", uploadDir); err == nil {
+			dubbing.Avatar = avatarPath
+		}
+	}
+
+	// Handle wav file upload
+	if _, err := c.FormFile("wav_file"); err == nil {
+		if wavPath, err := saveUploadedFile(c, "wav_file", uploadDir); err == nil {
+			dubbing.WavPath = wavPath
+		}
+	}
+
+	// Validate required fields
+	if dubbing.Name == "" {
+		ctx.FailErr(400, "Name is required")
 		return
 	}
 
 	// Add the new dubbing to the database
-	ret, err := dubbingReq.Add()
+	ret, err := dubbing.Add()
 	if err != nil {
 		ctx.FailErr(500, "Failed to add dubbing: "+err.Error())
 		return
@@ -202,43 +266,31 @@ func dubbingsHandler(ctx ginc.Contexter) {
 
 func dubbingsListHandler(ctx ginc.Contexter) {
 	// Extract query parameters for filtering
-	bookIDStr := ctx.GinCtx().Query("book_id")
 	name := ctx.GinCtx().Query("name")
 	pageStr := ctx.GinCtx().Query("page")
 	pageSizeStr := ctx.GinCtx().Query("size")
 
 	filters := make(map[string]interface{})
 
-	if bookIDStr != "" {
-		if bookID, err := strconv.Atoi(bookIDStr); err == nil {
-			filters["book_id"] = bookID
-		}
-	}
-
 	if name != "" {
 		filters["name"] = name
 	}
 
-	// Parse pagination parameters
+	// Pagination
 	page := 1
 	pageSize := 20
-
 	if pageStr != "" {
 		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
 			page = p
 		}
 	}
-
 	if pageSizeStr != "" {
-		if ps, err := strconv.Atoi(pageSizeStr); err == nil && ps > 0 {
-			if ps > 100 { // Limit maximum page size
-				ps = 100
-			}
+		if ps, err := strconv.Atoi(pageSizeStr); err == nil && ps > 0 && ps <= 100 {
 			pageSize = ps
 		}
 	}
 
-	// Calculate offset for pagination
+	// Calculate offset
 	offset := (page - 1) * pageSize
 	limit := []string{strconv.Itoa(offset), strconv.Itoa(pageSize)}
 
@@ -278,48 +330,123 @@ func dubbingsUpdateHandler(ctx ginc.Contexter) {
 		return
 	}
 
-	var updates map[string]interface{}
-	if err := ctx.ParseReqbody(&updates); err != nil {
+	c := ctx.GinCtx()
+
+	// Parse multipart form
+	err = c.Request.ParseMultipartForm(32 << 20) // 32MB max memory
+	if err != nil {
+		// If parsing multipart form fails, try to parse JSON
+		var updates map[string]interface{}
+		if err := ctx.ParseReqbody(&updates); err != nil {
+			return
+		}
+
+		// Update the dubbing with provided fields by creating a new dubbing instance
+		updatedDubbing := &db.Dubbing{ID: id}
+
+		// Update fields based on the provided updates map
+		for key, value := range updates {
+			switch key {
+			case "name":
+				if val, ok := value.(string); ok {
+					updatedDubbing.Name = val
+				}
+			case "avatar":
+				if val, ok := value.(string); ok {
+					updatedDubbing.Avatar = val
+				}
+			case "age_text":
+				if val, ok := value.(string); ok {
+					updatedDubbing.AgeText = val
+				}
+			case "emotion_text":
+				if val, ok := value.(string); ok {
+					updatedDubbing.EmotionText = val
+				}
+			case "wav_path":
+				if val, ok := value.(string); ok {
+					updatedDubbing.WavPath = val
+				}
+			}
+		}
+
+		// Get all field names to update
+		keys := make([]string, 0, len(updates))
+		for key := range updates {
+			keys = append(keys, key)
+		}
+
+		// Update the dubbing record
+		if err := updatedDubbing.UpdateByID(id, keys...); err != nil {
+			ctx.FailErr(500, "Failed to update dubbing: "+err.Error())
+			return
+		}
+
+		ctx.Success(gin.H{
+			"status": "success",
+			"msg":    "Dubbing updated successfully",
+			"id":     id,
+		})
 		return
 	}
 
-	// Update the dubbing with provided fields by creating a new dubbing instance
-	updatedDubbing := &db.Dubbing{ID: id}
+	// Handle multipart form update
+	dubbing := &db.Dubbing{ID: id}
 
-	// Update fields based on the provided updates map
-	for key, value := range updates {
-		switch key {
-		case "book_id":
-			if val, ok := value.(float64); ok {
-				updatedDubbing.BookId = int(val)
-			}
-		case "name":
-			if val, ok := value.(string); ok {
-				updatedDubbing.Name = val
-			}
-		case "age_text":
-			if val, ok := value.(string); ok {
-				updatedDubbing.AgeText = val
-			}
-		case "emotion_text":
-			if val, ok := value.(string); ok {
-				updatedDubbing.EmotionText = val
-			}
-		case "wav_path":
-			if val, ok := value.(string); ok {
-				updatedDubbing.WavPath = val
-			}
+	// Get form values
+	if name := c.PostForm("name"); name != "" {
+		dubbing.Name = name
+	}
+	if ageText := c.PostForm("age_text"); ageText != "" {
+		dubbing.AgeText = ageText
+	}
+	if emotionText := c.PostForm("emotion_text"); emotionText != "" {
+		dubbing.EmotionText = emotionText
+	}
+	if avatar := c.PostForm("avatar"); avatar != "" {
+		dubbing.Avatar = avatar
+	}
+	if wavPath := c.PostForm("wav_path"); wavPath != "" {
+		dubbing.WavPath = wavPath
+	}
+
+	// Handle file uploads
+	uploadDir := filepath.Join("assets", "uploads")
+
+	// Handle avatar upload
+	if _, err := c.FormFile("avatar_file"); err == nil {
+		if avatarPath, err := saveUploadedFile(c, "avatar_file", uploadDir); err == nil {
+			dubbing.Avatar = avatarPath
 		}
 	}
 
-	// Get all field names to update
-	keys := make([]string, 0, len(updates))
-	for key := range updates {
-		keys = append(keys, key)
+	// Handle wav file upload
+	if _, err := c.FormFile("wav_file"); err == nil {
+		if wavPath, err := saveUploadedFile(c, "wav_file", uploadDir); err == nil {
+			dubbing.WavPath = wavPath
+		}
+	}
+
+	// Get all non-empty fields to update
+	keys := []string{}
+	if dubbing.Name != "" {
+		keys = append(keys, "name")
+	}
+	if dubbing.Avatar != "" {
+		keys = append(keys, "avatar")
+	}
+	if dubbing.AgeText != "" {
+		keys = append(keys, "age_text")
+	}
+	if dubbing.EmotionText != "" {
+		keys = append(keys, "emotion_text")
+	}
+	if dubbing.WavPath != "" {
+		keys = append(keys, "wav_path")
 	}
 
 	// Update the dubbing record
-	if err := updatedDubbing.UpdateByID(id, keys...); err != nil {
+	if err := dubbing.UpdateByID(id, keys...); err != nil {
 		ctx.FailErr(500, "Failed to update dubbing: "+err.Error())
 		return
 	}

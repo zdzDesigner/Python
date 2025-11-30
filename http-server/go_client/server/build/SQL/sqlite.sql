@@ -119,8 +119,8 @@ END;
 ------------------------------------
 CREATE TABLE IF NOT EXISTS dubbings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    book_id INTEGER NOT NULL,
     name TEXT NOT NULL,
+    avatar TEXT DEFAULT '',
     age_text TEXT DEFAULT '',
     emotion_text TEXT DEFAULT '',
     wav_path TEXT DEFAULT '',

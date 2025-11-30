@@ -428,5 +428,33 @@ output 地址为`user_id`_`book_id`_`section_id`_`当前时间戳`
   组件中执行uploadProps操作后，把文件上传到go server 并返回文件内容
 
 
+
+
+
+
+
+
+
+
+
+
+## dubbings
+@web/src/pages/dubbing/Dubbing.jsx 中写*音色*管理的页面, 页面中包含对*音色*的`增、删、改、查`功能
+每个*音色*中包含`名称(name)`, `头像(avatar)`,`年龄文本(age_text)`, `情感文本(emotion_text)`, `音频地址(wav_path)`, 其中`音频地址`需要从本地上传; 
+布局要求: 每个`音色`是一个小卡片, 卡片的上部分是圆形`头像`, 下部分第一行是*名称+年龄文本*, 第二行是*情感文本*
+
+
+
+
+
+
+
+
+
+## TODO
+把@web/src/pages/book/Book.jsx中的添加小时封面改为上传图片的方式
+
+
+
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档

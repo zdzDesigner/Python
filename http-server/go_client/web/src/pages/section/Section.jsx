@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { Card, Table, Tag, Typography, Select, Button, Space, Modal, Input, InputNumber, Popconfirm } from 'antd'
 import { LeftOutlined } from '@ant-design/icons'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useLocation, useParams } from 'react-router-dom'
 
 import { useAudioLibraryState, useAudioLibraryDispatch } from '@/context/AudioLibraryContext'
 import TTSList from './TTSList'
@@ -11,6 +11,13 @@ import Progress from '@/components/Progress'
 export const AudioSection = () => {
   const { section_id: router_section_id, book_id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [title, setTitle] = useState(location.state?.key)
+  console.log('location.state:', location.state)
+  useEffect(() => {
+    console.log(title)
+  }, [title])
+
   const sectionListRef = useRef(null)
   const { audioFiles } = useAudioLibraryState()
   const [isshow_dubbing, setShowDubbing] = useState(false)
@@ -81,7 +88,7 @@ export const AudioSection = () => {
     return (
       <div className="flex w-full bg-white/80 backdrop-blur-lg border-b border-slate-200 p-3 flex justify-end items-center space-x-3">
         <div>
-          <LeftOutlined onClick={() => navigate('/audiobook/list')} style={{ cursor: 'pointer' }} /> 小说名称
+          <LeftOutlined onClick={() => navigate('/audiobook/list')} style={{ cursor: 'pointer' }} /> {title}
         </div>
         <div className="flex-1"></div>
         <div>

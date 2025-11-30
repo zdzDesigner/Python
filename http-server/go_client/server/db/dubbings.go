@@ -7,8 +7,8 @@ import (
 
 type Dubbing struct {
 	ID          int       `json:"id"`
-	BookId      int       `json:"book_id"`
 	Name        string    `json:"name"`
+	Avatar      string    `json:"avatar"`
 	AgeText     string    `json:"age_text"`
 	EmotionText string    `json:"emotion_text"`
 	WavPath     string    `json:"wav_path"`

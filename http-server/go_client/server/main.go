@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	checkAvailableEncoders()
+	// checkAvailableEncoders()
 	// Initialize SQLite database
 	dbConfig := map[string]string{
 		"DBPath": "assets/audio_server.db",
@@ -28,6 +28,9 @@ func main() {
 
 	// Add CORS middleware
 	router.Use(corsMiddleware())
+
+	// Serve static files
+	router.Static("/uploads", "./assets/uploads")
 
 	// Group API routes
 	api := router.Group("/api")
@@ -46,25 +49,25 @@ func main() {
 		api.POST("/sanitize-filenames", ginc.Handler(sanitizeFilenamesHandler))
 		api.POST("/audio/joint", ginc.Handler(batchSynthesizeHandler))
 		api.DELETE("/tts-tpl/:id", ginc.Handler(ttsTplDelete))
-		
+
 		// Books API routes
 		api.POST("/books", ginc.Handler(booksHandler))
 		api.GET("/books", ginc.Handler(booksListHandler))
 		api.PUT("/books/:id", ginc.Handler(booksUpdateHandler))
 		api.DELETE("/books/:id", ginc.Handler(booksDeleteHandler))
-		
+
 		// Sections API routes
 		api.POST("/sections", ginc.Handler(sectionsHandler))
 		api.GET("/sections", ginc.Handler(sectionsListHandler))
 		api.PUT("/sections/:id", ginc.Handler(sectionsUpdateHandler))
 		api.DELETE("/sections/:id", ginc.Handler(sectionsDeleteHandler))
-		
+
 		// Dubbings API routes
 		api.POST("/dubbings", ginc.Handler(dubbingsHandler))
 		api.GET("/dubbings", ginc.Handler(dubbingsListHandler))
 		api.PUT("/dubbings/:id", ginc.Handler(dubbingsUpdateHandler))
 		api.DELETE("/dubbings/:id", ginc.Handler(dubbingsDeleteHandler))
-		
+
 		// BookDubbings API routes
 		api.POST("/book-dubbings", ginc.Handler(bookDubbingsHandler))
 		api.GET("/book-dubbings", ginc.Handler(bookDubbingsListHandler))

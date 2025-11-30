@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { Popconfirm } from 'antd'
 import { EditOutlined, CloseOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useNotification } from '@/utils/NotificationContext'
 import { TPLLoading } from '@/components/Loadding'
 import api from '@/utils/api'
 
 const SectionList = forwardRef(({ book_id, section_id, hookSections }, ref) => {
   const navigate = useNavigate()
+
   const { showError, showSuccess } = useNotification()
   const [sections, setSections] = useState([])
   const [loading, setLoading] = useState(false)
@@ -19,6 +20,7 @@ const SectionList = forwardRef(({ book_id, section_id, hookSections }, ref) => {
   })
   const [hover_id, setHoverId] = useState(null)
   const [open_id, setOpenId] = useState(null)
+
 
   // Expose the addNewSection function to parent components
   useImperativeHandle(ref, () => ({ addNewSection }))
