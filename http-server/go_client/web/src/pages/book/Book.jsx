@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Typography, Button, Spin, Alert, Modal, Input, Form } from 'antd'
+import { Card, Typography, Button, Spin, Alert, Modal, Input, Form, Upload, message } from 'antd'
 import { TPLLoading } from '@/components/Loadding'
+import { PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import api from '@/utils/api'
 
 const { Title, Text } = Typography
@@ -13,6 +14,8 @@ export const AudioBook = () => {
   const [error, setError] = useState(null)
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [form] = Form.useForm()
+  const [coverFile, setCoverFile] = useState(null)
+  const [previewCover, setPreviewCover] = useState(null)
 
   // 获取小说数据
   useEffect(() => {
@@ -53,36 +56,76 @@ export const AudioBook = () => {
     setIsModalVisible(true)
   }
 
+  // 处理文件上传变化
+  const handleCoverChange = (info) => {
+    if (info.file.status === 'removed') {
+      setCoverFile(null)
+      setPreviewCover(null)
+    } else if (info.file.originFileObj) {
+      setCoverFile(info.file.originFileObj)
+      // Preview cover
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setPreviewCover(e.target.result)
+      }
+      reader.readAsDataURL(info.file.originFileObj)
+    }
+  }
+
   // 处理模态框确认
   const handleOk = async () => {
     try {
       const values = await form.validateFields()
+      
+      // Create FormData to handle file upload
+      const formData = new FormData()
+      formData.append('name', values.title)
+      formData.append('describe', values.description || '')
+      formData.append('size', '0')
+      
+      // Append cover file if provided
+      if (coverFile) {
+        formData.append('cover_file', coverFile)
+      } else if (values.cover) {
+        // If no file but URL provided, use the URL
+        formData.append('bg', values.cover)
+      }
+
       // 调用后端API添加新小说
-      const response = await api.post('/books', {
-        name: values.title,
-        describe: values.description || '',
-        bg: values.cover || '',
-        size: 0
+      const response = await fetch('http://localhost:8081/api/books', {
+        method: 'POST',
+        body: formData,
       })
 
-      if (response.code === 0) {
-        // 添加成功后重新获取小说列表
-        const booksData = await api.get('/books')
+      if (response.ok) {
+        const result = await response.json()
+        if (result.status === 'success') {
+          message.success('小说添加成功')
+          // 添加成功后重新获取小说列表
+          const booksData = await api.get('/books')
 
-        // 转换数据格式以匹配现有的UI
-        const formattedBooks = booksData.map((book) => ({
-          id: book.id,
-          title: book.name || `小说 ${book.id}`,
-          description: book.describe || '暂无描述',
-          cover: book.bg || null
-        }))
+          // 转换数据格式以匹配现有的UI
+          const formattedBooks = booksData.map((book) => ({
+            id: book.id,
+            title: book.name || `小说 ${book.id}`,
+            description: book.describe || '暂无描述',
+            cover: book.bg || null
+          }))
 
-        setBooks(formattedBooks)
-        setIsModalVisible(false)
-        form.resetFields()
+          setBooks(formattedBooks)
+          setIsModalVisible(false)
+          form.resetFields()
+          setCoverFile(null)
+          setPreviewCover(null)
+        } else {
+          message.error('添加小说失败')
+        }
+      } else {
+        message.error('添加小说失败: ' + (await response.text()))
       }
     } catch (err) {
       console.error('添加小说失败:', err)
+      message.error('添加小说失败')
     }
   }
 
@@ -90,6 +133,8 @@ export const AudioBook = () => {
   const handleCancel = () => {
     setIsModalVisible(false)
     form.resetFields()
+    setCoverFile(null)
+    setPreviewCover(null)
   }
 
   if (loading) {
@@ -152,8 +197,23 @@ export const AudioBook = () => {
           <Form.Item name="description" label="小说描述">
             <Input.TextArea placeholder="请输入小说描述" rows={3} />
           </Form.Item>
-          <Form.Item name="cover" label="封面图片">
-            <Input placeholder="请输入封面图片URL" />
+          <Form.Item label="上传封面">
+            <Upload 
+              beforeUpload={() => false} 
+              onChange={handleCoverChange}
+              showUploadList={false}
+              accept="image/*"
+            >
+              <Button icon={<UploadOutlined />}>选择文件</Button>
+            </Upload>
+            {previewCover && (
+              <div className="mt-2">
+                <img src={previewCover} alt="Preview" className="w-16 h-16 object-cover" />
+              </div>
+            )}
+          </Form.Item>
+          <Form.Item name="cover" label="封面URL">
+            <Input placeholder="或输入封面图片URL" />
           </Form.Item>
         </Form>
       </Modal>

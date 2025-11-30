@@ -47,13 +47,64 @@ func saveUploadedFile(c *gin.Context, formKey string, uploadDir string) (string,
 
 // Books handlers
 func booksHandler(ctx ginc.Contexter) {
-	var bookReq db.Book
-	if err := ctx.ParseReqbody(&bookReq); err != nil {
+	c := ctx.GinCtx()
+
+	// Parse multipart form
+	err := c.Request.ParseMultipartForm(32 << 20) // 32MB max memory
+	if err != nil {
+		// If parsing multipart form fails, try to parse JSON
+		var bookReq db.Book
+		if err := ctx.ParseReqbody(&bookReq); err != nil {
+			return
+		}
+
+		// Add the new book to the database
+		ret, err := bookReq.Add()
+		if err != nil {
+			ctx.FailErr(500, "Failed to add book: "+err.Error())
+			return
+		}
+
+		ctx.Success(gin.H{
+			"status": "success",
+			"id":     ret.Id,
+		})
+		return
+	}
+
+	// Create new book instance
+	book := &db.Book{}
+
+	// Get form values
+	book.Name = c.PostForm("name")
+	book.Description = c.PostForm("describe")
+	book.Bg = c.PostForm("bg")
+
+	// Parse size
+	if sizeStr := c.PostForm("size"); sizeStr != "" {
+		if size, err := strconv.Atoi(sizeStr); err == nil {
+			book.Size = size
+		}
+	}
+
+	// Handle cover file upload
+	uploadDir := filepath.Join("assets", "uploads")
+
+	// Handle cover upload
+	if _, err := c.FormFile("cover_file"); err == nil {
+		if coverPath, err := saveUploadedFile(c, "cover_file", uploadDir); err == nil {
+			book.Bg = coverPath
+		}
+	}
+
+	// Validate required fields
+	if book.Name == "" {
+		ctx.FailErr(400, "Name is required")
 		return
 	}
 
 	// Add the new book to the database
-	ret, err := bookReq.Add()
+	ret, err := book.Add()
 	if err != nil {
 		ctx.FailErr(500, "Failed to add book: "+err.Error())
 		return
