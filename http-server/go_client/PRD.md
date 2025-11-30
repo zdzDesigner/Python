@@ -452,10 +452,10 @@ output 地址为`user_id`_`book_id`_`section_id`_`当前时间戳`
 
 
 ## TODO
-把@web/src/pages/book/Book.jsx中的添加小时封面改为上传图片的方式
-
-
 添加 `book/book.go`, `section/section.go`, `dubbing/dubbing.og`
+
+
+在  实现侧边栏，最上部是`logo图标`, 中间是`小说图标` 和 `配音图标`, 最下面是`设置图标`，鼠标移动到当前菜单图标显示对应的文字
 
 
 

@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Card, Typography, Button, Spin, Alert, Modal, Input, Form, Upload, message, Popconfirm } from 'antd'
 import { TPLLoading } from '@/components/Loadding'
 import { PlusOutlined, UploadOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
-import api from '@/utils/api'
-import { bookList, deleteBook, updateBook, getBook } from '@/service/api/book'
+import { bookList, deleteBook, updateBook, getBook, createBook } from '@/service/api/book'
 import './style.css'
 
 const { Title, Text } = Typography
@@ -141,7 +140,7 @@ export const AudioBook = () => {
         const bookdata = {
           name: values.title,
           describe: values.description || '',
-          bg: coverPath || previewCover,
+          bg: coverPath || previewCover || '',
           size: 0
         }
 
@@ -162,13 +161,14 @@ export const AudioBook = () => {
           size: 0
         }
 
-        const response = await api.post('/books', bookdata)
-
-        if (response.status !== 'success') {
+        try {
+          await createBook(bookdata)
+          message.success('小说添加成功')
+        } catch (err) {
+          console.error('添加小说失败:', err)
           message.error('添加小说失败')
           return
         }
-        message.success('小说添加成功')
       }
 
       // 操作成功后重新获取小说列表

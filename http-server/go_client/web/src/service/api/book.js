@@ -16,10 +16,21 @@ export const deleteBook = async (id) => {
 }
 
 export const updateBook = async (id, data) => {
-  if (data.bg.trim() != '') data.bg = data.bg.substring(1)
+  // 如果bg字段以"/"开头，则去掉前缀
+  if (data.bg && data.bg.trim() !== '' && data.bg.startsWith('/')) {
+    data.bg = data.bg.substring(1)
+  }
   return await methods.put(`/books/${id}`, data)
 }
 
 export const getBook = async (id) => {
   return await methods.get(`/books/${id}`)
+}
+
+export const createBook = async (data) => {
+  // 如果bg字段以"/"开头，则去掉前缀
+  if (data.bg && data.bg.trim() !== '' && data.bg.startsWith('/')) {
+    data.bg = data.bg.substring(1)
+  }
+  return await methods.post('/books', data)
 }
