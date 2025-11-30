@@ -4,7 +4,7 @@ import { Card, Typography, Button, Spin, Alert, Modal, Input, Form, Upload, mess
 import { TPLLoading } from '@/components/Loadding'
 import { PlusOutlined, UploadOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import api from '@/utils/api'
-import { bookList, deleteBook } from '@/service/api/book'
+import { bookList, deleteBook, updateBook, getBook } from '@/service/api/book'
 import './style.css'
 
 const { Title, Text } = Typography
@@ -15,6 +15,8 @@ export const AudioBook = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isModalVisible, setIsModalVisible] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [currentBookId, setCurrentBookId] = useState(null)
   const [form] = Form.useForm()
   const [coverFile, setCoverFile] = useState(null)
   const [previewCover, setPreviewCover] = useState(null)
@@ -46,6 +48,40 @@ export const AudioBook = () => {
   // 显示添加小说模态框
   const showModal = () => {
     setIsModalVisible(true)
+    setIsEditMode(false)
+    setCurrentBookId(null)
+  }
+
+  // 显示编辑小说模态框
+  const showEditModal = async (book) => {
+    try {
+      // 获取书籍的完整信息
+      // const bookDetail = await getBook(book.id)
+
+      setIsModalVisible(true)
+      setIsEditMode(true)
+      setCurrentBookId(book.id)
+
+      // 填充表单数据
+      form.setFieldsValue({
+        title: book.title,
+        description: book.description
+      })
+
+      console.log({ book })
+      // 设置封面预览
+      if (book.cover) {
+        setPreviewCover(`${book.cover}`)
+      } else {
+        setPreviewCover(null)
+      }
+
+      // 清除之前选择的文件
+      setCoverFile(null)
+    } catch (err) {
+      console.error('获取书籍详情失败:', err)
+      message.error('获取书籍详情失败')
+    }
   }
 
   // 处理文件上传变化
@@ -73,13 +109,15 @@ export const AudioBook = () => {
     try {
       const values = await form.validateFields()
 
+      let coverPath = values.cover || ''
+
       // 直接上传文件到服务器
       if (coverFile) {
         const formData = new FormData()
         formData.append('file', coverFile)
 
         try {
-          const uploadResponse = await fetch('http://localhost:8081/api/upload', {
+          const uploadResponse = await fetch('/api/upload', {
             method: 'POST',
             body: formData
           })
@@ -87,7 +125,7 @@ export const AudioBook = () => {
           if (uploadResponse.ok) {
             const uploadResult = await uploadResponse.json()
             // 使用返回的文件路径
-            values.cover = uploadResult.path
+            coverPath = uploadResult.path
           } else {
             message.error('文件上传失败')
             return
@@ -98,45 +136,66 @@ export const AudioBook = () => {
         }
       }
 
-      // 调用后端API添加新小说
-      const bookData = {
-        name: values.title,
-        describe: values.description || '',
-        bg: values.cover || '',
-        size: 0
-      }
+      if (isEditMode) {
+        // 编辑模式 - 更新现有小说
+        const bookdata = {
+          name: values.title,
+          describe: values.description || '',
+          bg: coverPath || previewCover,
+          size: 0
+        }
 
-      const response = await api.post('/books', bookData)
-
-      if (response.status === 'success') {
-        message.success('小说添加成功')
-        // 添加成功后重新获取小说列表
-        setBooks(await bookList())
-        setIsModalVisible(false)
-        form.resetFields()
-        setCoverFile(null)
-        setPreviewCover(null)
+        try {
+          await updateBook(currentBookId, bookdata)
+          message.success('小说更新成功')
+        } catch (err) {
+          console.error('更新小说失败:', err)
+          message.error('更新小说失败')
+          return
+        }
       } else {
-        message.error('添加小说失败')
+        // 添加模式 - 创建新小说
+        const bookdata = {
+          name: values.title,
+          describe: values.description || '',
+          bg: coverPath || '',
+          size: 0
+        }
+
+        const response = await api.post('/books', bookdata)
+
+        if (response.status !== 'success') {
+          message.error('添加小说失败')
+          return
+        }
+        message.success('小说添加成功')
       }
+
+      // 操作成功后重新获取小说列表
+      setBooks(await bookList())
+      setIsModalVisible(false)
+      form.resetFields()
+      setCoverFile(null)
+      setPreviewCover(null)
+      setIsEditMode(false)
+      setCurrentBookId(null)
     } catch (err) {
-      console.error('添加小说失败:', err)
-      message.error('添加小说失败')
+      console.error('操作小说失败:', err)
+      message.error('操作小说失败')
     }
   }
 
   // 处理删除小说
   const handleDeleteBook = async (id) => {
     try {
-      await deleteBook(id);
+      await deleteBook(id)
       // 删除成功后重新获取小说列表
-      setBooks(await bookList());
-      message.success('小说删除成功');
+      setBooks(await bookList())
+      message.success('小说删除成功')
     } catch (err) {
-      console.error('删除小说失败:', err);
-      message.error('删除小说失败');
+      message.error('删除小说失败')
     }
-  };
+  }
 
   // 处理模态框取消
   const handleCancel = () => {
@@ -144,6 +203,8 @@ export const AudioBook = () => {
     form.resetFields()
     setCoverFile(null)
     setPreviewCover(null)
+    setIsEditMode(false)
+    setCurrentBookId(null)
   }
 
   if (loading) {
@@ -172,7 +233,7 @@ export const AudioBook = () => {
               <Card
                 hoverable
                 size="small"
-                className="shadow-sm transition-shadow duration-300 h-full relative"
+                className="cursor-default"
                 cover={
                   book.cover ? (
                     <img alt={book.title} src={book.cover} className="h-32 object-cover" />
@@ -185,39 +246,31 @@ export const AudioBook = () => {
               >
                 {/* Action buttons - only show on hover */}
                 <div className="absolute actions top-2 right-2 left-2 flex gap-1 opacity-0 transition-opacity duration-300">
-                  <Button 
-                    type="primary" 
-                    shape="circle" 
-                    icon={<EditOutlined />} 
-                    size="small" 
+                  <Button
+                    type="primary"
+                    shape="circle"
+                    icon={<EditOutlined />}
+                    size="small"
                     onClick={(e) => {
-                      e.stopPropagation();
-                      // TODO: Implement edit functionality
-                      console.log('Edit book:', book);
-                    }} 
+                      e.stopPropagation()
+                      showEditModal(book)
+                    }}
                   />
                   <div className="flex-1" />
-                  <Popconfirm 
-                    title="删除小说" 
-                    description="确定要删除这本小说吗？" 
+                  <Popconfirm
+                    title="删除小说"
+                    description="确定要删除这本小说吗？"
                     onConfirm={(e) => {
-                      e.stopPropagation();
-                      handleDeleteBook(book.id);
-                    }} 
-                    okText="确定" 
+                      e.stopPropagation()
+                      handleDeleteBook(book.id)
+                    }}
+                    okText="确定"
                     cancelText="取消"
                   >
-                    <Button 
-                      type="primary" 
-                      danger 
-                      shape="circle" 
-                      icon={<DeleteOutlined />} 
-                      size="small" 
-                      onClick={(e) => e.stopPropagation()}
-                    />
+                    <Button type="primary" danger shape="circle" icon={<DeleteOutlined />} size="small" onClick={(e) => e.stopPropagation()} />
                   </Popconfirm>
                 </div>
-                <div onClick={() => bookClick(book)}>
+                <div className='cursor-pointer' onClick={() => bookClick(book)}>
                   <Card.Meta title={book.title} description={book.description} />
                 </div>
               </Card>
@@ -236,8 +289,8 @@ export const AudioBook = () => {
         </div>
       </div>
 
-      {/* 添加小说模态框 */}
-      <Modal title="添加新小说" open={isModalVisible} onOk={handleOk} onCancel={handleCancel} okText="确认" cancelText="取消">
+      {/* 添加/编辑小说模态框 */}
+      <Modal title={isEditMode ? '编辑小说' : '添加新小说'} open={isModalVisible} onOk={handleOk} onCancel={handleCancel} okText="确认" cancelText="取消">
         <Form form={form} labelCol={{ span: 4 }}>
           <Form.Item name="title" label="小说标题" rules={[{ required: true, message: '请输入小说标题' }]}>
             <Input placeholder="请输入小说标题" />

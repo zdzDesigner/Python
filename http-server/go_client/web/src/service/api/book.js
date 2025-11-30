@@ -14,3 +14,12 @@ export const bookList = async () => {
 export const deleteBook = async (id) => {
   return await methods.delete(`/books/${id}`)
 }
+
+export const updateBook = async (id, data) => {
+  if (data.bg.trim() != '') data.bg = data.bg.substring(1)
+  return await methods.put(`/books/${id}`, data)
+}
+
+export const getBook = async (id) => {
+  return await methods.get(`/books/${id}`)
+}
