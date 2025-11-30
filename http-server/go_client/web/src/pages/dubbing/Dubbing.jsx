@@ -2,12 +2,15 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Button, Modal, Form, Input, Upload, message, Popconfirm } from 'antd'
 import { EditOutlined, DeleteOutlined, PlusOutlined, UserOutlined, PlayCircleOutlined, PauseCircleOutlined } from '@ant-design/icons'
 import { fetchVoices, createVoice, updateVoice, deleteVoice } from '@/service/api/dubbing'
+import './style.css'
 
 export const CSS_CARD = 'border border-gray-300 rounded-lg p-4 m-2 w-36 text-center shadow-sm bg-white relative transition-shadow duration-300 hover:shadow-md'
 
 // Voice Card Component
 const VoiceCard = ({ voice, onEdit, onDelete }) => {
   const [hovered, setHovered] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const audioRef = useRef(null)
 
   // Construct full URL for avatar if it's a relative path
   const getAvatarUrl = () => {
@@ -19,23 +22,84 @@ const VoiceCard = ({ voice, onEdit, onDelete }) => {
     return `http://localhost:8081/${voice.avatar}`
   }
 
+  // Construct full URL for audio if it's a relative path
+  const getAudioUrl = () => {
+    if (!voice.wav_path) return null
+    if (voice.wav_path.startsWith('http')) {
+      return voice.wav_path
+    }
+    // Assuming the audio is served from the backend
+    return `http://localhost:8081/${voice.wav_path}`
+  }
+
+  const togglePlay = () => {
+    const audioUrl = getAudioUrl()
+    if (!audioUrl) return
+
+    if (!audioRef.current) {
+      audioRef.current = new Audio(audioUrl)
+      audioRef.current.onended = () => {
+        setIsPlaying(false)
+        audioRef.current = null
+      }
+    }
+
+    if (isPlaying) {
+      audioRef.current.pause()
+      setIsPlaying(false)
+    } else {
+      audioRef.current.play()
+      setIsPlaying(true)
+    }
+  }
+
+  // Clean up audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
+  }, [])
+
   return (
-    <div className={CSS_CARD} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      {/* Action buttons - only show on hover */}
-      <div className={`absolute top-2 right-2 flex gap-1 transition-opacity duration-300 ${hovered ? 'opacity-100' : 'opacity-0'}`}>
-        <Button type="primary" shape="circle" icon={<EditOutlined />} size="small" onClick={() => onEdit(voice)} />
+    <div className={`${CSS_CARD} ${hovered && 'card-hover'}`} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+      {/* Action buttons - only show on hover    ${hovered ? 'opacity-100' : 'opacity-0'} */}
+      <div className={`absolute left-0 w-full z-100 top-2 right-2 flex gap-1 transition-opacity duration-300 ${hovered ? 'opacity-100' : 'opacity-0'}`}>
+        <Button className="ml-[10px]" type="primary" shape="circle" icon={<EditOutlined />} size="small" onClick={() => onEdit(voice)} />
+        <div className="flex-1" />
         <Popconfirm title="删除音色" description="确定要删除这个音色吗？" onConfirm={() => onDelete(voice.id)} okText="确定" cancelText="取消">
-          <Button type="primary" danger shape="circle" icon={<DeleteOutlined />} size="small" />
+          <Button className="mr-[10px]" type="primary" danger shape="circle" icon={<DeleteOutlined />} size="small" />
         </Popconfirm>
       </div>
 
       {/* Avatar */}
-      <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-3 border-2 border-gray-200">
+      <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-3 border-2 border-gray-200 relative">
         {voice.avatar ? (
           <img src={getAvatarUrl()} alt={voice.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-gray-200 flex items-center justify-center text-4xl text-gray-500">
             <UserOutlined />
+          </div>
+        )}
+
+        {/* Audio Player Overlay - only show if audio exists */}
+        {voice.wav_path && (
+          <div
+            className="absolute inset-0 flex items-center justify-center rounded-full cursor-pointer  duration-300  hover:bg-black/10"
+            onClick={(e) => {
+              e.stopPropagation()
+              togglePlay()
+            }}
+          >
+            <Button
+              className="playing opacity-0"
+              type="default"
+              shape="circle"
+              icon={isPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+              size="large"
+            />
           </div>
         )}
       </div>
@@ -46,7 +110,7 @@ const VoiceCard = ({ voice, onEdit, onDelete }) => {
       </div>
 
       {/* Emotion Text */}
-      <div className="text-gray-600 min-h-10 flex items-center justify-center text-xs">{voice.emotion_text}</div>
+      <div className="text-gray-600 min-h-1 items-center justify-center text-xs">{voice.emotion_text}</div>
     </div>
   )
 }
@@ -215,7 +279,8 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
             <Button icon={<PlusOutlined />}>选择文件</Button>
           </Upload>
           {audioUrl && (
-            <Button className='ml-2'
+            <Button
+              className="ml-2"
               icon={isPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
               onClick={() => {
                 if (!audioRef.current) {
@@ -233,8 +298,7 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
                   setIsPlaying(true)
                 }
               }}
-            >
-            </Button>
+            ></Button>
           )}
         </Form.Item>
 
@@ -338,10 +402,6 @@ export const DubbingList = () => {
   return (
     <div className="p-5">
       <div className="flex justify-between items-center mb-5">
-        <h1>音色管理</h1>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddClick} size="large">
-          新增音色
-        </Button>
       </div>
 
       <div className="flex flex-wrap gap-4">
