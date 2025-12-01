@@ -7,6 +7,9 @@ import (
 
 	"go-audio-server/db/sqlite"
 	"go-audio-server/internal/ginc"
+	"go-audio-server/router/book"
+	"go-audio-server/router/section"
+	"go-audio-server/router/dubbing"
 
 	"github.com/gin-gonic/gin"
 )
@@ -49,31 +52,12 @@ func main() {
 		api.POST("/sanitize-filenames", ginc.Handler(sanitizeFilenamesHandler))
 		api.POST("/audio/joint", ginc.Handler(batchSynthesizeHandler))
 		api.DELETE("/tts-tpl/:id", ginc.Handler(ttsTplDelete))
-
-		// Books API routes
-		api.POST("/books", ginc.Handler(booksHandler))
-		api.GET("/books", ginc.Handler(booksListHandler))
-		api.PUT("/books/:id", ginc.Handler(booksUpdateHandler))
-		api.DELETE("/books/:id", ginc.Handler(booksDeleteHandler))
 		api.POST("/upload", ginc.Handler(uploadHandler))
 
-		// Sections API routes
-		api.POST("/sections", ginc.Handler(sectionsHandler))
-		api.GET("/sections", ginc.Handler(sectionsListHandler))
-		api.PUT("/sections/:id", ginc.Handler(sectionsUpdateHandler))
-		api.DELETE("/sections/:id", ginc.Handler(sectionsDeleteHandler))
-
-		// Dubbings API routes
-		api.POST("/dubbings", ginc.Handler(dubbingsHandler))
-		api.GET("/dubbings", ginc.Handler(dubbingsListHandler))
-		api.PUT("/dubbings/:id", ginc.Handler(dubbingsUpdateHandler))
-		api.DELETE("/dubbings/:id", ginc.Handler(dubbingsDeleteHandler))
-
-		// BookDubbings API routes
-		api.POST("/book-dubbings", ginc.Handler(bookDubbingsHandler))
-		api.GET("/book-dubbings", ginc.Handler(bookDubbingsListHandler))
-		api.PUT("/book-dubbings/:id", ginc.Handler(bookDubbingsUpdateHandler))
-		api.DELETE("/book-dubbings/:id", ginc.Handler(bookDubbingsDeleteHandler))
+		// Register routes from separate packages
+		book.RegisterRoutes(api)
+		section.RegisterRoutes(api)
+		dubbing.RegisterRoutes(api)
 	}
 
 	// Health check route
