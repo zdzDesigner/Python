@@ -452,7 +452,7 @@ output 地址为`user_id`_`book_id`_`section_id`_`当前时间戳`
 
 
 ## TODO
-添加 `book/book.go`, `section/section.go`, `dubbing/dubbing.og`
+在@serve/router/ 中添加 `book/book.go`, `section/section.go`, `dubbing/dubbing.og` 把@serve/handlers.go 中的的接口拆分到以上创建的文件中
 
 
 在  实现侧边栏，最上部是`logo图标`, 中间是`小说图标` 和 `配音图标`, 最下面是`设置图标`，鼠标移动到当前菜单图标显示对应的文字
