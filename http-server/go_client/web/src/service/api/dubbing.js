@@ -5,7 +5,7 @@
 
 import { methods } from './method.js'
 
-const patchServerPath = (item) => ({ ...item, avatar: `/${item.avatar}`, wav_path: `/${item.wav_path}` })
+const patchServerPath = ({ avatar, wav_path, ...more }) => ({ ...more, avatar: !!avatar ? `/${avatar}` : '', wav_path: !!wav_path ? `/${wav_path}` : '' })
 const unpatchServerPath = (item) => ({ ...item, avatar: item.avatar?.substring(1), wav_path: item.wav_path?.substring(1) })
 /**
  * Fetch all voices

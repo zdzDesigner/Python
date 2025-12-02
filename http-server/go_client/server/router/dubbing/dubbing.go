@@ -46,14 +46,19 @@ func dubbingsHandler(ctx ginc.Contexter) {
 	// Parse multipart form
 	err := c.Request.ParseMultipartForm(32 << 20) // 32MB max memory
 	if err != nil {
-		// If parsing fails, continue without error - it might be a regular JSON request
-		log.Printf("Failed to parse multipart form: %v", err)
-	}
-
-	var dubbingReq db.Dubbing
-	if err := ctx.ParseReqbody(&dubbingReq); err != nil {
+		ctx.FailErr(400, "Failed to parse multipart form: "+err.Error())
 		return
 	}
+
+	// Parse form fields into dubbingReq
+	var dubbingReq db.Dubbing
+	dubbingReq.Name = c.PostForm("name")
+	dubbingReq.AgeText = c.PostForm("age_text")
+	dubbingReq.EmotionText = c.PostForm("emotion_text")
+	dubbingReq.Avatar = c.PostForm("avatar")
+	dubbingReq.WavPath = c.PostForm("wav_path")
+	
+	fmt.Println("dubbingReq:", dubbingReq)
 
 	// Handle file uploads
 	uploadDir := filepath.Join("assets", "uploads")
@@ -146,16 +151,17 @@ func dubbingsListHandler(ctx ginc.Contexter) {
 	}
 
 	ctx.Success(gin.H{
-		"status":     "success",
-		"data":       dubbingList,
-		"total":      total,
-		"page":       page,
-		"size":       pageSize,
-		"has_next":   total > (page * pageSize),
+		"status":   "success",
+		"data":     dubbingList,
+		"total":    total,
+		"page":     page,
+		"size":     pageSize,
+		"has_next": total > (page * pageSize),
 	})
 }
 
 func dubbingsUpdateHandler(ctx ginc.Contexter) {
+	c := ctx.GinCtx()
 	idStr := ctx.GinCtx().Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -163,12 +169,11 @@ func dubbingsUpdateHandler(ctx ginc.Contexter) {
 		return
 	}
 
-	var dubbingReq db.Dubbing
-	if err := ctx.ParseReqbody(&dubbingReq); err != nil {
-		return
-	}
+	// var dubbingReq db.Dubbing
+	// if err := ctx.ParseReqbody(&dubbingReq); err != nil {
+	// 	return
+	// }
 
-	c := ctx.GinCtx()
 	// Parse multipart form
 	err = c.Request.ParseMultipartForm(32 << 20) // 32MB max memory
 	if err != nil {
@@ -176,6 +181,14 @@ func dubbingsUpdateHandler(ctx ginc.Contexter) {
 		log.Printf("Failed to parse multipart form: %v", err)
 	}
 
+	var dubbingReq db.Dubbing
+	dubbingReq.Name = c.PostForm("name")
+	dubbingReq.AgeText = c.PostForm("age_text")
+	dubbingReq.EmotionText = c.PostForm("emotion_text")
+	dubbingReq.Avatar = c.PostForm("avatar")
+	dubbingReq.WavPath = c.PostForm("wav_path")
+
+	fmt.Println("dubbingReq:", dubbingReq)
 	// Handle file uploads
 	uploadDir := filepath.Join("assets", "uploads")
 	// Handle avatar upload
@@ -216,8 +229,7 @@ func dubbingsUpdateHandler(ctx ginc.Contexter) {
 	}
 
 	// Update the dubbing record
-	var updatedDubbing db.Dubbing
-	if err := updatedDubbing.UpdateByID(id, keys...); err != nil {
+	if err := dubbingReq.UpdateByID(id, keys...); err != nil {
 		ctx.FailErr(500, "Failed to update dubbing: "+err.Error())
 		return
 	}
@@ -336,12 +348,12 @@ func bookDubbingsListHandler(ctx ginc.Contexter) {
 	}
 
 	ctx.Success(gin.H{
-		"status":     "success",
-		"data":       bookDubbingList,
-		"total":      total,
-		"page":       page,
-		"size":       pageSize,
-		"has_next":   total > (page * pageSize),
+		"status":   "success",
+		"data":     bookDubbingList,
+		"total":    total,
+		"page":     page,
+		"size":     pageSize,
+		"has_next": total > (page * pageSize),
 	})
 }
 
@@ -414,7 +426,7 @@ func RegisterRoutes(api *gin.RouterGroup) {
 	api.GET("/dubbings", ginc.Handler(dubbingsListHandler))
 	api.PUT("/dubbings/:id", ginc.Handler(dubbingsUpdateHandler))
 	api.DELETE("/dubbings/:id", ginc.Handler(dubbingsDeleteHandler))
-	
+
 	// BookDubbings API routes
 	api.POST("/book-dubbings", ginc.Handler(bookDubbingsHandler))
 	api.GET("/book-dubbings", ginc.Handler(bookDubbingsListHandler))

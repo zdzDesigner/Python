@@ -211,68 +211,66 @@ export const AudioBook = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 text-slate-800 cursor-default">
+    <div className="flex flex-col h-screen bg-slate-50 text-slate-800 cursor-default p-4">
       {/* 小说列表 */}
-      <div className="flex-grow overflow-auto p-4">
-        <div className="flex flex-wrap gap-4">
-          {books.map((book) => (
-            <div key={book.id} className="card-hover w-[150px]">
-              <Card
-                hoverable
-                size="small"
-                className="cursor-default"
-                cover={
-                  book.cover ? (
-                    <img alt={book.title} src={book.cover} className="h-32 object-cover" />
-                  ) : (
-                    <div className="text-center bg-gray-200 h-32 flex items-center justify-center">
-                      <Text type="secondary">暂无封面</Text>
-                    </div>
-                  )
-                }
-              >
-                {/* Action buttons - only show on hover */}
-                <div className="absolute actions top-2 right-2 left-2 flex gap-1 opacity-0 transition-opacity duration-300">
-                  <Button
-                    type="primary"
-                    shape="circle"
-                    icon={<EditOutlined />}
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      showEditModal(book)
-                    }}
-                  />
-                  <div className="flex-1" />
-                  <Popconfirm
-                    title="删除小说"
-                    description="确定要删除这本小说吗？"
-                    onConfirm={(e) => {
-                      e.stopPropagation()
-                      handleDeleteBook(book.id)
-                    }}
-                    okText="确定"
-                    cancelText="取消"
-                  >
-                    <Button type="primary" danger shape="circle" icon={<DeleteOutlined />} size="small" onClick={(e) => e.stopPropagation()} />
-                  </Popconfirm>
-                </div>
-                <div className="cursor-pointer" onClick={() => bookClick(book)}>
-                  <Card.Meta title={book.title} description={book.description} />
-                </div>
-              </Card>
-            </div>
-          ))}
-          <div className="w-[150px]">
-            <Card hoverable className="shadow-sm transition-shadow duration-300 h-full flex flex-col items-center justify-center" onClick={showModal}>
-              <div className="flex flex-col h-full cursor-pointer">
+      <div className="flex flex-wrap gap-4">
+        {books.map((book) => (
+          <div key={book.id} className="card-hover w-[150px]">
+            <Card
+              hoverable
+              size="small"
+              className="cursor-default"
+              cover={
+                book.cover ? (
+                  <img alt={book.title} src={book.cover} className="h-32 object-cover" />
+                ) : (
+                  <div className="text-center bg-gray-200 h-32 flex items-center justify-center">
+                    <Text type="secondary">暂无封面</Text>
+                  </div>
+                )
+              }
+            >
+              {/* Action buttons - only show on hover */}
+              <div className="absolute actions top-2 right-2 left-2 flex gap-1 opacity-0 transition-opacity duration-300">
+                <Button
+                  type="primary"
+                  shape="circle"
+                  icon={<EditOutlined />}
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    showEditModal(book)
+                  }}
+                />
                 <div className="flex-1" />
-                <div className="text-6xl text-center text-gray-200">+</div>
-                <div className="flex-1" />
+                <Popconfirm
+                  title="删除小说"
+                  description="确定要删除这本小说吗？"
+                  onConfirm={(e) => {
+                    e.stopPropagation()
+                    handleDeleteBook(book.id)
+                  }}
+                  okText="确定"
+                  cancelText="取消"
+                >
+                  <Button type="primary" danger shape="circle" icon={<DeleteOutlined />} size="small" onClick={(e) => e.stopPropagation()} />
+                </Popconfirm>
               </div>
-              <br />
+              <div className="cursor-pointer" onClick={() => bookClick(book)}>
+                <Card.Meta title={book.title} description={book.description} />
+              </div>
             </Card>
           </div>
+        ))}
+        <div className="w-[150px]">
+          <Card hoverable className="shadow-sm transition-shadow duration-300 h-full flex flex-col items-center justify-center" onClick={showModal}>
+            <div className="flex flex-col h-full cursor-pointer">
+              <div className="flex-1" />
+              <div className="text-6xl text-center text-gray-200">+</div>
+              <div className="flex-1" />
+            </div>
+            <br />
+          </Card>
         </div>
       </div>
 

@@ -4,7 +4,7 @@ import { EditOutlined, DeleteOutlined, PlusOutlined, UserOutlined, PlayCircleOut
 import { fetchVoices, createVoice, updateVoice, deleteVoice } from '@/service/api/dubbing'
 import './style.css'
 
-export const CSS_CARD = 'border border-gray-300 rounded-lg p-4 m-2 w-36 text-center shadow-sm bg-white relative transition-shadow duration-300 hover:shadow-md'
+export const CSS_CARD = 'border border-gray-300 rounded-lg p-4 w-36 text-center shadow-sm bg-white relative transition-shadow duration-300 hover:shadow-md'
 
 // Voice Card Component
 const VoiceCard = ({ voice, onEdit, onDelete }) => {
@@ -397,32 +397,30 @@ export const DubbingList = () => {
   }
 
   return (
-    <div className="p-5">
-      <div className="flex justify-between items-center mb-5"></div>
+    <div className="flex flex-col h-screen bg-slate-50 text-slate-800 cursor-default p-4">
+        <div className="flex flex-wrap gap-4">
+          {voices.map((voice) => (
+            <VoiceCard key={voice.id} voice={voice} onEdit={handleEditClick} onDelete={handleDeleteVoice} />
+          ))}
+          <div className={`flex flex-col cursor-pointer border-dotted ${CSS_CARD}`} onClick={handleAddClick}>
+            <div className="flex-1" />
+            <div className="text-6xl text-center text-gray-200">+</div>
+            <div className="flex-1" />
+          </div>
+          <br />
 
-      <div className="flex flex-wrap gap-4">
-        {voices.map((voice) => (
-          <VoiceCard key={voice.id} voice={voice} onEdit={handleEditClick} onDelete={handleDeleteVoice} />
-        ))}
-        <div className={`flex flex-col cursor-pointer border-dotted ${CSS_CARD}`} onClick={handleAddClick}>
-          <div className="flex-1" />
-          <div className="text-6xl text-center text-gray-200">+</div>
-          <div className="flex-1" />
+          {voices.length === 0 && !loading && <div className="w-full text-center py-10 text-gray-600">暂无音色数据，请添加新的音色</div>}
         </div>
-        <br />
 
-        {voices.length === 0 && !loading && <div className="w-full text-center py-10 text-gray-600">暂无音色数据，请添加新的音色</div>}
-      </div>
-
-      <VoiceFormModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false)
-          setEditingVoice(null)
-        }}
-        onSubmit={handleSubmit}
-        initialData={editingVoice}
-      />
+        <VoiceFormModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false)
+            setEditingVoice(null)
+          }}
+          onSubmit={handleSubmit}
+          initialData={editingVoice}
+        />
     </div>
   )
 }
