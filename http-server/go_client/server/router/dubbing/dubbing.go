@@ -43,10 +43,9 @@ func saveUploadedFile(c *gin.Context, formKey string, uploadDir string) (string,
 // Dubbings handlers
 func dubbingsHandler(ctx ginc.Contexter) {
 	c := ctx.GinCtx()
-	// Parse multipart form
-	err := c.Request.ParseMultipartForm(32 << 20) // 32MB max memory
-	if err != nil {
-		ctx.FailErr(400, "Failed to parse multipart form: "+err.Error())
+
+	// Parse multipart form using the abstracted method
+	if err := ctx.ParseMultipartForm(32 << 20); err != nil {
 		return
 	}
 
@@ -57,7 +56,7 @@ func dubbingsHandler(ctx ginc.Contexter) {
 	dubbingReq.EmotionText = c.PostForm("emotion_text")
 	dubbingReq.Avatar = c.PostForm("avatar")
 	dubbingReq.WavPath = c.PostForm("wav_path")
-	
+
 	fmt.Println("dubbingReq:", dubbingReq)
 
 	// Handle file uploads
@@ -169,16 +168,9 @@ func dubbingsUpdateHandler(ctx ginc.Contexter) {
 		return
 	}
 
-	// var dubbingReq db.Dubbing
-	// if err := ctx.ParseReqbody(&dubbingReq); err != nil {
-	// 	return
-	// }
-
-	// Parse multipart form
-	err = c.Request.ParseMultipartForm(32 << 20) // 32MB max memory
-	if err != nil {
-		// If parsing fails, continue without error - it might be a regular JSON request
-		log.Printf("Failed to parse multipart form: %v", err)
+	// Parse multipart form using the abstracted method (ignore errors for optional form data)
+	if err := ctx.ParseMultipartForm(32 << 20); err != nil {
+		return
 	}
 
 	var dubbingReq db.Dubbing
@@ -422,17 +414,17 @@ func bookDubbingsDeleteHandler(ctx ginc.Contexter) {
 
 func dubbingsBatchUploadHandler(ctx ginc.Contexter) {
 	c := ctx.GinCtx()
-	
+
 	// Get Content-Length from request header
 	contentLength := c.Request.ContentLength
 	log.Printf("Batch upload request Content-Length: %d bytes (%.2f MB)", contentLength, float64(contentLength)/(1024*1024))
-	
+
 	// Determine max memory based on content length
 	maxMemory := int64(100 << 20) // Default 100MB
 	if contentLength > 0 && contentLength < maxMemory {
 		maxMemory = contentLength + (10 << 20) // Content-Length + 10MB buffer
 	}
-	
+
 	// Parse multipart form
 	err := c.Request.ParseMultipartForm(maxMemory)
 	if err != nil {
@@ -533,3 +525,4 @@ func RegisterRoutes(api *gin.RouterGroup) {
 	api.PUT("/book-dubbings/:id", ginc.Handler(bookDubbingsUpdateHandler))
 	api.DELETE("/book-dubbings/:id", ginc.Handler(bookDubbingsDeleteHandler))
 }
+

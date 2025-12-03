@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 	"sync"
@@ -21,6 +22,8 @@ type Contexter interface {
 	// ParseReqbody parses the JSON request body into the provided struct.
 	// Returns an error if parsing fails, and sends a failure response.
 	ParseReqbody(any) error
+	// ParseMultipartForm parses multipart form data with dynamic max memory based on Content-Length.
+	ParseMultipartForm(defaultMaxMemory ...int64) error
 	// Success sends a successful JSON response (HTTP 200) with optional data.
 	// Default code is 0 if not provided.
 	Success(...gin.H)
@@ -90,6 +93,38 @@ func (c *Context) ParseReqbody(reqbody any) error {
 		c.FailErr(400, errMsg)
 		return errors.New(errMsg)
 	}
+	return nil
+}
+
+// ParseMultipartForm parses multipart form data with dynamic max memory based on Content-Length.
+// If defaultMaxMemory is not provided, uses 32MB as default.
+// Automatically adjusts memory allocation based on Content-Length header.
+func (c *Context) ParseMultipartForm(defaultMaxMemory ...int64) error {
+	// Set default max memory
+	maxMemory := int64(32 << 20) // 32MB default
+	if len(defaultMaxMemory) > 0 && defaultMaxMemory[0] > 0 {
+		maxMemory = defaultMaxMemory[0]
+	}
+
+	// Get Content-Length from request header
+	contentLength := c.Gin.Request.ContentLength
+	if contentLength > 0 {
+		log.Printf("Multipart form Content-Length: %d bytes (%.2f MB)", contentLength, float64(contentLength)/(1024*1024))
+		
+		// Adjust max memory based on content length
+		if contentLength < maxMemory {
+			// Use Content-Length + 10MB buffer for smaller requests
+			maxMemory = contentLength + (10 << 20)
+		}
+	}
+
+	// Parse multipart form
+	if err := c.Gin.Request.ParseMultipartForm(maxMemory); err != nil {
+		errMsg := fmt.Sprintf("Failed to parse multipart form: %s", err.Error())
+		c.FailErr(400, errMsg)
+		return errors.New(errMsg)
+	}
+
 	return nil
 }
 
