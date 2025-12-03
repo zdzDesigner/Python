@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Button, Modal, Form, Input, Upload, message, Popconfirm, Spin } from 'antd'
-import { EditOutlined, DeleteOutlined, PlusOutlined, UserOutlined, PlayCircleOutlined, PauseCircleOutlined } from '@ant-design/icons'
+import { EditOutlined, DeleteOutlined, PlusOutlined, UserOutlined, PlayCircleOutlined, PauseCircleOutlined, UploadOutlined } from '@ant-design/icons'
 import { fetchVoices, createVoice, updateVoice, deleteVoice } from '@/service/api/dubbing'
 import './style.css'
 
@@ -376,6 +376,10 @@ export const DubbingList = () => {
     setIsModalOpen(true)
   }
 
+  const handleBatchUpload = () => {
+    message.info('批量上传功能开发中...')
+  }
+
   const handleSubmit = (formData, avatarFile, wavFile) => {
     if (editingVoice) {
       handleUpdateVoice(formData, avatarFile, wavFile)
@@ -402,9 +406,19 @@ export const DubbingList = () => {
           {voices.map((voice) => (
             <VoiceCard key={voice.id} voice={voice} onEdit={handleEditClick} onDelete={handleDeleteVoice} />
           ))}
-          <div className={`flex flex-col cursor-pointer border-dotted ${CSS_CARD}`} onClick={handleAddClick}>
+          <div className={`flex flex-col cursor-pointer border-dotted ${CSS_CARD}`}>
             <div className="flex-1" />
-            <div className="text-6xl text-center text-gray-200">+</div>
+            <div className="flex flex-col gap-2 items-center justify-center">
+              <div className="text-4xl text-center text-gray-400 hover:text-blue-500 transition-colors" onClick={handleAddClick}>
+                <PlusOutlined />
+              </div>
+              <div className="text-xs text-gray-500">单独上传</div>
+              <div className="border-t border-gray-300 w-20 my-1"></div>
+              <div className="text-4xl text-center text-gray-400 hover:text-blue-500 transition-colors" onClick={handleBatchUpload}>
+                <UploadOutlined />
+              </div>
+              <div className="text-xs text-gray-500">批量上传</div>
+            </div>
             <div className="flex-1" />
           </div>
           <br />
