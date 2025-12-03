@@ -420,9 +420,99 @@ func bookDubbingsDeleteHandler(ctx ginc.Contexter) {
 	})
 }
 
+func dubbingsBatchUploadHandler(ctx ginc.Contexter) {
+	c := ctx.GinCtx()
+	
+	// Parse multipart form
+	err := c.Request.ParseMultipartForm(100 << 20) // 100MB max memory
+	if err != nil {
+		ctx.FailErr(400, "Failed to parse multipart form: "+err.Error())
+		return
+	}
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		ctx.FailErr(400, "Failed to get multipart form: "+err.Error())
+		return
+	}
+
+	files := form.File["audio_files"]
+	if len(files) == 0 {
+		ctx.FailErr(400, "No audio files provided")
+		return
+	}
+
+	uploadDir := filepath.Join("assets", "uploads")
+	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+		ctx.FailErr(500, "Failed to create upload directory: "+err.Error())
+		return
+	}
+
+	successCount := 0
+	failedCount := 0
+	results := []gin.H{}
+
+	for _, file := range files {
+		// Generate unique filename
+		ext := filepath.Ext(file.Filename)
+		filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
+		filePath := filepath.Join(uploadDir, filename)
+
+		// Save file
+		if err := c.SaveUploadedFile(file, filePath); err != nil {
+			failedCount++
+			results = append(results, gin.H{
+				"filename": file.Filename,
+				"status":   "failed",
+				"error":    err.Error(),
+			})
+			continue
+		}
+
+		// Create dubbing record
+		relativePath := filepath.Join("uploads", filename)
+		dubbingReq := db.Dubbing{
+			Name:        file.Filename,
+			AgeText:     "未知",
+			EmotionText: "中性",
+			Avatar:      "",
+			WavPath:     relativePath,
+		}
+
+		ret, err := dubbingReq.Add()
+		if err != nil {
+			failedCount++
+			results = append(results, gin.H{
+				"filename": file.Filename,
+				"status":   "failed",
+				"error":    "Failed to create database record: " + err.Error(),
+			})
+			// Clean up uploaded file
+			os.Remove(filePath)
+			continue
+		}
+
+		successCount++
+		results = append(results, gin.H{
+			"filename": file.Filename,
+			"status":   "success",
+			"id":       ret.Id,
+		})
+	}
+
+	ctx.Success(gin.H{
+		"status":        "completed",
+		"total":         len(files),
+		"success_count": successCount,
+		"failed_count":  failedCount,
+		"results":       results,
+	})
+}
+
 func RegisterRoutes(api *gin.RouterGroup) {
 	// Dubbings API routes
 	api.POST("/dubbings", ginc.Handler(dubbingsHandler))
+	api.POST("/dubbings/batch", ginc.Handler(dubbingsBatchUploadHandler))
 	api.GET("/dubbings", ginc.Handler(dubbingsListHandler))
 	api.PUT("/dubbings/:id", ginc.Handler(dubbingsUpdateHandler))
 	api.DELETE("/dubbings/:id", ginc.Handler(dubbingsDeleteHandler))

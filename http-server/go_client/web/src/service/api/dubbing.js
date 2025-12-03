@@ -109,3 +109,25 @@ export const deleteVoice = async (id) => {
     throw error
   }
 }
+
+/**
+ * Batch upload audio files
+ * @param {FileList} audioFiles - Array of audio files
+ * @returns {Promise<Object>} - API response with upload results
+ */
+export const batchUploadVoices = async (audioFiles) => {
+  try {
+    const formData = new FormData()
+
+    // Append all audio files
+    for (let i = 0; i < audioFiles.length; i++) {
+      formData.append('audio_files', audioFiles[i])
+    }
+
+    const response = await methods.form('/dubbings/batch', formData)
+    return response
+  } catch (error) {
+    console.error('Error batch uploading voices:', error)
+    throw error
+  }
+}
