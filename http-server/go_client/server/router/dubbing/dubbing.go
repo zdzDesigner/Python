@@ -423,8 +423,18 @@ func bookDubbingsDeleteHandler(ctx ginc.Contexter) {
 func dubbingsBatchUploadHandler(ctx ginc.Contexter) {
 	c := ctx.GinCtx()
 	
+	// Get Content-Length from request header
+	contentLength := c.Request.ContentLength
+	log.Printf("Batch upload request Content-Length: %d bytes (%.2f MB)", contentLength, float64(contentLength)/(1024*1024))
+	
+	// Determine max memory based on content length
+	maxMemory := int64(100 << 20) // Default 100MB
+	if contentLength > 0 && contentLength < maxMemory {
+		maxMemory = contentLength + (10 << 20) // Content-Length + 10MB buffer
+	}
+	
 	// Parse multipart form
-	err := c.Request.ParseMultipartForm(100 << 20) // 100MB max memory
+	err := c.Request.ParseMultipartForm(maxMemory)
 	if err != nil {
 		ctx.FailErr(400, "Failed to parse multipart form: "+err.Error())
 		return
