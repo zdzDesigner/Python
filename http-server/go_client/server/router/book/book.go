@@ -2,13 +2,13 @@ package book
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
 	"time"
 
 	"go-audio-server/db"
+	"go-audio-server/db/sqlite"
 	"go-audio-server/internal/ginc"
 
 	"github.com/gin-gonic/gin"
@@ -43,12 +43,9 @@ func saveUploadedFile(c *gin.Context, formKey string, uploadDir string) (string,
 // Books handlers
 func booksHandler(ctx ginc.Contexter) {
 	c := ctx.GinCtx()
-	// Parse multipart form
-	err := c.Request.ParseMultipartForm(32 << 20) // 32MB max memory
-	if err != nil {
-		// If parsing fails, continue without error - it might be a regular JSON request
-		log.Printf("Failed to parse multipart form: %v", err)
-	}
+	
+	// Parse multipart form using the abstracted method (ignore errors for optional form data)
+	_ = ctx.ParseMultipartForm(32 << 20)
 
 	var bookReq db.Book
 	if err := ctx.ParseReqbody(&bookReq); err != nil {
@@ -57,7 +54,6 @@ func booksHandler(ctx ginc.Contexter) {
 
 	// Handle cover file upload
 	uploadDir := filepath.Join("assets", "uploads")
-	// Handle cover upload
 	if _, err := c.FormFile("cover_file"); err == nil {
 		if coverPath, err := saveUploadedFile(c, "cover_file", uploadDir); err == nil {
 			bookReq.Bg = coverPath
@@ -84,20 +80,9 @@ func booksHandler(ctx ginc.Contexter) {
 }
 
 func booksListHandler(ctx ginc.Contexter) {
-	// Extract query parameters for filtering
-	name := ctx.GinCtx().Query("name")
-	pageStr := ctx.GinCtx().Query("page")
-	pageSizeStr := ctx.GinCtx().Query("size")
-
-	page, err := strconv.Atoi(pageStr)
-	if err != nil || page < 1 {
-		page = 1
-	}
-
-	pageSize, err := strconv.Atoi(pageSizeStr)
-	if err != nil || pageSize < 1 {
-		pageSize = 10
-	}
+	name := ctx.Query("name")
+	page := ctx.Query("page")
+	size := ctx.Query("size")
 
 	// Prepare filter conditions
 	filters := make(map[string]interface{})
@@ -107,7 +92,7 @@ func booksListHandler(ctx ginc.Contexter) {
 
 	// Get books with pagination
 	var book db.Book
-	books, err := book.Get(filters, []string{fmt.Sprintf("%d", page), fmt.Sprintf("%d", pageSize)}, false)
+	books, err := book.Get(filters, sqlite.ToLimit(page, size), false)
 	if err != nil {
 		ctx.FailErr(500, "Failed to fetch books: "+err.Error())
 		return
@@ -131,12 +116,9 @@ func booksListHandler(ctx ginc.Contexter) {
 	}
 
 	ctx.Success(gin.H{
-		"status":     "success",
-		"data":       bookList,
-		"total":      total,
-		"page":       page,
-		"size":       pageSize,
-		"has_next":   total > (page * pageSize),
+		"status": "success",
+		"data":   bookList,
+		"total":  total,
 	})
 }
 
@@ -154,16 +136,11 @@ func booksUpdateHandler(ctx ginc.Contexter) {
 	}
 
 	c := ctx.GinCtx()
-	// Parse multipart form
-	err = c.Request.ParseMultipartForm(32 << 20) // 32MB max memory
-	if err != nil {
-		// If parsing fails, continue without error - it might be a regular JSON request
-		log.Printf("Failed to parse multipart form: %v", err)
-	}
+	// Parse multipart form using the abstracted method (ignore errors for optional form data)
+	_ = ctx.ParseMultipartForm(32 << 20)
 
 	// Handle cover file upload
 	uploadDir := filepath.Join("assets", "uploads")
-	// Handle cover upload
 	if _, err := c.FormFile("cover_file"); err == nil {
 		if coverPath, err := saveUploadedFile(c, "cover_file", uploadDir); err == nil {
 			bookReq.Bg = coverPath
@@ -192,8 +169,7 @@ func booksUpdateHandler(ctx ginc.Contexter) {
 	}
 
 	// Update the book record
-	var updatedBook db.Book
-	if err := updatedBook.UpdateByID(id, keys...); err != nil {
+	if err := bookReq.UpdateByID(id, keys...); err != nil {
 		ctx.FailErr(500, "Failed to update book: "+err.Error())
 		return
 	}

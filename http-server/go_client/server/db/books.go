@@ -42,7 +42,7 @@ func (b *Book) GetFunc(fn func(*sqlite.Sql) *sqlite.Sql) ([]*Book, error) {
 
 func (b *Book) Get(w any, limit []string, isdesc bool) ([]*Book, error) {
 	if limit == nil {
-		limit = []string{"1", "1"}
+		limit = []string{"1", "10"}
 	}
 	return sqlite.GetField[Book](func(dbm sqlite.DBSql) *sqlite.Sql {
 		if isdesc {

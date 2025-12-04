@@ -13,7 +13,7 @@ const unpatchServerPath = (item) => ({ ...item, avatar: item.avatar?.substring(1
  */
 export const fetchVoices = async () => {
   try {
-    const data = await methods.get('/dubbings')
+    const data = await methods.get('/dubbings?size=100&page=1')
     return data.map(patchServerPath) || []
   } catch (error) {
     console.error('Error fetching voices:', error)

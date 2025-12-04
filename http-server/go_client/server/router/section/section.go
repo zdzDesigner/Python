@@ -1,11 +1,10 @@
 package section
 
 import (
-	"fmt"
-	"strconv"
-
 	"go-audio-server/db"
+	"go-audio-server/db/sqlite"
 	"go-audio-server/internal/ginc"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -40,21 +39,10 @@ func sectionsHandler(ctx ginc.Contexter) {
 }
 
 func sectionsListHandler(ctx ginc.Contexter) {
-	// Extract query parameters for filtering
-	bookIDStr := ctx.GinCtx().Query("book_id")
-	name := ctx.GinCtx().Query("name")
-	pageStr := ctx.GinCtx().Query("page")
-	pageSizeStr := ctx.GinCtx().Query("size")
-
-	page, err := strconv.Atoi(pageStr)
-	if err != nil || page < 1 {
-		page = 1
-	}
-
-	pageSize, err := strconv.Atoi(pageSizeStr)
-	if err != nil || pageSize < 1 {
-		pageSize = 10
-	}
+	bookIDStr := ctx.Query("book_id")
+	name := ctx.Query("name")
+	page := ctx.Query("page")
+	size := ctx.Query("size")
 
 	// Prepare filter conditions
 	filters := make(map[string]interface{})
@@ -70,7 +58,7 @@ func sectionsListHandler(ctx ginc.Contexter) {
 
 	// Get sections with pagination
 	var section db.Section
-	sections, err := section.Get(filters, []string{fmt.Sprintf("%d", page), fmt.Sprintf("%d", pageSize)}, false)
+	sections, err := section.Get(filters, sqlite.ToLimit(page, size), false)
 	if err != nil {
 		ctx.FailErr(500, "Failed to fetch sections: "+err.Error())
 		return
@@ -94,12 +82,9 @@ func sectionsListHandler(ctx ginc.Contexter) {
 	}
 
 	ctx.Success(gin.H{
-		"status":     "success",
-		"data":       sectionList,
-		"total":      total,
-		"page":       page,
-		"size":       pageSize,
-		"has_next":   total > (page * pageSize),
+		"status": "success",
+		"data":   sectionList,
+		"total":  total,
 	})
 }
 
@@ -138,8 +123,7 @@ func sectionsUpdateHandler(ctx ginc.Contexter) {
 	}
 
 	// Update the section record
-	var updatedSection db.Section
-	if err := updatedSection.UpdateByID(id, keys...); err != nil {
+	if err := sectionReq.UpdateByID(id, keys...); err != nil {
 		ctx.FailErr(500, "Failed to update section: "+err.Error())
 		return
 	}

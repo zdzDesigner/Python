@@ -407,26 +407,28 @@ export const DubbingList = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 text-slate-800 cursor-default p-4">
+    <div className="flex flex-col text-slate-800 cursor-default p-4">
       <div className="flex flex-wrap gap-4">
+        {
+          <div className={`flex flex-col border-dotted ${CSS_CARD}`}>
+            <div className="flex-1" />
+            <div className="flex flex-col gap-2 items-center justify-center">
+              <div className="text-4xl text-center cursor-pointer text-gray-400 hover:text-blue-500 transition-colors" onClick={handleAddClick}>
+                <PlusOutlined />
+                <div className="text-xs">单独上传</div>
+              </div>
+              <div className="border-t border-gray-300 w-20 my-1"></div>
+              <div className="text-4xl text-center cursor-pointer text-gray-400 hover:text-blue-500 transition-colors" onClick={handleBatchUpload}>
+                <UploadOutlined />
+                <div className="text-xs">批量上传</div>
+              </div>
+            </div>
+            <div className="flex-1" />
+          </div>
+        }
         {voices.map((voice) => (
           <VoiceCard key={voice.id} voice={voice} onEdit={handleEditClick} onDelete={handleDeleteVoice} />
         ))}
-        <div className={`flex flex-col border-dotted ${CSS_CARD}`}>
-          <div className="flex-1" />
-          <div className="flex flex-col gap-2 items-center justify-center">
-            <div className="text-4xl text-center cursor-pointer text-gray-400 hover:text-blue-500 transition-colors" onClick={handleAddClick}>
-              <PlusOutlined />
-              <div className="text-xs">单独上传</div>
-            </div>
-            <div className="border-t border-gray-300 w-20 my-1"></div>
-            <div className="text-4xl text-center cursor-pointer text-gray-400 hover:text-blue-500 transition-colors" onClick={handleBatchUpload}>
-              <UploadOutlined />
-              <div className="text-xs">批量上传</div>
-            </div>
-          </div>
-          <div className="flex-1" />
-        </div>
         <br />
 
         {voices.length === 0 && !loading && <div className="w-full text-center py-10 text-gray-600">暂无音色数据，请添加新的音色</div>}
