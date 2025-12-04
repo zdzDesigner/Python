@@ -412,6 +412,9 @@ func (s *Sql) Page(page string, size string) *Sql {
 
 // ToLimit 计算 LIMIT 参数
 func ToLimit(pagestr, sizestr string) []string {
+	if pagestr == "" || sizestr == "" {
+		return nil
+	}
 	page := ToInt(pagestr)
 	size := ToInt(sizestr)
 	begin := (page - 1) * size

@@ -2,13 +2,14 @@ package dubbing
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"time"
 
 	"go-audio-server/db"
+	"go-audio-server/db/sqlite"
 	"go-audio-server/internal/ginc"
 
 	"github.com/gin-gonic/gin"
@@ -102,20 +103,9 @@ func dubbingsHandler(ctx ginc.Contexter) {
 }
 
 func dubbingsListHandler(ctx ginc.Contexter) {
-	// Extract query parameters for filtering
-	name := ctx.GinCtx().Query("name")
-	pageStr := ctx.GinCtx().Query("page")
-	pageSizeStr := ctx.GinCtx().Query("size")
-
-	page, err := strconv.Atoi(pageStr)
-	if err != nil || page < 1 {
-		page = 1
-	}
-
-	pageSize, err := strconv.Atoi(pageSizeStr)
-	if err != nil || pageSize < 1 {
-		pageSize = 10
-	}
+	name := ctx.Query("name")
+	page := ctx.Query("page")
+	size := ctx.Query("size")
 
 	// Prepare filter conditions
 	filters := make(map[string]interface{})
@@ -125,7 +115,7 @@ func dubbingsListHandler(ctx ginc.Contexter) {
 
 	// Get dubbings with pagination
 	var dubbing db.Dubbing
-	dubbings, err := dubbing.Get(filters, []string{fmt.Sprintf("%d", page), fmt.Sprintf("%d", pageSize)}, false)
+	dubbings, err := dubbing.Get(filters, sqlite.ToLimit(page, size), false)
 	if err != nil {
 		ctx.FailErr(500, "Failed to fetch dubbings: "+err.Error())
 		return
@@ -150,12 +140,9 @@ func dubbingsListHandler(ctx ginc.Contexter) {
 	}
 
 	ctx.Success(gin.H{
-		"status":   "success",
-		"data":     dubbingList,
-		"total":    total,
-		"page":     page,
-		"size":     pageSize,
-		"has_next": total > (page * pageSize),
+		"status": "success",
+		"data":   dubbingList,
+		"total":  total,
 	})
 }
 
@@ -415,20 +402,8 @@ func bookDubbingsDeleteHandler(ctx ginc.Contexter) {
 func dubbingsBatchUploadHandler(ctx ginc.Contexter) {
 	c := ctx.GinCtx()
 
-	// Get Content-Length from request header
-	contentLength := c.Request.ContentLength
-	log.Printf("Batch upload request Content-Length: %d bytes (%.2f MB)", contentLength, float64(contentLength)/(1024*1024))
-
-	// Determine max memory based on content length
-	maxMemory := int64(100 << 20) // Default 100MB
-	if contentLength > 0 && contentLength < maxMemory {
-		maxMemory = contentLength + (10 << 20) // Content-Length + 10MB buffer
-	}
-
-	// Parse multipart form
-	err := c.Request.ParseMultipartForm(maxMemory)
-	if err != nil {
-		ctx.FailErr(400, "Failed to parse multipart form: "+err.Error())
+	// Parse multipart form using the abstracted method
+	if err := ctx.ParseMultipartForm(100 << 20); err != nil {
 		return
 	}
 
@@ -474,7 +449,7 @@ func dubbingsBatchUploadHandler(ctx ginc.Contexter) {
 		// Create dubbing record
 		relativePath := filepath.Join("uploads", filename)
 		dubbingReq := db.Dubbing{
-			Name:        file.Filename,
+			Name:        regexp.MustCompile(".mp3|.wav|.ogg").ReplaceAllString(file.Filename, ""),
 			AgeText:     "未知",
 			EmotionText: "中性",
 			Avatar:      "",
@@ -525,4 +500,3 @@ func RegisterRoutes(api *gin.RouterGroup) {
 	api.PUT("/book-dubbings/:id", ginc.Handler(bookDubbingsUpdateHandler))
 	api.DELETE("/book-dubbings/:id", ginc.Handler(bookDubbingsDeleteHandler))
 }
-

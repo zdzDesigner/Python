@@ -412,18 +412,18 @@ export const DubbingList = () => {
         {voices.map((voice) => (
           <VoiceCard key={voice.id} voice={voice} onEdit={handleEditClick} onDelete={handleDeleteVoice} />
         ))}
-        <div className={`flex flex-col cursor-pointer border-dotted ${CSS_CARD}`}>
+        <div className={`flex flex-col border-dotted ${CSS_CARD}`}>
           <div className="flex-1" />
           <div className="flex flex-col gap-2 items-center justify-center">
-            <div className="text-4xl text-center text-gray-400 hover:text-blue-500 transition-colors" onClick={handleAddClick}>
+            <div className="text-4xl text-center cursor-pointer text-gray-400 hover:text-blue-500 transition-colors" onClick={handleAddClick}>
               <PlusOutlined />
+              <div className="text-xs">单独上传</div>
             </div>
-            <div className="text-xs text-gray-500">单独上传</div>
             <div className="border-t border-gray-300 w-20 my-1"></div>
-            <div className="text-4xl text-center text-gray-400 hover:text-blue-500 transition-colors" onClick={handleBatchUpload}>
+            <div className="text-4xl text-center cursor-pointer text-gray-400 hover:text-blue-500 transition-colors" onClick={handleBatchUpload}>
               <UploadOutlined />
+              <div className="text-xs">批量上传</div>
             </div>
-            <div className="text-xs text-gray-500">批量上传</div>
           </div>
           <div className="flex-1" />
         </div>

@@ -43,7 +43,7 @@ func (d *Dubbing) GetFunc(fn func(*sqlite.Sql) *sqlite.Sql) ([]*Dubbing, error) 
 
 func (d *Dubbing) Get(w any, limit []string, isdesc bool) ([]*Dubbing, error) {
 	if limit == nil {
-		limit = []string{"1", "1"}
+		limit = []string{"1", "10"}
 	}
 	return sqlite.GetField[Dubbing](func(dbm sqlite.DBSql) *sqlite.Sql {
 		if isdesc {
