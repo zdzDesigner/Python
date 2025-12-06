@@ -313,6 +313,7 @@ export const DubbingList = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingVoice, setEditingVoice] = useState(null)
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false)
+  const fileInputRef = useRef(null)
 
   // Load voices on component mount
   useEffect(() => {
@@ -379,7 +380,16 @@ export const DubbingList = () => {
   }
 
   const handleBatchUpload = () => {
-    setIsBatchModalOpen(true)
+    // Directly trigger file input instead of opening modal
+    fileInputRef.current?.click()
+  }
+
+  const handleFileSelect = (e) => {
+    const files = e.target.files
+    if (files && files.length > 0) {
+      // Open modal only after files are selected
+      setIsBatchModalOpen(true)
+    }
   }
 
   const handleBatchUploadSuccess = () => {
@@ -434,7 +444,17 @@ export const DubbingList = () => {
         {voices.length === 0 && !loading && <div className="w-full text-center py-10 text-gray-600">暂无音色数据，请添加新的音色</div>}
       </div>
 
-      <MultiUpload isOpen={isBatchModalOpen} onClose={() => setIsBatchModalOpen(false)} onSuccess={handleBatchUploadSuccess} />
+      {/* Hidden file input for batch upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="audio/*"
+        style={{ display: 'none' }}
+        onChange={handleFileSelect}
+      />
+
+      <MultiUpload isOpen={isBatchModalOpen} onClose={() => setIsBatchModalOpen(false)} onSuccess={handleBatchUploadSuccess} fileInputRef={fileInputRef} />
 
       <VoiceFormModal
         isOpen={isModalOpen}

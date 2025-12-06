@@ -1,23 +1,41 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Button, Modal, message, Progress, Spin } from 'antd'
 import { PlayCircleOutlined, PauseCircleOutlined } from '@ant-design/icons'
 import { batchUploadVoices } from '@/service/api/dubbing'
 
-export const MultiUpload = ({ isOpen, onClose, onSuccess }) => {
+export const MultiUpload = ({ isOpen, onClose, onSuccess, fileInputRef }) => {
   const [batchFiles, setBatchFiles] = useState([])
   const [selectedFiles, setSelectedFiles] = useState([])
   const [batchUploading, setBatchUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState({ total: 0, success: 0, failed: 0 })
   const [playingFileIndex, setPlayingFileIndex] = useState(null)
-  const fileInputRef = useRef(null)
   const audioRefs = useRef({})
 
-  // Auto-trigger file input when modal opens
-  React.useEffect(() => {
-    if (isOpen && batchFiles.length === 0) {
-      setTimeout(() => {
-        fileInputRef.current?.click()
-      }, 100)
+  // Load files when modal opens
+  useEffect(() => {
+    if (isOpen && fileInputRef?.current?.files) {
+      const files = fileInputRef.current.files
+
+      const audioFiles = Array.from(files).filter((file) => {
+        const ext = file.name.toLowerCase()
+        return ext.endsWith('.wav') || ext.endsWith('.mp3') || ext.endsWith('.m4a') || ext.endsWith('.flac') || ext.endsWith('.ogg')
+      })
+
+      if (audioFiles.length === 0) {
+        message.warning('未找到音频文件')
+        onClose()
+        return
+      }
+
+      const fileList = audioFiles.map((file, index) => ({
+        file,
+        displayName: getFileDisplayName(file),
+        url: URL.createObjectURL(file),
+        index
+      }))
+
+      setBatchFiles(fileList)
+      setSelectedFiles(fileList.map((_, i) => i))
     }
   }, [isOpen])
 
@@ -34,28 +52,7 @@ export const MultiUpload = ({ isOpen, onClose, onSuccess }) => {
   }
 
   const handleFileSelect = (e) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
-
-    const audioFiles = Array.from(files).filter((file) => {
-      const ext = file.name.toLowerCase()
-      return ext.endsWith('.wav') || ext.endsWith('.mp3') || ext.endsWith('.m4a') || ext.endsWith('.flac') || ext.endsWith('.ogg')
-    })
-
-    if (audioFiles.length === 0) {
-      message.warning('未找到音频文件')
-      return
-    }
-
-    const fileList = audioFiles.map((file, index) => ({
-      file,
-      displayName: getFileDisplayName(file),
-      url: URL.createObjectURL(file),
-      index
-    }))
-
-    setBatchFiles(fileList)
-    setSelectedFiles(fileList.map((_, i) => i))
+    // This function is no longer needed as files are handled in parent component
   }
 
   const toggleFileSelection = (index) => {
@@ -133,7 +130,8 @@ export const MultiUpload = ({ isOpen, onClose, onSuccess }) => {
       setSelectedFiles([])
       setUploadProgress({ total: 0, success: 0, failed: 0 })
       setPlayingFileIndex(null)
-      if (fileInputRef.current) {
+      // Reset file input in parent component
+      if (fileInputRef?.current) {
         fileInputRef.current.value = ''
       }
       onClose()
@@ -141,13 +139,11 @@ export const MultiUpload = ({ isOpen, onClose, onSuccess }) => {
   }
 
   const triggerFileInput = () => {
-    fileInputRef.current?.click()
+    // Not needed anymore as file input is in parent
   }
 
   return (
     <>
-      <input ref={fileInputRef} type="file" multiple accept="audio/*" style={{ display: 'none' }} onChange={handleFileSelect} />
-
       <Modal
         title="批量上传音频文件"
         open={isOpen}
@@ -166,9 +162,6 @@ export const MultiUpload = ({ isOpen, onClose, onSuccess }) => {
                 </Button>
               ]
             : [
-                <Button key="select" type="primary" onClick={triggerFileInput}>
-                  选择文件
-                </Button>,
                 <Button key="close" onClick={handleClose}>
                   关闭
                 </Button>
@@ -196,9 +189,7 @@ export const MultiUpload = ({ isOpen, onClose, onSuccess }) => {
                 {batchFiles.map((item, index) => (
                   <div
                     key={index}
-                    className={`flex items-center gap-3 p-3 border-b border-gray-100 hover:bg-gray-50 ${
-                      selectedFiles.includes(index) ? 'bg-blue-50' : ''
-                    }`}
+                    className={`flex items-center gap-3 p-3 border-b border-gray-100 hover:bg-gray-50 ${selectedFiles.includes(index) ? 'bg-blue-50' : ''}`}
                   >
                     <input type="checkbox" checked={selectedFiles.includes(index)} onChange={() => toggleFileSelection(index)} className="w-4 h-4" />
                     <div className="flex-1 min-w-0">
