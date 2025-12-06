@@ -8,9 +8,11 @@ import './style.css'
 export const CSS_CARD = 'border border-gray-300 rounded-lg p-4 w-36 text-center shadow-sm bg-white relative transition-shadow duration-300 hover:shadow-md'
 
 // Voice Card Component
-const VoiceCard = ({ voice, onEdit, onDelete, audioPlayerRef, onPlay }) => {
+const VoiceCard = ({ voice, onEdit, onDelete, audioPlayerRef, currentPlayingId, onPlay }) => {
   const [hovered, setHovered] = useState(false)
-  const [isplaying, setIsPlaying] = useState(false)
+
+  // Check if this card is currently playing
+  const isPlaying = currentPlayingId === voice.id
 
   // Construct full URL for avatar if it's a relative path
   const getAvatarUrl = () => {
@@ -28,46 +30,36 @@ const VoiceCard = ({ voice, onEdit, onDelete, audioPlayerRef, onPlay }) => {
     const audioUrl = getAudioUrl()
     if (!audioUrl) return
 
-    if (isplaying) {
+    if (isPlaying) {
       audioPlayerRef.current.pause()
-      setIsPlaying(false)
+      onPlay(null)
     } else {
-      // Notify parent to stop other playing cards
+      // Notify parent to update current playing ID
       onPlay(voice.id)
-      
+
       // Update audio source and play
       audioPlayerRef.current.src = audioUrl
       audioPlayerRef.current.play()
-      setIsPlaying(true)
     }
   }
 
-  // Listen for external play events
+  // Listen for audio end event
   useEffect(() => {
     const audio = audioPlayerRef.current
     if (!audio) return
 
     const handleEnded = () => {
-      setIsPlaying(false)
-    }
-
-    const handlePause = () => {
-      setIsPlaying(false)
+      if (currentPlayingId === voice.id) {
+        onPlay(null)
+      }
     }
 
     audio.addEventListener('ended', handleEnded)
-    audio.addEventListener('pause', handlePause)
 
     return () => {
       audio.removeEventListener('ended', handleEnded)
-      audio.removeEventListener('pause', handlePause)
     }
-  }, [])
-
-  // Stop playing when another card starts playing
-  useEffect(() => {
-    // This will be managed by parent component
-  }, [])
+  }, [currentPlayingId, voice.id])
 
   return (
     <div className={`${CSS_CARD} ${hovered && 'card-hover'}`} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
@@ -100,10 +92,10 @@ const VoiceCard = ({ voice, onEdit, onDelete, audioPlayerRef, onPlay }) => {
             }}
           >
             <Button
-              className={`playing ${!isplaying && 'opacity-0'}`}
+              className={`playing ${!isPlaying && 'opacity-0'}`}
               type="default"
               shape="circle"
-              icon={isplaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+              icon={isPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
               size="large"
             />
           </div>
@@ -335,7 +327,7 @@ export const DubbingList = () => {
     if (!audioPlayerRef.current) {
       audioPlayerRef.current = new Audio()
     }
-    
+
     return () => {
       if (audioPlayerRef.current) {
         audioPlayerRef.current.pause()
@@ -471,7 +463,15 @@ export const DubbingList = () => {
           </div>
         }
         {voices.map((voice) => (
-          <VoiceCard key={voice.id} voice={voice} onEdit={handleEditClick} onDelete={handleDeleteVoice} audioPlayerRef={audioPlayerRef} onPlay={handlePlay} />
+          <VoiceCard
+            key={voice.id}
+            voice={voice}
+            onEdit={handleEditClick}
+            onDelete={handleDeleteVoice}
+            audioPlayerRef={audioPlayerRef}
+            currentPlayingId={currentPlayingId}
+            onPlay={handlePlay}
+          />
         ))}
         <br />
 
