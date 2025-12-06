@@ -12,6 +12,15 @@ export const MultiUpload = ({ isOpen, onClose, onSuccess }) => {
   const fileInputRef = useRef(null)
   const audioRefs = useRef({})
 
+  // Auto-trigger file input when modal opens
+  React.useEffect(() => {
+    if (isOpen && batchFiles.length === 0) {
+      setTimeout(() => {
+        fileInputRef.current?.click()
+      }, 100)
+    }
+  }, [isOpen])
+
   const getFileDisplayName = (file) => {
     const fullPath = file.webkitRelativePath || file.name
     const pathParts = fullPath.split('/')
