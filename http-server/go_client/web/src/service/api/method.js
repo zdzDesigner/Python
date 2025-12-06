@@ -50,8 +50,8 @@ export const methods = {
       method,
       body: formData
     })
-    const { code, data } = await response.json()
+    const { code, data, ...more } = await response.json()
     if (code != 0) return Promise.reject('err')
-    return { code, data }
+    return { code, data, ...more }
   }
 }

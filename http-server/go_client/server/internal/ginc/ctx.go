@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime/multipart"
 	"os"
 	"strings"
 	"sync"
@@ -37,6 +38,8 @@ type Contexter interface {
 	GinCtx() *gin.Context
 	// Query retrieves a query parameter by key.
 	Query(string) string
+	PostForm(key string) (value string)
+	FormFile(name string) (*multipart.FileHeader, error)
 	// ClientPost makes a POST request using the internal client.
 	ClientPost(string, any, ...map[string]string) (*resty.Response, error)
 	// ClientPut makes a PUT request using the internal client.
@@ -80,6 +83,14 @@ func (c *Context) Query(query string) string {
 	return c.Gin.Query(query)
 }
 
+func (c *Context) PostForm(key string) (value string) {
+	return c.Gin.PostForm(key)
+}
+
+func (c *Context) FormFile(name string) (*multipart.FileHeader, error) {
+	return c.Gin.FormFile(name)
+}
+
 // ParamRoute retrieves a route parameter by key.
 func (c *Context) ParamRoute(key string) string {
 	return strings.Trim(c.Gin.Param(key), "/")
@@ -110,7 +121,7 @@ func (c *Context) ParseMultipartForm(defaultMaxMemory ...int64) error {
 	contentLength := c.Gin.Request.ContentLength
 	if contentLength > 0 {
 		log.Printf("Multipart form Content-Length: %d bytes (%.2f MB)", contentLength, float64(contentLength)/(1024*1024))
-		
+
 		// Adjust max memory based on content length
 		if contentLength < maxMemory {
 			// Use Content-Length + 10MB buffer for smaller requests
@@ -314,3 +325,4 @@ func (c *Context) applySourceFilter(params any) any {
 func NewContext() Contexter {
 	return &Context{Gin: &gin.Context{}}
 }
+

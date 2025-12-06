@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Button, Modal, message, Progress, Spin } from 'antd'
+import { Button, Modal, message, Progress, Spin, Space, Input, Checkbox } from 'antd'
 import { PlayCircleOutlined, PauseCircleOutlined } from '@ant-design/icons'
 import { batchUploadVoices } from '@/service/api/dubbing'
 
@@ -9,6 +9,8 @@ export const MultiUpload = ({ isOpen, onClose, onSuccess, fileInputRef }) => {
   const [batchUploading, setBatchUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState({ total: 0, success: 0, failed: 0 })
   const [playingFileIndex, setPlayingFileIndex] = useState(null)
+  const [islock_name, setIsLockName] = useState(true)
+  const [dubbing_name, setDubbingName] = useState('')
   const audioRefs = useRef({})
 
   // Load files when modal opens
@@ -97,22 +99,20 @@ export const MultiUpload = ({ isOpen, onClose, onSuccess, fileInputRef }) => {
     setUploadProgress({ total: filesToUpload.length, success: 0, failed: 0 })
 
     try {
-      const response = await batchUploadVoices(filesToUpload)
+      const response = await batchUploadVoices(filesToUpload, islock_name ? '' : dubbing_name)
 
       setUploadProgress({
-        total: response.data.total,
-        success: response.data.success_count,
-        failed: response.data.failed_count
+        total: response.total,
+        success: response.success_count,
+        failed: response.failed_count
       })
 
       message.success(`批量上传完成：成功 ${response.data.success_count} 个，失败 ${response.data.failed_count} 个`)
 
       batchFiles.forEach((item) => URL.revokeObjectURL(item.url))
 
-      setTimeout(() => {
-        handleClose()
-        if (onSuccess) onSuccess()
-      }, 2000)
+      handleClose()
+      if (onSuccess) onSuccess()
     } catch (err) {
       message.error('批量上传失败')
       console.error(err)
@@ -125,17 +125,15 @@ export const MultiUpload = ({ isOpen, onClose, onSuccess, fileInputRef }) => {
   }
 
   const handleClose = () => {
-    if (!batchUploading) {
-      setBatchFiles([])
-      setSelectedFiles([])
-      setUploadProgress({ total: 0, success: 0, failed: 0 })
-      setPlayingFileIndex(null)
-      // Reset file input in parent component
-      if (fileInputRef?.current) {
-        fileInputRef.current.value = ''
-      }
-      onClose()
+    setBatchFiles([])
+    setSelectedFiles([])
+    setUploadProgress({ total: 0, success: 0, failed: 0 })
+    setPlayingFileIndex(null)
+    // Reset file input in parent component
+    if (fileInputRef?.current) {
+      fileInputRef.current.value = ''
     }
+    onClose()
   }
 
   const triggerFileInput = () => {
@@ -185,7 +183,14 @@ export const MultiUpload = ({ isOpen, onClose, onSuccess, fileInputRef }) => {
           ) : batchFiles.length > 0 ? (
             <div>
               <div className="mb-4 text-gray-600">已找到 {batchFiles.length} 个音频文件，请选择需要上传的文件：</div>
-              <div className="max-h-96 overflow-y-auto border border-gray-200 rounded">
+              <Space.Compact style={{ width: '100%' }}>
+                <Button>名称:</Button>
+                <Input disabled={islock_name} onChange={(evt) => setDubbingName(evt.target.value)} />
+                <Button>
+                  <Checkbox defaultChecked={!islock_name} onChange={() => setIsLockName((v) => !v)} />
+                </Button>
+              </Space.Compact>
+              <div className="max-h-96 mt-2 overflow-y-auto border border-gray-200 rounded">
                 {batchFiles.map((item, index) => (
                   <div
                     key={index}

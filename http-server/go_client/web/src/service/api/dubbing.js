@@ -115,13 +115,16 @@ export const deleteVoice = async (id) => {
  * @param {FileList} audioFiles - Array of audio files
  * @returns {Promise<Object>} - API response with upload results
  */
-export const batchUploadVoices = async (audioFiles) => {
+export const batchUploadVoices = async (audioFiles, dubbing_name) => {
   try {
     const formData = new FormData()
 
     // Append all audio files
     for (let i = 0; i < audioFiles.length; i++) {
       formData.append('audio_files', audioFiles[i])
+    }
+    if (dubbing_name != '') {
+      formData.append('dubbing_name', dubbing_name)
     }
 
     const response = await methods.form('/dubbings/batch', formData)

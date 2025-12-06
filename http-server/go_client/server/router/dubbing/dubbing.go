@@ -43,8 +43,6 @@ func saveUploadedFile(c *gin.Context, formKey string, uploadDir string) (string,
 
 // Dubbings handlers
 func dubbingsHandler(ctx ginc.Contexter) {
-	c := ctx.GinCtx()
-
 	// Parse multipart form using the abstracted method
 	if err := ctx.ParseMultipartForm(32 << 20); err != nil {
 		return
@@ -52,25 +50,25 @@ func dubbingsHandler(ctx ginc.Contexter) {
 
 	// Parse form fields into dubbingReq
 	var dubbingReq db.Dubbing
-	dubbingReq.Name = c.PostForm("name")
-	dubbingReq.AgeText = c.PostForm("age_text")
-	dubbingReq.EmotionText = c.PostForm("emotion_text")
-	dubbingReq.Avatar = c.PostForm("avatar")
-	dubbingReq.WavPath = c.PostForm("wav_path")
+	dubbingReq.Name = ctx.PostForm("name")
+	dubbingReq.AgeText = ctx.PostForm("age_text")
+	dubbingReq.EmotionText = ctx.PostForm("emotion_text")
+	dubbingReq.Avatar = ctx.PostForm("avatar")
+	dubbingReq.WavPath = ctx.PostForm("wav_path")
 
 	fmt.Println("dubbingReq:", dubbingReq)
 
 	// Handle file uploads
 	uploadDir := filepath.Join("assets", "uploads")
 	// Handle avatar upload
-	if _, err := c.FormFile("avatar_file"); err == nil {
-		if avatarPath, err := saveUploadedFile(c, "avatar_file", uploadDir); err == nil {
+	if _, err := ctx.FormFile("avatar_file"); err == nil {
+		if avatarPath, err := saveUploadedFile(ctx.GinCtx(), "avatar_file", uploadDir); err == nil {
 			dubbingReq.Avatar = avatarPath
 		}
 	}
 	// Handle wav file upload
-	if _, err := c.FormFile("wav_file"); err == nil {
-		if wavPath, err := saveUploadedFile(c, "wav_file", uploadDir); err == nil {
+	if _, err := ctx.FormFile("wav_file"); err == nil {
+		if wavPath, err := saveUploadedFile(ctx.GinCtx(), "wav_file", uploadDir); err == nil {
 			dubbingReq.WavPath = wavPath
 		}
 	}
@@ -147,7 +145,6 @@ func dubbingsListHandler(ctx ginc.Contexter) {
 }
 
 func dubbingsUpdateHandler(ctx ginc.Contexter) {
-	c := ctx.GinCtx()
 	idStr := ctx.GinCtx().Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -161,24 +158,24 @@ func dubbingsUpdateHandler(ctx ginc.Contexter) {
 	}
 
 	var dubbingReq db.Dubbing
-	dubbingReq.Name = c.PostForm("name")
-	dubbingReq.AgeText = c.PostForm("age_text")
-	dubbingReq.EmotionText = c.PostForm("emotion_text")
-	dubbingReq.Avatar = c.PostForm("avatar")
-	dubbingReq.WavPath = c.PostForm("wav_path")
+	dubbingReq.Name = ctx.PostForm("name")
+	dubbingReq.AgeText = ctx.PostForm("age_text")
+	dubbingReq.EmotionText = ctx.PostForm("emotion_text")
+	dubbingReq.Avatar = ctx.PostForm("avatar")
+	dubbingReq.WavPath = ctx.PostForm("wav_path")
 
 	fmt.Println("dubbingReq:", dubbingReq)
 	// Handle file uploads
 	uploadDir := filepath.Join("assets", "uploads")
 	// Handle avatar upload
-	if _, err := c.FormFile("avatar_file"); err == nil {
-		if avatarPath, err := saveUploadedFile(c, "avatar_file", uploadDir); err == nil {
+	if _, err := ctx.FormFile("avatar_file"); err == nil {
+		if avatarPath, err := saveUploadedFile(ctx.GinCtx(), "avatar_file", uploadDir); err == nil {
 			dubbingReq.Avatar = avatarPath
 		}
 	}
 	// Handle wav file upload
-	if _, err := c.FormFile("wav_file"); err == nil {
-		if wavPath, err := saveUploadedFile(c, "wav_file", uploadDir); err == nil {
+	if _, err := ctx.FormFile("wav_file"); err == nil {
+		if wavPath, err := saveUploadedFile(ctx.GinCtx(), "wav_file", uploadDir); err == nil {
 			dubbingReq.WavPath = wavPath
 		}
 	}
@@ -413,6 +410,7 @@ func dubbingsBatchUploadHandler(ctx ginc.Contexter) {
 		return
 	}
 
+	dubbing_name := ctx.PostForm("dubbing_name")
 	files := form.File["audio_files"]
 	if len(files) == 0 {
 		ctx.FailErr(400, "No audio files provided")
@@ -446,12 +444,19 @@ func dubbingsBatchUploadHandler(ctx ginc.Contexter) {
 			continue
 		}
 
+		name := regexp.MustCompile(".mp3|.wav|.ogg").ReplaceAllString(file.Filename, "")
+		emotion_text := "中性"
+		if dubbing_name != "" {
+			emotion_text = name
+			name = dubbing_name
+		}
+
 		// Create dubbing record
 		relativePath := filepath.Join("uploads", filename)
 		dubbingReq := db.Dubbing{
-			Name:        regexp.MustCompile(".mp3|.wav|.ogg").ReplaceAllString(file.Filename, ""),
+			Name:        name,
 			AgeText:     "未知",
-			EmotionText: "中性",
+			EmotionText: emotion_text,
 			Avatar:      "",
 			WavPath:     relativePath,
 		}
@@ -482,7 +487,7 @@ func dubbingsBatchUploadHandler(ctx ginc.Contexter) {
 		"total":         len(files),
 		"success_count": successCount,
 		"failed_count":  failedCount,
-		"results":       results,
+		"data":          results,
 	})
 }
 

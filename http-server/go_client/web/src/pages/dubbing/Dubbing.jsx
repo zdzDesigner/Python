@@ -8,10 +8,9 @@ import './style.css'
 export const CSS_CARD = 'border border-gray-300 rounded-lg p-4 w-36 text-center shadow-sm bg-white relative transition-shadow duration-300 hover:shadow-md'
 
 // Voice Card Component
-const VoiceCard = ({ voice, onEdit, onDelete }) => {
+const VoiceCard = ({ voice, onEdit, onDelete, audioPlayerRef, onPlay }) => {
   const [hovered, setHovered] = useState(false)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const audioRef = useRef(null)
+  const [isplaying, setIsPlaying] = useState(false)
 
   // Construct full URL for avatar if it's a relative path
   const getAvatarUrl = () => {
@@ -29,31 +28,45 @@ const VoiceCard = ({ voice, onEdit, onDelete }) => {
     const audioUrl = getAudioUrl()
     if (!audioUrl) return
 
-    if (!audioRef.current) {
-      audioRef.current = new Audio(audioUrl)
-      audioRef.current.onended = () => {
-        setIsPlaying(false)
-        audioRef.current = null
-      }
-    }
-
-    if (isPlaying) {
-      audioRef.current.pause()
+    if (isplaying) {
+      audioPlayerRef.current.pause()
       setIsPlaying(false)
     } else {
-      audioRef.current.play()
+      // Notify parent to stop other playing cards
+      onPlay(voice.id)
+      
+      // Update audio source and play
+      audioPlayerRef.current.src = audioUrl
+      audioPlayerRef.current.play()
       setIsPlaying(true)
     }
   }
 
-  // Clean up audio on unmount
+  // Listen for external play events
   useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current = null
-      }
+    const audio = audioPlayerRef.current
+    if (!audio) return
+
+    const handleEnded = () => {
+      setIsPlaying(false)
     }
+
+    const handlePause = () => {
+      setIsPlaying(false)
+    }
+
+    audio.addEventListener('ended', handleEnded)
+    audio.addEventListener('pause', handlePause)
+
+    return () => {
+      audio.removeEventListener('ended', handleEnded)
+      audio.removeEventListener('pause', handlePause)
+    }
+  }, [])
+
+  // Stop playing when another card starts playing
+  useEffect(() => {
+    // This will be managed by parent component
   }, [])
 
   return (
@@ -87,10 +100,10 @@ const VoiceCard = ({ voice, onEdit, onDelete }) => {
             }}
           >
             <Button
-              className="playing opacity-0"
+              className={`playing ${!isplaying && 'opacity-0'}`}
               type="default"
               shape="circle"
-              icon={isPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+              icon={isplaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
               size="large"
             />
           </div>
@@ -115,7 +128,7 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
   const [wavFile, setWavFile] = useState(null)
   const [previewAvatar, setPreviewAvatar] = useState(null)
   const [audioUrl, setAudioUrl] = useState(null)
-  const [isPlaying, setIsPlaying] = useState(false)
+  const [isplaying, setIsPlaying] = useState(false)
   const audioRef = useRef(null)
 
   useEffect(() => {
@@ -274,7 +287,7 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
           {audioUrl && (
             <Button
               className="ml-2"
-              icon={isPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+              icon={isplaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
               onClick={() => {
                 if (!audioRef.current) {
                   audioRef.current = new Audio(audioUrl)
@@ -283,7 +296,7 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
                   }
                 }
 
-                if (isPlaying) {
+                if (isplaying) {
                   audioRef.current.pause()
                   setIsPlaying(false)
                 } else {
@@ -313,7 +326,23 @@ export const DubbingList = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingVoice, setEditingVoice] = useState(null)
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false)
+  const [currentPlayingId, setCurrentPlayingId] = useState(null)
   const fileInputRef = useRef(null)
+  const audioPlayerRef = useRef(null)
+
+  // Initialize audio player once
+  useEffect(() => {
+    if (!audioPlayerRef.current) {
+      audioPlayerRef.current = new Audio()
+    }
+    
+    return () => {
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause()
+        audioPlayerRef.current = null
+      }
+    }
+  }, [])
 
   // Load voices on component mount
   useEffect(() => {
@@ -393,7 +422,12 @@ export const DubbingList = () => {
   }
 
   const handleBatchUploadSuccess = () => {
+    setIsBatchModalOpen(false)
     loadVoices()
+  }
+
+  const handlePlay = (voiceId) => {
+    setCurrentPlayingId(voiceId)
   }
 
   const handleSubmit = (formData, avatarFile, wavFile) => {
@@ -437,7 +471,7 @@ export const DubbingList = () => {
           </div>
         }
         {voices.map((voice) => (
-          <VoiceCard key={voice.id} voice={voice} onEdit={handleEditClick} onDelete={handleDeleteVoice} />
+          <VoiceCard key={voice.id} voice={voice} onEdit={handleEditClick} onDelete={handleDeleteVoice} audioPlayerRef={audioPlayerRef} onPlay={handlePlay} />
         ))}
         <br />
 
@@ -445,14 +479,7 @@ export const DubbingList = () => {
       </div>
 
       {/* Hidden file input for batch upload */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        accept="audio/*"
-        style={{ display: 'none' }}
-        onChange={handleFileSelect}
-      />
+      <input ref={fileInputRef} type="file" multiple accept="audio/*" style={{ display: 'none' }} onChange={handleFileSelect} />
 
       <MultiUpload isOpen={isBatchModalOpen} onClose={() => setIsBatchModalOpen(false)} onSuccess={handleBatchUploadSuccess} fileInputRef={fileInputRef} />
 
