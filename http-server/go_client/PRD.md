@@ -461,5 +461,11 @@ output 地址为`user_id`_`book_id`_`section_id`_`当前时间戳`
 
 
 
+
+## book_dubbings
+/home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/pages/section/Section.jsx 点击*角色配音*后Modal中的内为**上**, **下**两个部分,
+**上**部分是*当前book_id在book_dubbings db中的数据*和*当前文本的角色数据*去重后的数据。**下**部分展示 /home/zdz/Documents/Try/Python/course/http-server/go_client/web/src/pages/dubbing/Dubbing.jsx 组件，但要隐藏VoiceCard中的*删除*和*编辑*，并且在VoiceCard右上角添加checkbox组建，点击后把当前VoiceCard添加到**上**部分布局中
+
+
 ## init
 学习下 @.qwen/PROJECT_SUMMARY.md  摘要文档
