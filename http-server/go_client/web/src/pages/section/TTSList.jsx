@@ -17,6 +17,7 @@ import {
   batchSynthesize,
   ttsTplDelete
 } from '@/service/api/tts'
+import { fetchVoices } from '@/service/api/dubbing'
 import { useNotification } from '@/utils/NotificationContext'
 import BatchTrainingProgress from './BatchTrainingProgress'
 import './TTSList.css'
@@ -46,7 +47,7 @@ TTSTable.displayName = 'TTSTable'
 
 const MemoizedTableSelect = memo(({ recordKey, value, onChange, options }) => {
   return (
-    <Select style={{ width: '100%' }} showSearch placeholder="请选择" value={value} onChange={(v) => onChange(recordKey, v)} virtual>
+    <Select popupMatchSelectWidth={false} style={{ width: '100%' }} showSearch placeholder="请选择" value={value} onChange={(v) => onChange(recordKey, v)} virtual>
       {options}
     </Select>
   )
@@ -398,6 +399,7 @@ const TTSList = ({ book_id, section_id, ttsdata, setTtsData }) => {
   const [batchProgress, setBatchProgress] = useState(0)
   const [batchProgressText, setBatchProgressText] = useState('')
   const [batchAbortController, setBatchAbortController] = useState(null)
+  const [dubbingVoices, setDubbingVoices] = useState([])
 
   const { showError, showSuccess, showWarning } = useNotification()
 
@@ -405,6 +407,18 @@ const TTSList = ({ book_id, section_id, ttsdata, setTtsData }) => {
   const { dispatch, fetchAudioFiles } = useAudioLibraryDispatch()
 
   const [jsonData, setTtsJsonData] = useState(null)
+
+  useEffect(() => {
+    const loadDubbingVoices = async () => {
+      try {
+        const voices = await fetchVoices()
+        setDubbingVoices(voices)
+      } catch (error) {
+        console.error('Failed to load dubbing voices:', error)
+      }
+    }
+    loadDubbingVoices()
+  }, [])
 
   const fileSelect = useCallback(
     (data) => {
@@ -616,13 +630,13 @@ const TTSList = ({ book_id, section_id, ttsdata, setTtsData }) => {
 
   // Memoize table audio files options to prevent re-renders
   const tableAudioFileOptions = useMemo(() => {
-    if (!audioFiles) return []
-    return audioFiles.map((file) => (
-      <Option key={file.path} value={file.path}>
-        {file.name}
+    if (!dubbingVoices) return []
+    return dubbingVoices.map((voice) => (
+      <Option key={voice.id} value={voice.id}>
+        {`${voice.name}/${voice.age_text}/${voice.emotion_text}`}
       </Option>
     ))
-  }, [audioFiles])
+  }, [dubbingVoices])
 
   // Function to update table data for a specific record
   const updateTableDataDubbing = useCallback((recordKey, newDubbingValue) => {
