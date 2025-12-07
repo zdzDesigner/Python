@@ -8,7 +8,7 @@ import './style.css'
 export const CSS_CARD = 'border border-gray-300 rounded-lg p-4 w-36 text-center shadow-sm bg-white relative transition-shadow duration-300 hover:shadow-md'
 
 // Voice Card Component
-const VoiceCard = ({ voice, onEdit, onDelete, audioPlayerRef, currentPlayingId, onPlay }) => {
+const VoiceCard = ({ voice, onEdit, onDelete, audioPlayerRef, currentPlayingId, onPlay, selectionMode = false, isSelected = false, onSelect }) => {
   const [hovered, setHovered] = useState(false)
 
   // Check if this card is currently playing
@@ -62,15 +62,28 @@ const VoiceCard = ({ voice, onEdit, onDelete, audioPlayerRef, currentPlayingId, 
   }, [currentPlayingId, voice.id])
 
   return (
-    <div className={`${CSS_CARD} ${hovered && 'card-hover'}`} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      {/* Action buttons - only show on hover    ${hovered ? 'opacity-100' : 'opacity-0'} */}
-      <div className={`absolute left-0 w-full z-100 top-2 right-2 flex gap-1 transition-opacity duration-300 ${hovered ? 'opacity-100' : 'opacity-0'}`}>
-        <Button className="ml-[10px]" type="primary" shape="circle" icon={<EditOutlined />} size="small" onClick={() => onEdit(voice)} />
-        <div className="flex-1" />
-        <Popconfirm title="删除音色" description="确定要删除这个音色吗？" onConfirm={() => onDelete(voice.id)} okText="确定" cancelText="取消">
-          <Button className="mr-[10px]" type="primary" danger shape="circle" icon={<DeleteOutlined />} size="small" />
-        </Popconfirm>
-      </div>
+    <div className={`${CSS_CARD} ${hovered && 'card-hover'} ${selectionMode && isSelected ? 'ring-2 ring-blue-500' : ''}`} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+      {/* Action buttons or selection checkbox */}
+      {selectionMode ? (
+        <div className="absolute left-0 w-full z-100 top-2 right-2 flex gap-1">
+          <div className="flex-1" />
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onSelect && onSelect(voice)}
+            className="mr-[10px] w-5 h-5 cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      ) : (
+        <div className={`absolute left-0 w-full z-100 top-2 right-2 flex gap-1 transition-opacity duration-300 ${hovered ? 'opacity-100' : 'opacity-0'}`}>
+          <Button className="ml-[10px]" type="primary" shape="circle" icon={<EditOutlined />} size="small" onClick={() => onEdit(voice)} />
+          <div className="flex-1" />
+          <Popconfirm title="删除音色" description="确定要删除这个音色吗？" onConfirm={() => onDelete(voice.id)} okText="确定" cancelText="取消">
+            <Button className="mr-[10px]" type="primary" danger shape="circle" icon={<DeleteOutlined />} size="small" />
+          </Popconfirm>
+        </div>
+      )}
 
       {/* Avatar */}
       <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-3 border-2 border-gray-200 relative">
@@ -311,7 +324,7 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
 }
 
 // Main Dubbing Component
-export const DubbingList = () => {
+export const DubbingList = ({ selectionMode = false, onVoiceSelect, selectedVoices = [] }) => {
   const [voices, setVoices] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -445,7 +458,7 @@ export const DubbingList = () => {
   return (
     <div className="flex flex-col text-slate-800 cursor-default p-4">
       <div className="flex flex-wrap gap-4">
-        {
+        {!selectionMode && (
           <div className={`flex flex-col border-dotted ${CSS_CARD}`}>
             <div className="flex-1" />
             <div className="flex flex-col gap-2 items-center justify-center">
@@ -461,7 +474,7 @@ export const DubbingList = () => {
             </div>
             <div className="flex-1" />
           </div>
-        }
+        )}
         {voices.map((voice) => (
           <VoiceCard
             key={voice.id}
@@ -471,6 +484,9 @@ export const DubbingList = () => {
             audioPlayerRef={audioPlayerRef}
             currentPlayingId={currentPlayingId}
             onPlay={handlePlay}
+            selectionMode={selectionMode}
+            isSelected={selectedVoices.some((v) => v.id === voice.id)}
+            onSelect={onVoiceSelect}
           />
         ))}
         <br />
@@ -478,20 +494,24 @@ export const DubbingList = () => {
         {voices.length === 0 && !loading && <div className="w-full text-center py-10 text-gray-600">暂无音色数据，请添加新的音色</div>}
       </div>
 
-      {/* Hidden file input for batch upload */}
-      <input ref={fileInputRef} type="file" multiple accept="audio/*" style={{ display: 'none' }} onChange={handleFileSelect} />
+      {!selectionMode && (
+        <>
+          {/* Hidden file input for batch upload */}
+          <input ref={fileInputRef} type="file" multiple accept="audio/*" style={{ display: 'none' }} onChange={handleFileSelect} />
 
-      <MultiUpload isOpen={isBatchModalOpen} onClose={() => setIsBatchModalOpen(false)} onSuccess={handleBatchUploadSuccess} fileInputRef={fileInputRef} />
+          <MultiUpload isOpen={isBatchModalOpen} onClose={() => setIsBatchModalOpen(false)} onSuccess={handleBatchUploadSuccess} fileInputRef={fileInputRef} />
 
-      <VoiceFormModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false)
-          setEditingVoice(null)
-        }}
-        onSubmit={handleSubmit}
-        initialData={editingVoice}
-      />
+          <VoiceFormModal
+            isOpen={isModalOpen}
+            onClose={() => {
+              setIsModalOpen(false)
+              setEditingVoice(null)
+            }}
+            onSubmit={handleSubmit}
+            initialData={editingVoice}
+          />
+        </>
+      )}
     </div>
   )
 }
