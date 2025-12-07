@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { Card, Table, Tag, Typography, Select, Button, Space, Modal, Input, InputNumber, Popconfirm } from 'antd'
-import { LeftOutlined, CloseOutlined, UserOutlined, PlayCircleOutlined, PauseCircleOutlined } from '@ant-design/icons'
+import { LeftOutlined, CloseOutlined, UserOutlined, PlayCircleOutlined, PauseCircleOutlined, SwapOutlined, PlusOutlined } from '@ant-design/icons'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 
 import { useAudioLibraryState, useAudioLibraryDispatch } from '@/context/AudioLibraryContext'
@@ -189,9 +189,12 @@ export const AudioSection = () => {
                       >
                         <div className="absolute w-full z-100 top-1 right-0 flex gap-1">
                           <div className="flex-1" />
-                          <Button className="mr-[8px]" size="small" type="link" onClick={() => openVoiceSelectionModal(characterName)}>
-                            {hasValidWavPath ? '替换' : '添加'}
-                          </Button>
+                          <Button 
+                            className="mr-[8px]" 
+                            size="small" 
+                            icon={hasValidWavPath ? <SwapOutlined /> : <PlusOutlined />}
+                            onClick={() => openVoiceSelectionModal(characterName)}
+                          />
                         </div>
 
                         <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-3 border-2 border-gray-200 relative">
