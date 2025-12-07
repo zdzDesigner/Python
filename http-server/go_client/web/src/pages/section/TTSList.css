@@ -1,3 +1,7 @@
 .ant-table-row {
   height: 80px;
 }
+
+.Card:hover .playing {
+  opacity: 0.6;
+}
