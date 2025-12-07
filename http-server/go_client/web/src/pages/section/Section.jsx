@@ -143,9 +143,8 @@ export const AudioSection = () => {
         </div>
         <>
           <Modal title="角色配音" open={isshow_dubbing} onOk={dubModalOk} onCancel={dubModalCancel} width={900} transitionName="" maskTransitionName="">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', gap: '20px' }}>
               <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
-                <div style={{ marginBottom: '12px', fontWeight: 'bold' }}>已选择的角色配音:</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
                   {uniqueCharacterNames.map((characterName) => {
                     const selectedVoice = (selectedCharacterVoices[characterName] || [])[0]
@@ -187,11 +186,12 @@ export const AudioSection = () => {
                         onMouseEnter={() => setHovered(true)}
                         onMouseLeave={() => setHovered(false)}
                       >
-                        <div className="absolute w-full z-100 top-1 right-0 flex gap-1">
+                        <div className="absolute w-full z-100 top-2 right-2 flex gap-1">
                           <div className="flex-1" />
-                          <Button 
-                            className="mr-[8px]" 
-                            size="small" 
+                          <Button
+                            size="small"
+                            type="primary"
+                            shape="circle"
                             icon={hasValidWavPath ? <SwapOutlined /> : <PlusOutlined />}
                             onClick={() => openVoiceSelectionModal(characterName)}
                           />
