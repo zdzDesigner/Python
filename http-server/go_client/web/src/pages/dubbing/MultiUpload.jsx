@@ -165,6 +165,8 @@ export const MultiUpload = ({ isOpen, onClose, onSuccess, fileInputRef }) => {
                 </Button>
               ]
         }
+        transitionName=""
+        maskTransitionName=""
       >
         <div className="py-4">
           {batchUploading ? (

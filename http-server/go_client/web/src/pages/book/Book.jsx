@@ -275,7 +275,16 @@ export const AudioBook = () => {
       </div>
 
       {/* 添加/编辑小说模态框 */}
-      <Modal title={isEditMode ? '编辑小说' : '添加新小说'} open={isModalVisible} onOk={handleOk} onCancel={handleCancel} okText="确认" cancelText="取消">
+      <Modal
+        title={isEditMode ? '编辑小说' : '添加新小说'}
+        open={isModalVisible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        okText="确认"
+        cancelText="取消"
+        transitionName=""
+        maskTransitionName=""
+      >
         <Form form={form} labelCol={{ span: 4 }}>
           <Form.Item name="title" label="小说标题" rules={[{ required: true, message: '请输入小说标题' }]}>
             <Input placeholder="请输入小说标题" />

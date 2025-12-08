@@ -47,7 +47,15 @@ TTSTable.displayName = 'TTSTable'
 
 const MemoizedTableSelect = memo(({ recordKey, value, onChange, options }) => {
   return (
-    <Select popupMatchSelectWidth={false} style={{ width: '100%' }} showSearch placeholder="请选择" value={value} onChange={(v) => onChange(recordKey, v)} virtual>
+    <Select
+      popupMatchSelectWidth={false}
+      style={{ width: '100%' }}
+      showSearch
+      placeholder="请选择"
+      value={value}
+      onChange={(v) => onChange(recordKey, v)}
+      virtual
+    >
       {options}
     </Select>
   )
@@ -1205,6 +1213,8 @@ const TTSList = ({ book_id, section_id, ttsdata, setTtsData }) => {
           }}
           footer={null}
           width={700}
+          transitionName=""
+          maskTransitionName=""
         >
           {<TextDataSettings onJsonData={handleJsonData} />}
         </Modal>

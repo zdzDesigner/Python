@@ -62,7 +62,11 @@ const VoiceCard = ({ voice, onEdit, onDelete, audioPlayerRef, currentPlayingId, 
   }, [currentPlayingId, voice.id])
 
   return (
-    <div className={`${CSS_CARD} ${hovered && 'card-hover'} ${selectionMode && isSelected ? 'ring-2 ring-blue-500' : ''}`} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+    <div
+      className={`${CSS_CARD} ${hovered && 'card-hover'} ${selectionMode && isSelected ? 'ring-2 ring-blue-500' : ''}`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       {/* Action buttons or selection checkbox */}
       {selectionMode ? (
         <div className="absolute left-0 w-full z-100 top-2 right-2 flex gap-1">
@@ -260,7 +264,7 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
   }
 
   return (
-    <Modal title={initialData ? '编辑音色' : '新增音色'} open={isOpen} onCancel={onClose} footer={null} width={400}>
+    <Modal title={initialData ? '编辑音色' : '新增音色'} open={isOpen} onCancel={onClose} footer={null} width={400} transitionName="" maskTransitionName="">
       <Form labelCol={{ span: 6 }} wrapperCol={{ span: 16 }} form={form} layout="horizontal" onFinish={handleSubmit}>
         <Form.Item name="name" label="名称" rules={[{ required: true, message: '请输入名称' }]}>
           <Input placeholder="请输入名称" />

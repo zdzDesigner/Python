@@ -244,9 +244,9 @@ export const AudioSection = () => {
             onCancel={closeVoiceSelectionModal}
             footer={null}
             width={900}
-            destroyOnHidden
             mask={false}
             style={{ top: 20 }}
+            destroyOnHidden
           >
             <DubbingList
               selectionMode={true}
