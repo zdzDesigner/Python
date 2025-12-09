@@ -9,14 +9,7 @@ import SectionList from './SectionList'
 import Progress from '@/components/Progress'
 import { DubbingList, CSS_CARD } from '@/pages/dubbing/Dubbing'
 
-const CharacterVoiceCard = memo(({ 
-  characterName, 
-  selectedVoice, 
-  audioPlayerRef, 
-  currentPlayingId, 
-  setCurrentPlayingId,
-  openVoiceSelectionModal 
-}) => {
+const CharacterVoiceCard = memo(({ characterName, selectedVoice, audioPlayerRef, currentPlayingId, setCurrentPlayingId, openVoiceSelectionModal }) => {
   const [hovered, setHovered] = useState(false)
   const hasValidWavPath = selectedVoice && selectedVoice.wav_path && selectedVoice.wav_path.trim() !== ''
 
@@ -94,13 +87,9 @@ const CharacterVoiceCard = memo(({
         )}
       </div>
 
-      <div className="font-bold mb-1 text-sm">
-        {selectedVoice ? `${selectedVoice.name} · ${selectedVoice.age_text || ''}` : `${characterName} · 未选择`}
-      </div>
+      <div className="font-bold mb-1 text-sm">{selectedVoice ? `${selectedVoice.name} · ${selectedVoice.age_text || ''}` : `${characterName} · 未选择`}</div>
 
-      <div className="text-gray-600 min-h-1 items-center justify-center text-xs">
-        {selectedVoice ? selectedVoice.emotion_text : ''}
-      </div>
+      <div className="text-gray-600 min-h-1 items-center justify-center text-xs">{selectedVoice ? selectedVoice.emotion_text : ''}</div>
     </div>
   )
 })
@@ -134,6 +123,21 @@ export const AudioSection = () => {
     }
   }, [])
 
+  const uniqueCharacterNames = useMemo(() => {
+    if (!ttsdata) return []
+    const uniqueNames = [...new Set(ttsdata.map((item) => item.speaker))]
+    return uniqueNames
+  }, [ttsdata])
+
+  const openVoiceSelectionModal = useCallback(
+    (characterName) => {
+      setSelectingCharacter(characterName)
+      if (!dubbingListMounted) {
+        setTimeout(() => setDubbingListMounted(true), 0)
+      }
+    },
+    [dubbingListMounted]
+  )
   const characterCards = useMemo(() => {
     return uniqueCharacterNames.map((characterName) => {
       const selectedVoice = (selectedCharacterVoices[characterName] || [])[0]
@@ -151,11 +155,13 @@ export const AudioSection = () => {
     })
   }, [uniqueCharacterNames, selectedCharacterVoices, currentPlayingId, openVoiceSelectionModal])
 
-  const uniqueCharacterNames = useMemo(() => {
-    if (!ttsdata) return []
-    const uniqueNames = [...new Set(ttsdata.map((item) => item.speaker))]
-    return uniqueNames
-  }, [ttsdata])
+  const hookSections = useCallback((sections) => {
+    console.log({ sections })
+    if (section_id == 0 && sections.length > 0) {
+      setSectionId(sections[0].id)
+    }
+  }, [])
+
   // Memoize the audio files options to prevent unnecessary re-renders
   const audioFileOptions = useMemo(() => {
     if (!audioFiles) return []
@@ -193,13 +199,6 @@ export const AudioSection = () => {
     setSelectedCharacterVoices(initialSelectedVoices)
     setTimeout(() => setShowDubbing(true), 0)
   }, [ttsdata])
-
-  const openVoiceSelectionModal = useCallback((characterName) => {
-    setSelectingCharacter(characterName)
-    if (!dubbingListMounted) {
-      setTimeout(() => setDubbingListMounted(true), 0)
-    }
-  }, [dubbingListMounted])
 
   const closeVoiceSelectionModal = useCallback(() => {
     setSelectingCharacter(null)
@@ -256,9 +255,7 @@ export const AudioSection = () => {
           <Modal title="角色配音" open={isshow_dubbing} onOk={dubModalOk} onCancel={dubModalCancel} width={900} transitionName="" maskTransitionName="">
             <div style={{ display: 'flex', gap: '20px' }}>
               <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                  {characterCards}
-                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>{characterCards}</div>
               </div>
             </div>
           </Modal>
