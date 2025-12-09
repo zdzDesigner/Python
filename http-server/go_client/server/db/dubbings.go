@@ -2,6 +2,7 @@ package db
 
 import (
 	"time"
+
 	"go-audio-server/db/sqlite"
 )
 
@@ -23,8 +24,8 @@ func (d *Dubbing) Add() (sqlite.Ret, error) {
 	return sqler.Ret, sqler.Add("created_at", "updated_at")
 }
 
-func (d *Dubbing) Count() int { 
-	return sqlite.DB(d).Count() 
+func (d *Dubbing) Count() int {
+	return sqlite.DB(d).Count()
 }
 
 func (d *Dubbing) Del(val map[string]any) error {
@@ -36,8 +37,8 @@ func (d *Dubbing) Update(w map[string]any, keys []string) error {
 }
 
 func (d *Dubbing) GetFunc(fn func(*sqlite.Sql) *sqlite.Sql) ([]*Dubbing, error) {
-	return sqlite.GetField[Dubbing](func(dbm sqlite.DBSql) *sqlite.Sql { 
-		return fn(dbm(d)) 
+	return sqlite.GetField[Dubbing](func(dbm sqlite.DBSql) *sqlite.Sql {
+		return fn(dbm(d))
 	})
 }
 
@@ -47,9 +48,9 @@ func (d *Dubbing) Get(w any, limit []string, isdesc bool) ([]*Dubbing, error) {
 	}
 	return sqlite.GetField[Dubbing](func(dbm sqlite.DBSql) *sqlite.Sql {
 		if isdesc {
-			return dbm(d).Where(w).Page(limit[0], limit[1]).Order("id desc")
+			return dbm(d).Where(w).Limit(limit).Order("id desc")
 		} else {
-			return dbm(d).Where(w).Page(limit[0], limit[1]).Order("id asc")
+			return dbm(d).Where(w).Limit(limit).Order("id asc")
 		}
 	})
 }
@@ -58,3 +59,4 @@ func (d *Dubbing) Get(w any, limit []string, isdesc bool) ([]*Dubbing, error) {
 func (d *Dubbing) UpdateByID(id int, keys ...string) error {
 	return sqlite.DB(d).Where(map[string]any{"id": id}).Update(keys...)
 }
+
