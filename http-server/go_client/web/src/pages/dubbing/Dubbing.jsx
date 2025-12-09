@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, memo, useCallback, useMemo } from 'react'
 import { Button, Modal, Form, Input, Upload, message, Popconfirm, Spin, Progress } from 'antd'
 import { EditOutlined, DeleteOutlined, PlusOutlined, UserOutlined, PlayCircleOutlined, PauseCircleOutlined, UploadOutlined } from '@ant-design/icons'
 import { fetchVoices, createVoice, updateVoice, deleteVoice } from '@/service/api/dubbing'
@@ -8,7 +8,7 @@ import './style.css'
 export const CSS_CARD = 'border border-gray-300 rounded-lg p-4 w-36 text-center shadow-sm bg-white relative transition-shadow duration-300 hover:shadow-md'
 
 // Voice Card Component
-const VoiceCard = ({ voice, onEdit, onDelete, audioPlayerRef, currentPlayingId, onPlay, selectionMode = false, isSelected = false, onSelect }) => {
+const VoiceCard = memo(({ voice, onEdit, onDelete, audioPlayerRef, currentPlayingId, onPlay, selectionMode = false, isSelected = false, onSelect }) => {
   const [hovered, setHovered] = useState(false)
 
   // Check if this card is currently playing
@@ -59,7 +59,7 @@ const VoiceCard = ({ voice, onEdit, onDelete, audioPlayerRef, currentPlayingId, 
     return () => {
       audio.removeEventListener('ended', handleEnded)
     }
-  }, [currentPlayingId, voice.id])
+  }, [currentPlayingId, voice.id, onPlay])
 
   return (
     <div
@@ -128,7 +128,8 @@ const VoiceCard = ({ voice, onEdit, onDelete, audioPlayerRef, currentPlayingId, 
       <div className="text-gray-600 min-h-1 items-center justify-center text-xs">{voice.emotion_text}</div>
     </div>
   )
-}
+})
+VoiceCard.displayName = 'VoiceCard'
 
 // Voice Form Modal Component
 const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
@@ -264,7 +265,7 @@ const VoiceFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
   }
 
   return (
-    <Modal title={initialData ? '编辑音色' : '新增音色'} open={isOpen} onCancel={onClose} footer={null} width={400} transitionName="" maskTransitionName="">
+    <Modal title={initialData ? '编辑音色' : '新增音色'} open={isOpen} onCancel={onClose} footer={null} width={400} transitionName="" maskTransitionName="" destroyOnClose>
       <Form labelCol={{ span: 6 }} wrapperCol={{ span: 16 }} form={form} layout="horizontal" onFinish={handleSubmit}>
         <Form.Item name="name" label="名称" rules={[{ required: true, message: '请输入名称' }]}>
           <Input placeholder="请输入名称" />
@@ -435,17 +436,17 @@ export const DubbingList = ({ selectionMode = false, onVoiceSelect, selectedVoic
     loadVoices()
   }
 
-  const handlePlay = (voiceId) => {
+  const handlePlay = useCallback((voiceId) => {
     setCurrentPlayingId(voiceId)
-  }
+  }, [])
 
-  const handleSubmit = (formData, avatarFile, wavFile) => {
+  const handleSubmit = useCallback((formData, avatarFile, wavFile) => {
     if (editingVoice) {
       handleUpdateVoice(formData, avatarFile, wavFile)
     } else {
       handleCreateVoice(formData, avatarFile, wavFile)
     }
-  }
+  }, [editingVoice])
 
   if (loading) {
     return (
@@ -479,20 +480,23 @@ export const DubbingList = ({ selectionMode = false, onVoiceSelect, selectedVoic
             <div className="flex-1" />
           </div>
         )}
-        {voices.map((voice) => (
-          <VoiceCard
-            key={voice.id}
-            voice={voice}
-            onEdit={handleEditClick}
-            onDelete={handleDeleteVoice}
-            audioPlayerRef={audioPlayerRef}
-            currentPlayingId={currentPlayingId}
-            onPlay={handlePlay}
-            selectionMode={selectionMode}
-            isSelected={selectedVoices.some((v) => v.id === voice.id)}
-            onSelect={onVoiceSelect}
-          />
-        ))}
+        {voices.map((voice) => {
+          const isSelected = selectedVoices.some((v) => v.id === voice.id)
+          return (
+            <VoiceCard
+              key={voice.id}
+              voice={voice}
+              onEdit={handleEditClick}
+              onDelete={handleDeleteVoice}
+              audioPlayerRef={audioPlayerRef}
+              currentPlayingId={currentPlayingId}
+              onPlay={handlePlay}
+              selectionMode={selectionMode}
+              isSelected={isSelected}
+              onSelect={onVoiceSelect}
+            />
+          )
+        })}
         <br />
 
         {voices.length === 0 && !loading && <div className="w-full text-center py-10 text-gray-600">暂无音色数据，请添加新的音色</div>}
