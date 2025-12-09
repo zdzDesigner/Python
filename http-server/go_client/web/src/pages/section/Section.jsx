@@ -219,15 +219,17 @@ export const AudioSection = () => {
   )
 
   const dubModalOk = useCallback(() => {
-    // 批量设置音色
     setTtsData((prevData) => {
       return prevData.map((item) => {
-        if (characterMappings[item.speaker]) return { ...item, dubbing: characterMappings[item.speaker] }
+        const selectedVoice = selectedCharacterVoices[item.speaker]?.[0]
+        if (selectedVoice) {
+          return { ...item, dubbing_id: selectedVoice.id, dubbing: selectedVoice.wav_path }
+        }
         return item
       })
     })
     setShowDubbing(false)
-  }, [characterMappings])
+  }, [selectedCharacterVoices])
 
   // Function to handle modal cancellation
   const dubModalCancel = useCallback(() => {
@@ -292,7 +294,9 @@ export const AudioSection = () => {
             {section_id > 0 && <TTSList book_id={book_id} section_id={section_id} ttsdata={ttsdata} setTtsData={setTtsData} />}
           </div>
         </div>
-        <Progress />
+        {
+          // <Progress />
+        }
       </div>
     </div>
   )

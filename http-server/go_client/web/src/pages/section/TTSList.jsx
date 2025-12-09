@@ -401,7 +401,7 @@ const TTSList = ({ book_id, section_id, ttsdata, setTtsData }) => {
   const [isshow_text, setShowText] = useState(false)
   // State for character mappings
   // State for table data
-  const [tableData, setTableData] = useState([ttsdata])
+  const [tableData, setTableData] = useState(ttsdata)
   // State for batch training progress
   const [isBatchTraining, setIsBatchTraining] = useState(false)
   const [batchProgress, setBatchProgress] = useState(0)
@@ -414,7 +414,15 @@ const TTSList = ({ book_id, section_id, ttsdata, setTtsData }) => {
   const { audioFiles } = useAudioLibraryState()
   const { dispatch, fetchAudioFiles } = useAudioLibraryDispatch()
 
-  const [jsonData, setTtsJsonData] = useState(null)
+  useEffect(() => {
+    if (ttsdata && ttsdata.length > 0) {
+      setTableData(ttsdata)
+    }
+  }, [ttsdata])
+
+  useEffect(() => {
+    setTtsData(tableData)
+  }, [tableData])
 
   useEffect(() => {
     const loadDubbingVoices = async () => {
@@ -435,6 +443,7 @@ const TTSList = ({ book_id, section_id, ttsdata, setTtsData }) => {
     [dispatch]
   )
 
+  const [jsonData, setTtsJsonData] = useState(null)
   const handleJsonData = useCallback((jsonData) => {
     setTtsJsonData(jsonData)
   }, [])
@@ -450,10 +459,6 @@ const TTSList = ({ book_id, section_id, ttsdata, setTtsData }) => {
     [fileSelect, fetchAudioFiles, showSuccess]
   )
 
-  // Update tableData when jsonData changes, and fetch TTS records from API when jsonData is null/undefined
-  useEffect(() => {
-    setTtsData(tableData)
-  }, [tableData])
   useEffect(() => {
     const fetchTTSRecords = async () => {
       try {
@@ -475,13 +480,7 @@ const TTSList = ({ book_id, section_id, ttsdata, setTtsData }) => {
     }
 
     if (jsonData) {
-      // Use provided JSON data
-      // const initialData = jsonData.map((item) => ({
-      //   ...item,
-      //   dubbing: item.dubbing
-      // }))
       setTableData(jsonData.map(mapTTSRecord))
-      // fetchTTSRecords()
     } else {
       fetchTTSRecords()
     }
@@ -648,11 +647,12 @@ const TTSList = ({ book_id, section_id, ttsdata, setTtsData }) => {
 
   // Function to update table data for a specific record
   const updateTableDataDubbing = useCallback((recordKey, newDubbingValue) => {
+    console.log({ newDubbingValue })
     setTableData((prevData) => {
       const newData = [...prevData]
       const index = newData.findIndex((item) => item.id === recordKey)
       if (index !== -1) {
-        newData[index] = { ...newData[index], dubbing: newDubbingValue }
+        newData[index] = { ...newData[index], dubbing_id: newDubbingValue }
       }
       return newData
     })
@@ -841,8 +841,8 @@ const TTSList = ({ book_id, section_id, ttsdata, setTtsData }) => {
       {
         title: '配音',
         width: 150,
-        dataIndex: 'dubbing',
-        key: 'dubbing',
+        dataIndex: 'dubbing_id',
+        key: 'dubbing_id',
         fixed: 'left',
         render: (text, record) => {
           return <MemoizedTableSelect recordKey={record.id} value={text} onChange={updateTableDataDubbing} options={tableAudioFileOptions} />
